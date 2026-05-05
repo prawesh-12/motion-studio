@@ -9,8 +9,8 @@ import {
   UserCircleIcon,
   Search01Icon,
   PencilEdit01Icon,
-  BubbleChatAddIcon,
   Plug01Icon,
+  ImageAdd02Icon,
 } from "@hugeicons/core-free-icons"
 import {
   Sidebar,
@@ -29,7 +29,12 @@ const navItems = [
   { title: "Home", href: "/", icon: Home01Icon },
   { title: "Search", href: "/search", icon: Search01Icon },
   { title: "Integrations", href: "/integrations", icon: Plug01Icon },
-  { title: "New Chat", href: "/chat", icon: BubbleChatAddIcon, highlight: true },
+  {
+    title: "New Post",
+    href: "/chat",
+    icon: ImageAdd02Icon,
+    highlight: true,
+  },
 ]
 
 const secondaryItems = [
@@ -99,7 +104,11 @@ export function AppSidebar() {
                     asChild
                     isActive={pathname === item.href}
                     tooltip={item.title}
-                    className={item.highlight ? "bg-indigo-500/15 hover:bg-indigo-500/20 text-indigo-200" : ""}
+                    className={
+                      item.highlight
+                        ? "bg-indigo-500/15 text-indigo-200 hover:bg-indigo-500/20"
+                        : ""
+                    }
                   >
                     <Link href={item.href}>
                       <HugeiconsIcon icon={item.icon} size={18} />
