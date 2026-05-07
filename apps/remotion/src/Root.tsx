@@ -23,10 +23,40 @@ import {
   MESSAGE_POPUP_WIDTH,
   MESSAGE_POPUP_HEIGHT,
 } from "./MessagePopup";
+import {
+  MessageBubbles,
+  MESSAGE_BUBBLES_DURATION,
+  MESSAGE_BUBBLES_FPS,
+  MESSAGE_BUBBLES_WIDTH,
+  MESSAGE_BUBBLES_HEIGHT,
+} from "./MessageBubbles";
+import {
+  IntroText,
+  INTRO_TEXT_DURATION,
+  INTRO_TEXT_FPS,
+  INTRO_TEXT_WIDTH,
+  INTRO_TEXT_HEIGHT,
+} from "./IntroText";
 
 export const RemotionRoot: React.FC = () => {
   return (
     <>
+      <Composition
+        id="IntroText"
+        component={IntroText}
+        durationInFrames={INTRO_TEXT_DURATION}
+        fps={INTRO_TEXT_FPS}
+        width={INTRO_TEXT_WIDTH}
+        height={INTRO_TEXT_HEIGHT}
+      />
+      <Composition
+        id="MessageBubbles"
+        component={MessageBubbles}
+        durationInFrames={MESSAGE_BUBBLES_DURATION}
+        fps={MESSAGE_BUBBLES_FPS}
+        width={MESSAGE_BUBBLES_WIDTH}
+        height={MESSAGE_BUBBLES_HEIGHT}
+      />
       <Composition
         id="MessagePopup"
         component={MessagePopup}

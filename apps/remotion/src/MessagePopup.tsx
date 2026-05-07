@@ -4,6 +4,7 @@ import {
   staticFile,
   useCurrentFrame,
   useVideoConfig,
+  Img,
 } from "remotion";
 
 export const MESSAGE_POPUP_DURATION = 240; // 4s @ 60fps
@@ -14,9 +15,9 @@ export const MESSAGE_POPUP_HEIGHT = 720;
 const ICON_SRC = staticFile("message_icon.png");
 
 const NOTIFICATION = {
-  sender: "sanku",
+  sender: "her 💕",
   time: "now",
-  body: "yo just shipped that new feature 🚀",
+  body: "babe what is this claude code?",
 };
 
 // Animation timing (frames @ 60fps)
@@ -91,7 +92,7 @@ function NotificationBanner({ frame, fps }: { frame: number; fps: number }) {
         willChange: "transform, opacity",
       }}
     >
-      <img
+      <Img
         src={ICON_SRC}
         alt={NOTIFICATION.sender}
         width={ICON_SIZE}
