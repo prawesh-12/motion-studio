@@ -10,7 +10,7 @@ const navLinks = [
 
 export function DocsHeader() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-dashed border-border/60 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+    <header className="sticky top-0 z-50 w-full border-b border-dashed border-white/10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
       <div className="flex h-14 items-center gap-6 px-8">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">

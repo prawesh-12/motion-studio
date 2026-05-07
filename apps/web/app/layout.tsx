@@ -25,13 +25,13 @@ export default function RootLayout({
       suppressHydrationWarning
       className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
     >
-      <body className="min-h-screen bg-background text-foreground">
+      <body className="min-h-screen bg-background text-foreground overflow-x-hidden">
         <ThemeProvider>
-          <div className="mx-auto max-w-[1400px] border-x border-dashed border-border/60 min-h-screen">
+          <div className="mx-auto max-w-[1600px] border-x border-dashed border-white/10 min-h-screen">
             <DocsHeader />
             <div className="flex">
               <AppSidebar />
-              <main className="flex-1 min-w-0 border-l border-dashed border-border/60">
+              <main className="flex-1 min-w-0 border-l border-dashed border-white/10">
                 {children}
               </main>
             </div>
