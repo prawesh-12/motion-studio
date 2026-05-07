@@ -98,7 +98,7 @@ export function DocsShell({ doc }: { doc: Doc }) {
             <HugeiconsIcon icon={ListViewIcon} size={13} />
             <span>On This Page</span>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2 border-l border-dashed border-border pl-3">
             {doc.meta.toc.map((t) => (
               <li key={t.id}>
                 <a

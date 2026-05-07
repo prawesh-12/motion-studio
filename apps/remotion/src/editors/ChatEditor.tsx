@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   BubbleChatIcon,
@@ -37,9 +37,21 @@ export function ChatEditor({ value, onChange }: EditorProps<ChatMessage[]>) {
     lastSide === "left" ? "right" : "left",
   );
 
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const prevLength = useRef(value.length);
+  useEffect(() => {
+    if (value.length > prevLength.current && scrollRef.current) {
+      scrollRef.current.scrollTo({
+        top: scrollRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    }
+    prevLength.current = value.length;
+  }, [value.length]);
+
   useEffect(() => {
     if (flashedIndex === null) return;
-    const t = setTimeout(() => setFlashedIndex(null), 450);
+    const t = setTimeout(() => setFlashedIndex(null), 500);
     return () => clearTimeout(t);
   }, [flashedIndex, flashKey]);
 
@@ -78,12 +90,12 @@ export function ChatEditor({ value, onChange }: EditorProps<ChatMessage[]>) {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      <div className="flex-1 overflow-y-auto">
+    <div className="flex h-full min-h-0 flex-col bg-muted/20">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto">
         {value.length === 0 ? (
           <EmptyState />
         ) : (
-          <div className="space-y-2.5 px-4 py-5">
+          <div className="space-y-3 px-5 py-6">
             {value.map((m, i) => (
               <BubbleRow
                 key={i}
@@ -112,10 +124,10 @@ export function ChatEditor({ value, onChange }: EditorProps<ChatMessage[]>) {
 function EmptyState() {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 px-6 py-12 text-center">
-      <div className="flex size-12 items-center justify-center rounded-full bg-muted">
+      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
         <HugeiconsIcon
           icon={BubbleChatIcon}
-          size={22}
+          size={24}
           className="text-muted-foreground"
         />
       </div>
@@ -144,42 +156,102 @@ function BubbleRow({
 }) {
   const isRight = msg.side === "right";
   return (
-    <div
-      className={`group flex items-end gap-1.5 ${
-        isRight ? "flex-row-reverse" : "flex-row"
-      }`}
-    >
+    <div className="group flex w-full items-center gap-2">
       <div
-        className={`relative max-w-[78%] rounded-[20px] transition-[background-color,box-shadow,transform] duration-300 ease-out ${
-          isRight
-            ? "bg-blue-500 text-white"
-            : "bg-zinc-200 text-zinc-900 dark:bg-zinc-800 dark:text-zinc-50"
-        } ${flashing ? "ring-2 ring-offset-2 ring-offset-background ring-foreground/40 scale-[1.03]" : ""}`}
-        style={{
-          borderBottomRightRadius: isRight ? 6 : 20,
-          borderBottomLeftRadius: !isRight ? 6 : 20,
-        }}
-      >
-        <input
-          value={msg.text}
-          onChange={(e) => onText(e.target.value)}
-          className="w-full bg-transparent px-3.5 py-2 text-[14px] leading-snug outline-none placeholder:opacity-60"
-          placeholder="Empty message"
-        />
-      </div>
-      <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-        <IconButton
-          onClick={onFlip}
-          icon={ArrowReloadHorizontalIcon}
-          title="Flip side"
-        />
-        <IconButton
-          onClick={onDelete}
-          icon={Delete02Icon}
-          title="Delete"
-          variant="danger"
-        />
-      </div>
+        className="transition-[flex-grow] duration-300 ease-out"
+        style={{ flexGrow: isRight ? 1 : 0, flexShrink: 0, flexBasis: 0 }}
+        aria-hidden
+      />
+
+      {isRight && (
+        <RowActions onFlip={onFlip} onDelete={onDelete} />
+      )}
+
+      <BubbleBody
+        msg={msg}
+        isRight={isRight}
+        flashing={flashing}
+        onText={onText}
+      />
+
+      {!isRight && (
+        <RowActions onFlip={onFlip} onDelete={onDelete} />
+      )}
+
+      <div
+        className="transition-[flex-grow] duration-300 ease-out"
+        style={{ flexGrow: !isRight ? 1 : 0, flexShrink: 0, flexBasis: 0 }}
+        aria-hidden
+      />
+    </div>
+  );
+}
+
+function BubbleBody({
+  msg,
+  isRight,
+  flashing,
+  onText,
+}: {
+  msg: ChatMessage;
+  isRight: boolean;
+  flashing: boolean;
+  onText: (t: string) => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement | null>(null);
+  return (
+    <div
+      onClick={() => ref.current?.focus()}
+      className={`relative max-w-[78%] cursor-text rounded-[22px] px-4 py-2 transition-[background-color,transform,box-shadow] duration-300 ease-out ${
+        isRight
+          ? "bg-blue-500 text-white shadow-sm shadow-blue-500/30"
+          : "bg-zinc-200 text-zinc-900 dark:bg-zinc-700/70 dark:text-zinc-50"
+      } ${flashing ? "ring-2 ring-offset-4 ring-offset-muted/20 ring-foreground scale-[1.04]" : ""}`}
+      style={{
+        borderBottomRightRadius: isRight ? 8 : 22,
+        borderBottomLeftRadius: !isRight ? 8 : 22,
+      }}
+    >
+      <textarea
+        ref={ref}
+        value={msg.text}
+        onChange={(e) => onText(e.target.value)}
+        rows={1}
+        spellCheck={false}
+        className={`block w-full min-w-[40px] resize-none overflow-hidden bg-transparent text-[14px] leading-snug outline-none placeholder:opacity-60 ${
+          isRight ? "placeholder:text-white/60" : ""
+        }`}
+        style={
+          {
+            fieldSizing: "content",
+          } as React.CSSProperties
+        }
+        placeholder="Empty"
+      />
+    </div>
+  );
+}
+
+function RowActions({
+  onFlip,
+  onDelete,
+}: {
+  onFlip: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+      <IconButton
+        onClick={onFlip}
+        icon={ArrowReloadHorizontalIcon}
+        title="Flip side"
+      />
+      <IconButton
+        onClick={onDelete}
+        icon={Delete02Icon}
+        title="Delete"
+        variant="danger"
+      />
     </div>
   );
 }
@@ -201,13 +273,13 @@ function IconButton({
     <button
       onClick={onClick}
       title={title}
-      className={`flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors ${
+      className={`flex size-8 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-sm transition-colors ${
         danger
-          ? "hover:bg-red-500/10 hover:text-red-500"
+          ? "hover:border-red-500/40 hover:bg-red-500/10 hover:text-red-500"
           : "hover:bg-muted hover:text-foreground"
       }`}
     >
-      <HugeiconsIcon icon={icon} size={14} />
+      <HugeiconsIcon icon={icon} size={15} />
     </button>
   );
 }
@@ -227,7 +299,7 @@ function Composer({
 }) {
   const canSend = draft.trim().length > 0;
   return (
-    <div className="shrink-0 space-y-3 border-t border-border bg-background/95 px-4 py-4 backdrop-blur">
+    <div className="shrink-0 space-y-3 border-t border-border bg-background px-5 py-4">
       <div className="grid grid-cols-2 gap-2">
         <SideTab
           active={side === "left"}
@@ -253,7 +325,7 @@ function Composer({
             }
           }}
           placeholder={`Message as ${side === "right" ? "you" : "them"}…`}
-          className="flex-1 rounded-full border border-border bg-background px-4 py-2 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-foreground/30"
+          className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-foreground/30"
         />
         <button
           onClick={onSend}
@@ -262,8 +334,8 @@ function Composer({
           className={`flex size-10 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-all ${
             canSend
               ? side === "right"
-                ? "bg-blue-500 hover:bg-blue-600"
-                : "bg-zinc-500 hover:bg-zinc-600"
+                ? "bg-blue-500 hover:bg-blue-600 active:scale-95"
+                : "bg-zinc-500 hover:bg-zinc-600 active:scale-95"
               : "cursor-not-allowed bg-muted text-muted-foreground"
           }`}
         >
