@@ -30,7 +30,6 @@ export function Preview({ id }: { id: string }) {
         loop
         controls
         autoPlay
-        initiallyMuted
         acknowledgeRemotionLicense
       />
     </div>

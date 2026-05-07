@@ -11,15 +11,12 @@ import {
   Moon01Icon,
   CommandLineIcon,
   Clock01Icon,
-  Cursor01Icon,
-  CreditCardIcon,
-  BubbleChatIcon,
-  InputCursorTextIcon,
-  ToggleOnIcon,
-  MenuSquareIcon,
-  Notification01Icon,
   VideoReplayIcon,
+  TextFontIcon,
 } from "@hugeicons/core-free-icons"
+
+const textAnimations = compositions.filter((c) => c.id.startsWith("Title"))
+const templates = compositions.filter((c) => !c.id.startsWith("Title"))
 
 const nav = [
   {
@@ -34,20 +31,16 @@ const nav = [
     ],
   },
   {
-    section: "Components",
-    items: [
-      { title: "Button", href: "/docs/components/button", icon: Cursor01Icon },
-      { title: "Card", href: "/docs/components/card", icon: CreditCardIcon },
-      { title: "Dialog", href: "/docs/components/dialog", icon: BubbleChatIcon },
-      { title: "Input", href: "/docs/components/input", icon: InputCursorTextIcon },
-      { title: "Select", href: "/docs/components/select", icon: ToggleOnIcon },
-      { title: "Tabs", href: "/docs/components/tabs", icon: MenuSquareIcon },
-      { title: "Toast", href: "/docs/components/toast", icon: Notification01Icon },
-    ],
+    section: "Text Animations",
+    items: textAnimations.map((c) => ({
+      title: c.title,
+      href: `/docs/${c.id}`,
+      icon: TextFontIcon,
+    })),
   },
   {
     section: "Templates",
-    items: compositions.map((c) => ({
+    items: templates.map((c) => ({
       title: c.title,
       href: `/docs/${c.id}`,
       icon: VideoReplayIcon,

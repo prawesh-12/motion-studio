@@ -1,10 +1,24 @@
 import type { AnyCompositionInfo } from "./schema";
 import { messagePopupInfo } from "./compositions/MessagePopup/meta";
 import { messageBubblesInfo } from "./compositions/MessageBubbles/meta";
-import { titleRevealInfo } from "./compositions/TitleReveal/meta";
+import { titleSlideUpInfo } from "./compositions/TitleSlideUp/meta";
+import { titleTypeInfo } from "./compositions/TitleType/meta";
+import { titlePopupInfo } from "./compositions/TitlePopup/meta";
+import { titleFadeInfo } from "./compositions/TitleFade/meta";
+import { typingSearchInfo } from "./compositions/TypingSearch/meta";
+import { statCounterInfo } from "./compositions/StatCounter/meta";
+import { tweetCardInfo } from "./compositions/TweetCard/meta";
+import { cursorWalkthroughInfo } from "./compositions/CursorWalkthrough/meta";
 
 export const compositions: AnyCompositionInfo[] = [
-  titleRevealInfo,
+  titleSlideUpInfo,
+  titleTypeInfo,
+  titlePopupInfo,
+  titleFadeInfo,
+  typingSearchInfo,
+  cursorWalkthroughInfo,
+  statCounterInfo,
+  tweetCardInfo,
   messagePopupInfo,
   messageBubblesInfo,
 ];

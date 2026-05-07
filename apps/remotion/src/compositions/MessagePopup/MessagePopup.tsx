@@ -37,7 +37,7 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: "#f4f4ef",
+        background: "#ffffff",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
         color: "#0f1014",

@@ -1,17 +1,14 @@
 "use client";
+import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import {
-  AbsoluteFill,
-  Easing,
-  interpolate,
-  useCurrentFrame,
-} from "remotion";
+  TITLE_FONT_FAMILY,
+  getSubtitleColor,
+  type TitleProps,
+} from "../title-shared";
 
-export type TitleRevealProps = {
-  headline: string;
-  subtitle: string;
-  backgroundColor: string;
-  textColor: string;
-};
+export type TitleSlideUpProps = TitleProps;
+
+const APPLE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
 const HEADLINE_START = 8;
 const WORD_STAGGER = 3;
@@ -19,9 +16,7 @@ const WORD_REVEAL = 32;
 const SUBTITLE_DELAY = 14;
 const SUBTITLE_DURATION = 26;
 
-const APPLE_EASE = Easing.bezier(0.16, 1, 0.3, 1);
-
-export const TitleReveal: React.FC<TitleRevealProps> = ({
+export const TitleSlideUp: React.FC<TitleSlideUpProps> = ({
   headline,
   subtitle,
   backgroundColor,
@@ -45,17 +40,12 @@ export const TitleReveal: React.FC<TitleRevealProps> = ({
     },
   );
 
-  const subtitleColor = isDarkColor(textColor)
-    ? "rgba(15,16,20,0.55)"
-    : "rgba(255,255,255,0.65)";
-
   return (
     <AbsoluteFill
       style={{
         background: backgroundColor,
         color: textColor,
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+        fontFamily: TITLE_FONT_FAMILY,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -94,7 +84,7 @@ export const TitleReveal: React.FC<TitleRevealProps> = ({
             fontWeight: 400,
             letterSpacing: "-0.012em",
             margin: "32px 0 0",
-            color: subtitleColor,
+            color: getSubtitleColor(textColor),
             opacity: subtitleProgress,
             transform: `translateY(${(1 - subtitleProgress) * 14}px)`,
             willChange: "transform, opacity",
@@ -149,17 +139,4 @@ function RevealWord({
       </span>
     </span>
   );
-}
-
-function isDarkColor(color: string): boolean {
-  const c = color.trim().toLowerCase();
-  if (c === "white" || c === "#fff" || c === "#ffffff") return true;
-  if (c.startsWith("#") && c.length === 7) {
-    const r = parseInt(c.slice(1, 3), 16);
-    const g = parseInt(c.slice(3, 5), 16);
-    const b = parseInt(c.slice(5, 7), 16);
-    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    return luminance > 0.6;
-  }
-  return false;
 }

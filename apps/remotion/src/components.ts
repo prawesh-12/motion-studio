@@ -2,11 +2,25 @@
 import type { ComponentType } from "react";
 import { MessagePopup } from "./compositions/MessagePopup/MessagePopup";
 import { MessageBubbles } from "./compositions/MessageBubbles/MessageBubbles";
-import { TitleReveal } from "./compositions/TitleReveal/TitleReveal";
+import { TitleSlideUp } from "./compositions/TitleSlideUp/TitleSlideUp";
+import { TitleType } from "./compositions/TitleType/TitleType";
+import { TitlePopup } from "./compositions/TitlePopup/TitlePopup";
+import { TitleFade } from "./compositions/TitleFade/TitleFade";
+import { TypingSearch } from "./compositions/TypingSearch/TypingSearch";
+import { StatCounter } from "./compositions/StatCounter/StatCounter";
+import { TweetCard } from "./compositions/TweetCard/TweetCard";
+import { CursorWalkthrough } from "./compositions/CursorWalkthrough/CursorWalkthrough";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const componentsById: Record<string, ComponentType<any>> = {
   MessagePopup,
   MessageBubbles,
-  TitleReveal,
+  TitleSlideUp,
+  TitleType,
+  TitlePopup,
+  TitleFade,
+  TypingSearch,
+  StatCounter,
+  TweetCard,
+  CursorWalkthrough,
 };

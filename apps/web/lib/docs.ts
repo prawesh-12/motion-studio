@@ -9,6 +9,30 @@ import MessagePopupMDX, {
 import MessageBubblesMDX, {
   meta as messageBubblesMeta,
 } from "@/content/docs/message-bubbles.mdx"
+import TitleSlideUpMDX, {
+  meta as titleSlideUpMeta,
+} from "@/content/docs/title-slide-up.mdx"
+import TitleTypeMDX, {
+  meta as titleTypeMeta,
+} from "@/content/docs/title-type.mdx"
+import TitlePopupMDX, {
+  meta as titlePopupMeta,
+} from "@/content/docs/title-popup.mdx"
+import TitleFadeMDX, {
+  meta as titleFadeMeta,
+} from "@/content/docs/title-fade.mdx"
+import TypingSearchMDX, {
+  meta as typingSearchMeta,
+} from "@/content/docs/typing-search.mdx"
+import StatCounterMDX, {
+  meta as statCounterMeta,
+} from "@/content/docs/stat-counter.mdx"
+import TweetCardMDX, {
+  meta as tweetCardMeta,
+} from "@/content/docs/tweet-card.mdx"
+import CursorWalkthroughMDX, {
+  meta as cursorWalkthroughMeta,
+} from "@/content/docs/cursor-walkthrough.mdx"
 
 export type DocTocItem = { label: string; id: string }
 
@@ -31,6 +55,54 @@ export const docs: Doc[] = [
     href: "/docs",
     meta: introductionMeta,
     Content: IntroductionMDX,
+  },
+  {
+    slug: "TitleSlideUp",
+    href: "/docs/TitleSlideUp",
+    meta: titleSlideUpMeta,
+    Content: TitleSlideUpMDX,
+  },
+  {
+    slug: "TitleType",
+    href: "/docs/TitleType",
+    meta: titleTypeMeta,
+    Content: TitleTypeMDX,
+  },
+  {
+    slug: "TitlePopup",
+    href: "/docs/TitlePopup",
+    meta: titlePopupMeta,
+    Content: TitlePopupMDX,
+  },
+  {
+    slug: "TitleFade",
+    href: "/docs/TitleFade",
+    meta: titleFadeMeta,
+    Content: TitleFadeMDX,
+  },
+  {
+    slug: "TypingSearch",
+    href: "/docs/TypingSearch",
+    meta: typingSearchMeta,
+    Content: TypingSearchMDX,
+  },
+  {
+    slug: "StatCounter",
+    href: "/docs/StatCounter",
+    meta: statCounterMeta,
+    Content: StatCounterMDX,
+  },
+  {
+    slug: "TweetCard",
+    href: "/docs/TweetCard",
+    meta: tweetCardMeta,
+    Content: TweetCardMDX,
+  },
+  {
+    slug: "CursorWalkthrough",
+    href: "/docs/CursorWalkthrough",
+    meta: cursorWalkthroughMeta,
+    Content: CursorWalkthroughMDX,
   },
   {
     slug: "MessagePopup",
