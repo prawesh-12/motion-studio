@@ -112,6 +112,21 @@ export function Builder() {
     playerRef.current?.seekTo(Math.max(0, totalDuration - 1))
   }, [totalDuration])
 
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key !== " " || !hasClips) return
+      const el = document.activeElement
+      if (el) {
+        const tag = el.tagName.toLowerCase()
+        if (tag === "input" || tag === "textarea" || (el as HTMLElement).isContentEditable) return
+      }
+      e.preventDefault()
+      handlePlayPause()
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [hasClips, handlePlayPause])
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <TopBar

@@ -89,14 +89,14 @@ export function SortableClipBlock({
       style={style}
       onClick={onSelect}
       className={`group relative shrink-0 select-none overflow-hidden rounded-md transition-shadow ${
-        selected ? "z-10 ring-2 ring-blue-500" : "ring-0"
+        selected ? "z-10" : ""
       } ${resizing ? "cursor-ew-resize" : "cursor-grab active:cursor-grabbing"}`}
       {...attributes}
       {...listeners}
     >
       {/* Gradient body — top lighter, bottom richer */}
       <div
-        className={`bg-gradient-to-br ${colorClass} flex h-14 flex-col justify-between px-3 py-2`}
+        className={`bg-gradient-to-b ${colorClass} flex h-14 flex-col justify-between px-3 py-2`}
       >
         {/* Inner top highlight + outline */}
         <div
@@ -114,6 +114,10 @@ export function SortableClipBlock({
           {seconds.toFixed(2)}s
         </p>
       </div>
+
+      {selected && (
+        <div className="pointer-events-none absolute inset-0 z-20 rounded-md ring-2 ring-inset ring-blue-500" />
+      )}
 
       <ResizeHandle
         side="left"

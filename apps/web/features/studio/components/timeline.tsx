@@ -150,8 +150,8 @@ export function Timeline({
   }
 
   return (
-    <div className="shrink-0 border-t border-border bg-background">
-      <div className="flex items-center justify-between border-b border-border px-4 py-2">
+    <div className="shrink-0 bg-background">
+      <div className="flex items-center justify-between px-4 py-2">
         <p className="text-xs font-medium text-muted-foreground">
           Timeline
         </p>

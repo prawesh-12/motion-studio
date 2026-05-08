@@ -50,14 +50,6 @@ export default function LandingPage() {
       <section className="relative overflow-hidden border-b border-dashed border-border">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-60"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 50% 0%, rgba(120,120,255,0.15), transparent 60%)",
-          }}
-        />
-        <div
-          aria-hidden
           className="pointer-events-none absolute inset-0 opacity-[0.07]"
           style={{
             backgroundImage:

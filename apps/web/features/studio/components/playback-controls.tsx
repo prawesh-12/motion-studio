@@ -34,7 +34,7 @@ export function PlaybackControls({
   const totalSeconds = totalDuration / fps
 
   return (
-    <div className="flex shrink-0 items-center justify-center gap-3 border-t border-border bg-background px-4 py-2">
+    <div className="flex shrink-0 items-center justify-center gap-3 bg-background px-4 py-2">
       <div className="flex items-center gap-1">
         <ControlButton
           onClick={onSkipToStart}
@@ -83,13 +83,13 @@ function ControlButton({
       disabled={disabled}
       title={title}
       className={cn(
-        "flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors",
+        "flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors",
         "hover:bg-muted hover:text-foreground",
         "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground",
       )}
     >
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <HugeiconsIcon icon={icon as any} size={14} strokeWidth={2} />
+      <HugeiconsIcon icon={icon as any} size={16} strokeWidth={2} />
     </button>
   )
 }
