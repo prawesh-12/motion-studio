@@ -16,6 +16,8 @@ import { TwitterFollow } from "./compositions/TwitterFollow/TwitterFollow";
 import { WhatsAppMessages } from "./compositions/WhatsAppMessages/WhatsAppMessages";
 import { SlackMessages } from "./compositions/SlackMessages/SlackMessages";
 import { DiscordMessages } from "./compositions/DiscordMessages/DiscordMessages";
+import { PhoneFrame } from "./compositions/PhoneFrame/PhoneFrame";
+import { SplitScene } from "./compositions/SplitScene/SplitScene";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const componentsById: Record<string, ComponentType<any>> = {
@@ -35,4 +37,6 @@ export const componentsById: Record<string, ComponentType<any>> = {
   WhatsAppMessages,
   SlackMessages,
   DiscordMessages,
+  PhoneFrame,
+  SplitScene,
 };

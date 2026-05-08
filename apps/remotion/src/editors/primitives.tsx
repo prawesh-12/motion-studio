@@ -69,6 +69,18 @@ export function PrimitiveControl({ field, value, onChange }: Props) {
         </Wrapper>
       );
 
+    case "image":
+      return (
+        <Wrapper htmlFor={field.key} label={field.label}>
+          <ImageControl
+            id={field.key}
+            value={(value as string) ?? ""}
+            placeholder={field.placeholder}
+            onChange={onChange}
+          />
+        </Wrapper>
+      );
+
     case "select": {
       const current = (value as string) ?? field.options[0]?.value ?? "";
       return (
@@ -106,6 +118,87 @@ function Wrapper({
         {label}
       </Label>
       {children}
+    </div>
+  );
+}
+
+function ImageControl({
+  id,
+  value,
+  placeholder,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  placeholder?: string;
+  onChange: (v: unknown) => void;
+}) {
+  const hasImage = value.length > 0;
+
+  function handleFile(file: File | null) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") onChange(reader.result);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <label
+          className="flex h-9 cursor-pointer items-center gap-1.5 rounded-md border border-border bg-muted/40 px-3 text-[12px] font-medium text-foreground transition-colors hover:bg-muted"
+          title="Upload an image"
+        >
+          <svg
+            width="13"
+            height="13"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Upload
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+          />
+        </label>
+        {hasImage ? (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="h-9 rounded-md border border-border bg-muted/40 px-3 text-[12px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            Clear
+          </button>
+        ) : null}
+      </div>
+      <Input
+        id={id}
+        value={value.startsWith("data:") ? "" : value}
+        placeholder={placeholder ?? "Or paste an image URL"}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      {hasImage ? (
+        <div className="overflow-hidden rounded-md border border-border bg-background">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={value}
+            alt="Selected image preview"
+            className="block h-28 w-full object-cover"
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -15,6 +15,8 @@ import { twitterFollowInfo } from "./compositions/TwitterFollow/meta";
 import { whatsappMessagesInfo } from "./compositions/WhatsAppMessages/meta";
 import { slackMessagesInfo } from "./compositions/SlackMessages/meta";
 import { discordMessagesInfo } from "./compositions/DiscordMessages/meta";
+import { phoneFrameInfo } from "./compositions/PhoneFrame/meta";
+import { splitSceneInfo } from "./compositions/SplitScene/meta";
 
 export const compositions: AnyCompositionInfo[] = [
   titleSlideUpInfo,
@@ -33,6 +35,8 @@ export const compositions: AnyCompositionInfo[] = [
   whatsappMessagesInfo,
   slackMessagesInfo,
   discordMessagesInfo,
+  phoneFrameInfo,
+  splitSceneInfo,
 ];
 
 export const compositionsById: Record<string, AnyCompositionInfo> =

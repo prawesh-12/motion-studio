@@ -12,7 +12,7 @@ type Props = {
   totalDuration: number
   hasClips: boolean
   onOpenLibrary: () => void
-  playerRef: Ref<PlayerRef>
+  playerRef?: Ref<PlayerRef>
 }
 
 export function PreviewStage({
