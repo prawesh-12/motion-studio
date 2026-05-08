@@ -10,29 +10,78 @@ import type { ChatMessage } from "../../editors/types";
 export type MessageBubblesProps = {
   contactName: string;
   messages: ChatMessage[];
+  theme: "light" | "dark";
 };
+
+type Palette = {
+  bg: string;
+  text: string;
+  mutedText: string;
+  border: string;
+  receivedBg: string;
+  sentBg: string;
+  receivedText: string;
+  sentText: string;
+};
+
+function getPalette(theme: "light" | "dark"): Palette {
+  if (theme === "dark") {
+    return {
+      bg: "#000000",
+      text: "#ffffff",
+      mutedText: "rgba(255,255,255,0.55)",
+      border: "rgba(255,255,255,0.08)",
+      receivedBg: "#26252A",
+      sentBg: "#007AFF",
+      receivedText: "#ffffff",
+      sentText: "#ffffff",
+    };
+  }
+  return {
+    bg: "#ffffff",
+    text: "#0f1014",
+    mutedText: "rgba(15,16,20,0.55)",
+    border: "rgba(15,16,20,0.08)",
+    receivedBg: "#E9E9EB",
+    sentBg: "#007AFF",
+    receivedText: "#0f1014",
+    sentText: "#ffffff",
+  };
+}
 
 export const MessageBubbles: React.FC<MessageBubblesProps> = ({
   contactName,
   messages,
+  theme,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const palette = getPalette(theme);
 
   return (
     <AbsoluteFill
       style={{
-        background: "#09090b",
+        background: palette.bg,
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
-        color: "#ffffff",
+        color: palette.text,
         overflow: "hidden",
         display: "flex",
         flexDirection: "column",
       }}
     >
-      <ChatHeader name={contactName} frame={frame} fps={fps} />
-      <Conversation frame={frame} fps={fps} messages={messages} />
+      <ChatHeader
+        name={contactName}
+        frame={frame}
+        fps={fps}
+        palette={palette}
+      />
+      <Conversation
+        frame={frame}
+        fps={fps}
+        messages={messages}
+        palette={palette}
+      />
     </AbsoluteFill>
   );
 };
@@ -41,10 +90,12 @@ function ChatHeader({
   name,
   frame,
   fps,
+  palette,
 }: {
   name: string;
   frame: number;
   fps: number;
+  palette: Palette;
 }) {
   const enter = spring({
     frame,
@@ -56,7 +107,7 @@ function ChatHeader({
     <div
       style={{
         padding: "48px 0 28px",
-        borderBottom: "1px solid rgba(255,255,255,0.08)",
+        borderBottom: `1px solid ${palette.border}`,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
@@ -86,7 +137,7 @@ function ChatHeader({
         style={{
           fontSize: 28,
           fontWeight: 600,
-          color: "#ffffff",
+          color: palette.text,
           letterSpacing: "-0.01em",
         }}
       >
@@ -104,10 +155,12 @@ function Conversation({
   frame,
   fps,
   messages,
+  palette,
 }: {
   frame: number;
   fps: number;
   messages: ChatMessage[];
+  palette: Palette;
 }) {
   return (
     <div
@@ -125,6 +178,7 @@ function Conversation({
           messages={messages}
           frame={frame}
           fps={fps}
+          palette={palette}
         />
       ))}
     </div>
@@ -137,12 +191,14 @@ function MessageRow({
   messages,
   frame,
   fps,
+  palette,
 }: {
   msg: ChatMessage;
   index: number;
   messages: ChatMessage[];
   frame: number;
   fps: number;
+  palette: Palette;
 }) {
   const local = frame - msg.delay;
   if (local < 0) return null;
@@ -176,13 +232,19 @@ function MessageRow({
       }}
     >
       {isTyping ? (
-        <TypingBubble side={msg.side} localFrame={local} fps={fps} />
+        <TypingBubble
+          side={msg.side}
+          localFrame={local}
+          fps={fps}
+          palette={palette}
+        />
       ) : (
         <MessageBubble
           side={msg.side}
           text={msg.text}
           localFrame={local - msg.typingFrames}
           fps={fps}
+          palette={palette}
         />
       )}
     </div>
@@ -193,10 +255,12 @@ function TypingBubble({
   side,
   localFrame,
   fps,
+  palette,
 }: {
   side: ChatMessage["side"];
   localFrame: number;
   fps: number;
+  palette: Palette;
 }) {
   const enter = spring({
     frame: localFrame,
@@ -204,75 +268,42 @@ function TypingBubble({
     config: { damping: 13, stiffness: 160, mass: 0.6 },
   });
 
-  const isRight = side === "right";
-  const bubbleBg = isRight ? "#00bbff" : "#27272a";
-  const pageBg = "#09090b";
-
   return (
-    <div style={{ position: "relative" }}>
-      <div
-        style={{
-          background: bubbleBg,
-          padding: "22px 28px",
-          borderRadius: 40,
-          display: "flex",
-          gap: 12,
-          alignItems: "center",
-          opacity: enter,
-          transform: `scale(${0.7 + enter * 0.3})`,
-          transformOrigin: isRight ? "bottom right" : "bottom left",
-          willChange: "transform, opacity",
-          position: "relative",
-        }}
-      >
-        {[0, 1, 2].map((i) => {
-          const phase = (localFrame + i * 5) / 7;
-          const yBob = Math.sin(phase) * 4;
-          const dotOpacity = 0.5 + Math.sin(phase) * 0.3;
-          return (
-            <span
-              key={i}
-              style={{
-                width: 14,
-                height: 14,
-                borderRadius: "50%",
-                background: isRight ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.55)",
-                transform: `translateY(${-Math.abs(yBob)}px)`,
-                opacity: dotOpacity,
-                willChange: "transform, opacity",
-              }}
-            />
-          );
-        })}
-      </div>
-      {/* Tail: ::before */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          height: 36,
-          width: 40,
-          background: bubbleBg,
-          ...(isRight
-            ? { right: -14, borderBottomLeftRadius: "32px 28px" }
-            : { left: -14, borderBottomRightRadius: 32 }),
-          opacity: enter,
-        }}
-      />
-      {/* Tail: ::after (cuts out page bg) */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          height: 36,
-          width: 52,
-          background: pageBg,
-          ...(isRight
-            ? { right: -52, borderBottomLeftRadius: 20 }
-            : { left: -52, borderBottomRightRadius: 20 }),
-          opacity: enter,
-        }}
-      />
+    <div
+      style={{
+        background: palette.receivedBg,
+        padding: "22px 28px",
+        borderRadius: 30,
+        borderBottomLeftRadius: side === "left" ? 8 : 30,
+        borderBottomRightRadius: side === "right" ? 8 : 30,
+        display: "flex",
+        gap: 12,
+        alignItems: "center",
+        opacity: enter,
+        transform: `scale(${0.7 + enter * 0.3})`,
+        transformOrigin: side === "left" ? "bottom left" : "bottom right",
+        willChange: "transform, opacity",
+      }}
+    >
+      {[0, 1, 2].map((i) => {
+        const phase = (localFrame + i * 5) / 7;
+        const yBob = Math.sin(phase) * 4;
+        const dotOpacity = 0.5 + Math.sin(phase) * 0.3;
+        return (
+          <span
+            key={i}
+            style={{
+              width: 14,
+              height: 14,
+              borderRadius: "50%",
+              background: palette.mutedText,
+              transform: `translateY(${-Math.abs(yBob)}px)`,
+              opacity: dotOpacity,
+              willChange: "transform, opacity",
+            }}
+          />
+        );
+      })}
     </div>
   );
 }
@@ -282,11 +313,13 @@ function MessageBubble({
   text,
   localFrame,
   fps,
+  palette,
 }: {
   side: ChatMessage["side"];
   text: string;
   localFrame: number;
   fps: number;
+  palette: Palette;
 }) {
   const pop = spring({
     frame: localFrame,
@@ -295,60 +328,29 @@ function MessageBubble({
   });
 
   const isRight = side === "right";
-  const bubbleBg = isRight ? "#00bbff" : "#27272a";
-  const pageBg = "#09090b";
 
   return (
-    <div style={{ position: "relative" }}>
-      <div
-        style={{
-          background: bubbleBg,
-          color: isRight ? "#000000" : "#ffffff",
-          padding: "16px 32px",
-          borderRadius: 40,
-          maxWidth: 720,
-          fontSize: 32,
-          fontWeight: 400,
-          lineHeight: 1.3,
-          letterSpacing: "-0.005em",
-          opacity: pop,
-          transform: `scale(${0.7 + pop * 0.3})`,
-          transformOrigin: isRight ? "bottom right" : "bottom left",
-          willChange: "transform, opacity",
-          wordWrap: "break-word",
-          position: "relative",
-        }}
-      >
-        {text}
-      </div>
-      {/* Tail: ::before */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          height: 36,
-          width: 40,
-          background: bubbleBg,
-          ...(isRight
-            ? { right: -14, borderBottomLeftRadius: "32px 28px" }
-            : { left: -14, borderBottomRightRadius: 32 }),
-          opacity: pop,
-        }}
-      />
-      {/* Tail: ::after (cuts out page bg) */}
-      <div
-        style={{
-          position: "absolute",
-          bottom: 0,
-          height: 36,
-          width: 52,
-          background: pageBg,
-          ...(isRight
-            ? { right: -52, borderBottomLeftRadius: 20 }
-            : { left: -52, borderBottomRightRadius: 20 }),
-          opacity: pop,
-        }}
-      />
+    <div
+      style={{
+        background: isRight ? palette.sentBg : palette.receivedBg,
+        color: isRight ? palette.sentText : palette.receivedText,
+        padding: "18px 26px",
+        borderRadius: 30,
+        borderBottomLeftRadius: isRight ? 30 : 8,
+        borderBottomRightRadius: isRight ? 8 : 30,
+        maxWidth: 720,
+        fontSize: 32,
+        fontWeight: 400,
+        lineHeight: 1.3,
+        letterSpacing: "-0.005em",
+        opacity: pop,
+        transform: `scale(${0.7 + pop * 0.3})`,
+        transformOrigin: isRight ? "bottom right" : "bottom left",
+        willChange: "transform, opacity",
+        wordWrap: "break-word",
+      }}
+    >
+      {text}
     </div>
   );
 }

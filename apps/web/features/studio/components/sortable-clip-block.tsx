@@ -1,12 +1,14 @@
 "use client"
 
-import React from "react"
+import React, { useRef, useState } from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Clip } from "@workspace/compositions/project"
 import { compositionsById } from "@workspace/compositions/registry"
 import { cn } from "@workspace/ui/lib/utils"
 import { PX_PER_SECOND, colorForCompositionId } from "../lib/clip-colors"
+
+const MIN_DURATION_FRAMES = 15
 
 type Props = {
   clip: Clip
@@ -26,6 +28,8 @@ export function SortableClipBlock({
   onDurationChange,
 }: Props) {
   const info = compositionsById[clip.compositionId]
+  const [resizing, setResizing] = useState<"left" | "right" | null>(null)
+
   const seconds = clip.durationInFrames / fps
   const widthPx = Math.max(80, seconds * PX_PER_SECOND)
   const colorClass = colorForCompositionId(clip.compositionId)
@@ -37,14 +41,46 @@ export function SortableClipBlock({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: clip.id })
+  } = useSortable({ id: clip.id, disabled: resizing !== null })
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: resizing ? "none" : transition,
     width: widthPx,
-    opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 10 : 1,
+    opacity: isDragging ? 0.6 : 1,
+    zIndex: isDragging || resizing ? 10 : 1,
+  }
+
+  const framesPerPx = fps / PX_PER_SECOND
+
+  function startResize(side: "left" | "right", startEvent: React.PointerEvent) {
+    startEvent.preventDefault()
+    startEvent.stopPropagation()
+    setResizing(side)
+
+    const startX = startEvent.clientX
+    const startDuration = clip.durationInFrames
+
+    function onMove(ev: PointerEvent) {
+      const deltaPx = ev.clientX - startX
+      const deltaFrames = Math.round(deltaPx * framesPerPx)
+      const next =
+        side === "right"
+          ? startDuration + deltaFrames
+          : startDuration - deltaFrames
+      onDurationChange(Math.max(MIN_DURATION_FRAMES, next))
+    }
+
+    function onUp() {
+      window.removeEventListener("pointermove", onMove)
+      window.removeEventListener("pointerup", onUp)
+      window.removeEventListener("pointercancel", onUp)
+      setResizing(null)
+    }
+
+    window.addEventListener("pointermove", onMove)
+    window.addEventListener("pointerup", onUp)
+    window.addEventListener("pointercancel", onUp)
   }
 
   return (
@@ -52,25 +88,15 @@ export function SortableClipBlock({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={cn(
-        "group relative shrink-0 select-none overflow-hidden rounded-lg",
-        "cursor-grab active:cursor-grabbing",
-        "transition-all duration-150",
-        // Elevation
-        "shadow-[0_2px_6px_rgba(0,0,0,0.22),0_1px_2px_rgba(0,0,0,0.15)]",
-        // Outer ring — selection only; elevation shadow defines the edge at rest
-        selected && "ring-2 ring-blue-400 ring-offset-2 ring-offset-background",
-      )}
+      className={`group relative shrink-0 select-none overflow-hidden rounded-md ring-offset-2 ring-offset-[#0d0d0f] transition-shadow ${
+        selected ? "ring-2 ring-blue-500" : "ring-0"
+      } ${resizing ? "cursor-ew-resize" : "cursor-grab active:cursor-grabbing"}`}
       {...attributes}
       {...listeners}
     >
       {/* Gradient body — top lighter, bottom richer */}
       <div
-        className={cn(
-          "bg-gradient-to-b",
-          colorClass,
-          "relative flex h-14 flex-col justify-between p-2",
-        )}
+        className={`bg-gradient-to-br ${colorClass} flex h-14 flex-col justify-between px-3 py-2`}
       >
         {/* Inner top highlight + inner outline */}
         <div
@@ -89,59 +115,62 @@ export function SortableClipBlock({
         </p>
       </div>
 
-      {/* Controls: −  +  × */}
-      <div
-        className={cn(
-          "absolute right-1 top-1 flex items-center gap-px",
-          "rounded-md bg-black/30 px-0.5 py-0.5 backdrop-blur-sm",
-          "transition-opacity duration-150",
-          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100",
-        )}
+      <ResizeHandle
+        side="left"
+        active={resizing === "left"}
+        visible={selected || resizing !== null}
+        onPointerDown={(e) => startResize("left", e)}
+      />
+      <ResizeHandle
+        side="right"
+        active={resizing === "right"}
+        visible={selected || resizing !== null}
+        onPointerDown={(e) => startResize("right", e)}
+      />
+
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          onDelete()
+        }}
         onPointerDown={(e) => e.stopPropagation()}
+        title="Delete"
+        className={`absolute right-1 top-1 flex size-5 items-center justify-center rounded bg-black/30 text-[12px] leading-none text-white/80 backdrop-blur-sm transition-opacity hover:bg-red-500/50 hover:text-white ${
+          selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
       >
-        <ClipButton title="−1s" onClick={(e) => { e.stopPropagation(); onDurationChange(clip.durationInFrames - fps) }}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <rect x="1.5" y="4.5" width="7" height="1" rx="0.5" fill="currentColor" />
-          </svg>
-        </ClipButton>
-
-        <ClipButton title="+1s" onClick={(e) => { e.stopPropagation(); onDurationChange(clip.durationInFrames + fps) }}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <rect x="1.5" y="4.5" width="7" height="1" rx="0.5" fill="currentColor" />
-            <rect x="4.5" y="1.5" width="1" height="7" rx="0.5" fill="currentColor" />
-          </svg>
-        </ClipButton>
-
-        <div className="mx-0.5 h-3 w-px bg-white/20" />
-
-        <ClipButton title="Delete clip" danger onClick={(e) => { e.stopPropagation(); onDelete() }}>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-            <path d="M2 2L8 8M8 2L2 8" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" />
-          </svg>
-        </ClipButton>
-      </div>
+        ×
+      </button>
     </div>
   )
 }
 
-function ClipButton({
-  children,
-  danger,
-  ...props
-}: React.ComponentProps<"button"> & { danger?: boolean }) {
+function ResizeHandle({
+  side,
+  active,
+  visible,
+  onPointerDown,
+}: {
+  side: "left" | "right"
+  active: boolean
+  visible: boolean
+  onPointerDown: (e: React.PointerEvent) => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
   return (
-    <button
-      type="button"
-      className={cn(
-        "flex size-5 items-center justify-center rounded",
-        "text-white/75 transition-colors duration-100",
-        danger
-          ? "hover:bg-red-500/50 hover:text-white"
-          : "hover:bg-white/20 hover:text-white",
-      )}
-      {...props}
+    <div
+      ref={ref}
+      onPointerDown={onPointerDown}
+      onClick={(e) => e.stopPropagation()}
+      className={`absolute top-0 z-10 flex h-full w-2.5 cursor-ew-resize items-center justify-center ${
+        side === "left" ? "left-0" : "right-0"
+      }`}
     >
-      {children}
-    </button>
+      <span
+        className={`h-6 w-[3px] rounded-full bg-white/90 shadow-[0_0_0_1px_rgba(0,0,0,0.25)] transition-opacity ${
+          active || visible ? "opacity-100" : "opacity-0 group-hover:opacity-90"
+        }`}
+      />
+    </div>
   )
 }

@@ -24,9 +24,9 @@ export function DocsShell({ doc }: { doc: Doc }) {
   const Content = doc.Content
 
   return (
-    <div className="flex">
-      <div className="flex flex-1 justify-center">
-        <div className="min-w-0 w-full max-w-3xl px-12 py-10">
+    <div className="mx-auto flex w-full max-w-6xl gap-12 px-8 py-10 xl:px-12">
+      <div className="min-w-0 flex-1">
+        <div className="mx-auto w-full max-w-3xl">
           <Breadcrumb className="mb-8">
             <BreadcrumbList>
               <BreadcrumbItem>
@@ -93,7 +93,7 @@ export function DocsShell({ doc }: { doc: Doc }) {
         </div>
       </div>
 
-      <aside className="hidden w-48 shrink-0 px-6 py-10 xl:block">
+      <aside className="hidden w-52 shrink-0 xl:block">
         <div className="sticky top-24">
           <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-muted-foreground/60">
             <HugeiconsIcon icon={Books02Icon} size={13} />
