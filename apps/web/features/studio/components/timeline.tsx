@@ -80,26 +80,23 @@ export function Timeline({
   }, [selectedClipId, onDelete])
 
   return (
-    <div className="shrink-0 border-t border-zinc-800 bg-[#0d0d0f]">
-      <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-2">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
+    <div className="shrink-0 border-t border-border bg-background">
+      <div className="flex items-center justify-between border-b border-border px-4 py-2">
+        <p className="text-xs font-medium text-muted-foreground">
           Timeline
         </p>
-        <p className="text-[11px] tabular-nums text-zinc-500">
+        <p className="text-[11px] tabular-nums text-muted-foreground">
           {totalSeconds.toFixed(2)}s · {project.fps}fps · {project.width}×
           {project.height}
         </p>
       </div>
 
       <div className="overflow-x-auto">
-        <div style={{ minWidth: trackWidth + 32, width: "max-content" }}>
+        <div style={{ minWidth: trackWidth + 32 }} className="w-full">
           <TimeRuler ticks={ticks} pxPerSecond={PX_PER_SECOND} />
 
           {project.clips.length === 0 ? (
-            <div
-              className="px-4 py-10 text-center text-[12px] text-zinc-500"
-              style={{ width: trackWidth }}
-            >
+            <div className="px-4 py-10 text-center text-[12px] text-muted-foreground">
               Empty timeline — add a clip from the library.
             </div>
           ) : (
@@ -112,7 +109,7 @@ export function Timeline({
                 items={project.clips.map((c) => c.id)}
                 strategy={horizontalListSortingStrategy}
               >
-                <div className="flex items-stretch gap-px px-3 py-3">
+                <div className="flex items-stretch gap-2 px-3 py-3">
                   {project.clips.map((clip) => (
                     <SortableClipBlock
                       key={clip.id}
@@ -142,17 +139,17 @@ function TimeRuler({
   pxPerSecond: number
 }) {
   return (
-    <div className="relative h-7 border-b border-zinc-800/60 px-3">
+    <div className="relative h-7 border-b border-border/60 px-3">
       {ticks.map((t) => (
         <div
           key={t}
           className="absolute top-0 flex h-full flex-col items-start gap-0.5"
           style={{ left: 12 + t * pxPerSecond }}
         >
-          <span className="mt-1 text-[9px] tabular-nums text-zinc-600">
+          <span className="mt-1 text-[9px] tabular-nums text-muted-foreground">
             {formatTime(t)}
           </span>
-          <span className="absolute bottom-0 h-1.5 w-px bg-zinc-700" />
+          <span className="absolute bottom-0 h-1.5 w-px bg-border" />
         </div>
       ))}
     </div>

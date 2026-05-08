@@ -1,6 +1,18 @@
 "use client"
 
+import { useState } from "react"
+import { Player } from "@remotion/player"
+import { Plus } from "lucide-react"
+import { Button } from "@workspace/ui/components/button"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@workspace/ui/components/tooltip"
 import { compositions } from "@workspace/compositions/registry"
+import { componentsById } from "@workspace/compositions/components"
+import type { AnyCompositionInfo } from "@workspace/compositions/schema"
 import { colorForCompositionId } from "../lib/clip-colors"
 
 type Props = {
@@ -12,16 +24,18 @@ export function LibraryPanel({ onAdd }: Props) {
   const others = compositions.filter((c) => !c.id.startsWith("Title"))
 
   return (
-    <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-zinc-800 bg-[#0f0f11]">
-      <div className="sticky top-0 z-10 border-b border-zinc-800 bg-[#0f0f11]/95 px-4 py-3 backdrop-blur">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-500">
-          Library
-        </p>
-        <p className="mt-1 text-[13px] text-zinc-400">Click to add a scene</p>
-      </div>
-      <Section title="Text Animations" items={titleAnimations} onAdd={onAdd} />
-      <Section title="Templates" items={others} onAdd={onAdd} />
-    </aside>
+    <TooltipProvider delayDuration={300}>
+      <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border bg-background">
+        <div className="sticky top-0 z-10 border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
+          <p className="text-sm font-medium text-foreground">
+            Library
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Click to add a scene</p>
+        </div>
+        <Section title="Text Animations" items={titleAnimations} onAdd={onAdd} />
+        <Section title="Templates" items={others} onAdd={onAdd} />
+      </aside>
+    </TooltipProvider>
   )
 }
 
@@ -36,8 +50,8 @@ function Section({
 }) {
   if (items.length === 0) return null
   return (
-    <div className="border-b border-zinc-800/60 px-3 py-3">
-      <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+    <div className="border-b border-border/60 px-3 py-3">
+      <p className="mb-2 px-1 text-xs font-medium text-muted-foreground">
         {title}
       </p>
       <ul className="space-y-px">
@@ -45,26 +59,94 @@ function Section({
           const colorClass = colorForCompositionId(c.id)
           return (
             <li key={c.id}>
-              <button
-                onClick={() => onAdd(c.id)}
-                className="group flex w-full items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-zinc-800/60"
-              >
-                <span
-                  className={`bg-gradient-to-br ${colorClass} flex size-8 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold tracking-tight text-white shadow-sm`}
-                >
-                  {c.title.slice(0, 2).toUpperCase()}
-                </span>
-                <span className="min-w-0 flex-1 truncate text-[13px] text-zinc-300 group-hover:text-zinc-100">
-                  {c.title}
-                </span>
-                <span className="flex size-5 shrink-0 items-center justify-center rounded text-[14px] leading-none text-zinc-600 transition-colors group-hover:bg-zinc-700 group-hover:text-zinc-200">
-                  +
-                </span>
-              </button>
+              <PreviewTooltipItem info={c} onAdd={onAdd} colorClass={colorClass} />
             </li>
           )
         })}
       </ul>
     </div>
+  )
+}
+
+function PreviewTooltipItem({
+  info,
+  onAdd,
+  colorClass,
+}: {
+  info: AnyCompositionInfo
+  onAdd: (id: string) => void
+  colorClass: string
+}) {
+  const [open, setOpen] = useState(false)
+  const Component = componentsById[info.id]
+
+  return (
+    <Tooltip open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild>
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => onAdd(info.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              onAdd(info.id)
+            }
+          }}
+          className="group flex w-full cursor-pointer items-center gap-3 rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-accent/60"
+        >
+          <span
+            className={`bg-gradient-to-br ${colorClass} flex size-8 shrink-0 items-center justify-center rounded-md text-[11px] font-semibold tracking-tight text-white shadow-sm`}
+          >
+            {info.title.slice(0, 2).toUpperCase()}
+          </span>
+          <span className="min-w-0 flex-1 truncate text-[13px] text-foreground/80 group-hover:text-foreground">
+            {info.title}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            className="size-5 shrink-0"
+            tabIndex={-1}
+          >
+            <Plus className="size-3.5" />
+          </Button>
+        </div>
+      </TooltipTrigger>
+      {open && Component && (
+        <TooltipContent
+          side="right"
+          sideOffset={12}
+          hideArrow
+          className="block w-72 max-w-none overflow-hidden border border-border bg-background p-0 shadow-xl"
+        >
+          <div className="w-72">
+            <div
+              className="w-full overflow-hidden"
+              style={{ aspectRatio: `${info.width} / ${info.height}` }}
+            >
+              <Player
+                component={Component}
+                inputProps={info.defaultProps}
+                durationInFrames={info.durationInFrames}
+                fps={info.fps}
+                compositionWidth={info.width}
+                compositionHeight={info.height}
+                style={{ width: "100%", height: "100%" }}
+                autoPlay
+                loop
+                initiallyMuted
+                acknowledgeRemotionLicense
+              />
+            </div>
+            <div className="px-3 py-2">
+              <p className="text-[11px] text-muted-foreground">
+                {info.description}
+              </p>
+            </div>
+          </div>
+        </TooltipContent>
+      )}
+    </Tooltip>
   )
 }

@@ -1,12 +1,12 @@
 export const PX_PER_SECOND = 80
 
 export const CLIP_COLORS = [
-  "from-violet-500/85 to-violet-600/85",
-  "from-sky-500/85 to-sky-600/85",
-  "from-emerald-500/85 to-emerald-600/85",
-  "from-amber-500/85 to-amber-600/85",
-  "from-rose-500/85 to-rose-600/85",
-  "from-fuchsia-500/85 to-fuchsia-600/85",
+  "from-violet-400 to-violet-600",
+  "from-sky-400 to-sky-600",
+  "from-emerald-400 to-emerald-600",
+  "from-amber-400 to-amber-600",
+  "from-rose-400 to-rose-600",
+  "from-fuchsia-400 to-fuchsia-600",
 ]
 
 export function colorForCompositionId(id: string): string {

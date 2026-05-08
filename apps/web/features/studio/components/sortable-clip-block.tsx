@@ -1,10 +1,11 @@
 "use client"
 
-import { useRef, useState } from "react"
+import React, { useRef, useState } from "react"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import type { Clip } from "@workspace/compositions/project"
 import { compositionsById } from "@workspace/compositions/registry"
+import { cn } from "@workspace/ui/lib/utils"
 import { PX_PER_SECOND, colorForCompositionId } from "../lib/clip-colors"
 
 const MIN_DURATION_FRAMES = 15
@@ -93,13 +94,23 @@ export function SortableClipBlock({
       {...attributes}
       {...listeners}
     >
+      {/* Gradient body — top lighter, bottom richer */}
       <div
         className={`bg-gradient-to-br ${colorClass} flex h-14 flex-col justify-between px-3 py-2`}
       >
+        {/* Inner top highlight + inner outline */}
+        <div
+          className="pointer-events-none absolute inset-0 rounded-lg"
+          style={{
+            boxShadow:
+              "inset 0 1px 0 rgba(255,255,255,0.32), inset 0 0 0 1px rgba(255,255,255,0.10)",
+          }}
+        />
+
         <p className="truncate text-[11px] font-semibold leading-tight text-white drop-shadow-sm">
           {info?.title ?? clip.compositionId}
         </p>
-        <p className="text-[10px] tabular-nums text-white/80">
+        <p className="text-[10px] tabular-nums text-white/75">
           {seconds.toFixed(2)}s
         </p>
       </div>

@@ -36,7 +36,7 @@ export function Builder() {
     exportState.phase === "starting" || exportState.phase === "rendering"
 
   return (
-    <div className="flex h-screen flex-col bg-[#0a0a0b] text-zinc-100">
+    <div className="flex h-screen flex-col bg-background text-foreground">
       <TopBar
         clipCount={state.project.clips.length}
         totalSeconds={totalSeconds}
@@ -65,6 +65,9 @@ export function Builder() {
             playerInputProps={playerInputProps}
             totalDuration={totalDuration}
             hasClips={hasClips}
+            onOpenLibrary={() =>
+              dispatch({ type: "TOGGLE_PANEL", panel: "library" })
+            }
           />
 
           <Timeline

@@ -21,7 +21,7 @@ export function CompositionStats({ id }: { id: string }) {
           key={item.label}
           className="rounded-md border border-border p-3"
         >
-          <dt className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+          <dt className="text-xs font-medium text-muted-foreground/60">
             {item.label}
           </dt>
           <dd className="mt-1 text-sm font-medium">{item.value}</dd>

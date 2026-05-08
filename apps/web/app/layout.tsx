@@ -1,11 +1,11 @@
-import { Geist_Mono, Inter } from "next/font/google"
+import { Geist_Mono, Inter, Geist } from "next/font/google"
 
 import "@workspace/ui/globals.css"
 import "streamdown/styles.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { cn } from "@workspace/ui/lib/utils"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-sans" })
+const geist = Geist({subsets:['latin'],variable:'--font-sans'})
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -21,7 +21,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn("antialiased", fontMono.variable, "font-sans", inter.variable)}
+      className={cn("antialiased", fontMono.variable, "font-sans", geist.variable)}
     >
       <body className="min-h-screen bg-background text-foreground overflow-x-hidden">
         <ThemeProvider>{children}</ThemeProvider>
