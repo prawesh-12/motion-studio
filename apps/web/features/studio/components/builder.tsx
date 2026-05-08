@@ -1,6 +1,7 @@
 "use client"
 
-import { useMemo, useReducer } from "react"
+import { useEffect, useMemo, useReducer, useRef, useState } from "react"
+import type { PlayerRef } from "@remotion/player"
 import { projectDuration } from "@workspace/compositions/project"
 import { compositionsById } from "@workspace/compositions/registry"
 import {
@@ -35,6 +36,27 @@ export function Builder() {
   const isExporting =
     exportState.phase === "starting" || exportState.phase === "rendering"
 
+  const playerRef = useRef<PlayerRef>(null)
+  const [currentFrame, setCurrentFrame] = useState(0)
+
+  useEffect(() => {
+    const player = playerRef.current
+    if (!player) return
+    const onFrame = (e: { detail: { frame: number } }) => {
+      setCurrentFrame(e.detail.frame)
+    }
+    player.addEventListener("frameupdate", onFrame)
+    return () => player.removeEventListener("frameupdate", onFrame)
+  }, [hasClips])
+
+  const seekToFrame = (frame: number) => {
+    const player = playerRef.current
+    if (!player) return
+    const clamped = Math.max(0, Math.min(frame, Math.max(0, totalDuration - 1)))
+    player.seekTo(clamped)
+    setCurrentFrame(clamped)
+  }
+
   return (
     <div className="flex h-screen flex-col bg-background text-foreground">
       <TopBar
@@ -68,11 +90,14 @@ export function Builder() {
             onOpenLibrary={() =>
               dispatch({ type: "TOGGLE_PANEL", panel: "library" })
             }
+            playerRef={playerRef}
           />
 
           <Timeline
             project={state.project}
             selectedClipId={state.selectedClipId}
+            currentFrame={currentFrame}
+            onSeek={seekToFrame}
             onSelect={(id) => dispatch({ type: "SELECT_CLIP", clipId: id })}
             onReorder={(clipIds) =>
               dispatch({ type: "REORDER_CLIPS", clipIds })

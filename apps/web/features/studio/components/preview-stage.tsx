@@ -1,6 +1,7 @@
 "use client"
 
-import { Player } from "@remotion/player"
+import type { Ref } from "react"
+import { Player, type PlayerRef } from "@remotion/player"
 import { ProjectComposition } from "@workspace/compositions/compositions/Project/Project"
 import type { Project } from "@workspace/compositions/project"
 import { Button } from "@workspace/ui/components/button"
@@ -11,6 +12,7 @@ type Props = {
   totalDuration: number
   hasClips: boolean
   onOpenLibrary: () => void
+  playerRef?: Ref<PlayerRef>
 }
 
 export function PreviewStage({
@@ -19,6 +21,7 @@ export function PreviewStage({
   totalDuration,
   hasClips,
   onOpenLibrary,
+  playerRef,
 }: Props) {
   if (!hasClips) {
     return (
@@ -41,6 +44,7 @@ export function PreviewStage({
         }}
       >
         <Player
+          ref={playerRef}
           component={ProjectComposition}
           inputProps={playerInputProps}
           durationInFrames={totalDuration}

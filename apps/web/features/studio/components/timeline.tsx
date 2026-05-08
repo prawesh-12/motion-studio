@@ -24,15 +24,21 @@ import { SortableClipBlock } from "./sortable-clip-block"
 type Props = {
   project: Project
   selectedClipId: string | null
+  currentFrame: number
+  onSeek: (frame: number) => void
   onSelect: (id: string) => void
   onReorder: (clipIds: string[]) => void
   onDelete: (id: string) => void
   onDurationChange: (id: string, durationInFrames: number) => void
 }
 
+const TRACK_INSET = 12
+
 export function Timeline({
   project,
   selectedClipId,
+  currentFrame,
+  onSeek,
   onSelect,
   onReorder,
   onDelete,
@@ -92,8 +98,17 @@ export function Timeline({
       </div>
 
       <div className="overflow-x-auto">
-        <div style={{ minWidth: trackWidth + 32 }} className="w-full">
-          <TimeRuler ticks={ticks} pxPerSecond={PX_PER_SECOND} />
+        <div
+          style={{ minWidth: trackWidth + 32 }}
+          className="relative w-full"
+        >
+          <TimeRuler
+            ticks={ticks}
+            pxPerSecond={PX_PER_SECOND}
+            totalSeconds={Math.max(totalSeconds, 5)}
+            fps={project.fps}
+            onSeek={onSeek}
+          />
 
           {project.clips.length === 0 ? (
             <div className="px-4 py-10 text-center text-[12px] text-muted-foreground">
@@ -125,8 +140,44 @@ export function Timeline({
               </SortableContext>
             </DndContext>
           )}
+
+          <Playhead
+            frame={currentFrame}
+            fps={project.fps}
+            pxPerSecond={PX_PER_SECOND}
+          />
         </div>
       </div>
+    </div>
+  )
+}
+
+function Playhead({
+  frame,
+  fps,
+  pxPerSecond,
+}: {
+  frame: number
+  fps: number
+  pxPerSecond: number
+}) {
+  const left = TRACK_INSET + (frame / fps) * pxPerSecond
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute top-0 bottom-0 z-20"
+      style={{ left, transform: "translateX(-50%)" }}
+    >
+      <div className="absolute -top-px left-1/2 -translate-x-1/2">
+        <div
+          className="size-0 border-x-[6px] border-t-[8px] border-x-transparent"
+          style={{ borderTopColor: "rgb(239 68 68)" }}
+        />
+      </div>
+      <div
+        className="absolute top-0 bottom-0 left-1/2 w-px -translate-x-1/2"
+        style={{ background: "rgb(239 68 68)" }}
+      />
     </div>
   )
 }
@@ -134,17 +185,33 @@ export function Timeline({
 function TimeRuler({
   ticks,
   pxPerSecond,
+  totalSeconds,
+  fps,
+  onSeek,
 }: {
   ticks: number[]
   pxPerSecond: number
+  totalSeconds: number
+  fps: number
+  onSeek: (frame: number) => void
 }) {
+  function handleSeek(e: React.MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const x = e.clientX - rect.left - TRACK_INSET
+    const seconds = Math.max(0, Math.min(x / pxPerSecond, totalSeconds))
+    onSeek(Math.round(seconds * fps))
+  }
+
   return (
-    <div className="relative h-7 border-b border-border/60 px-3">
+    <div
+      className="relative h-7 cursor-pointer border-b border-border/60 px-3"
+      onMouseDown={handleSeek}
+    >
       {ticks.map((t) => (
         <div
           key={t}
-          className="absolute top-0 flex h-full flex-col items-start gap-0.5"
-          style={{ left: 12 + t * pxPerSecond }}
+          className="pointer-events-none absolute top-0 flex h-full flex-col items-start gap-0.5"
+          style={{ left: TRACK_INSET + t * pxPerSecond }}
         >
           <span className="mt-1 text-[9px] tabular-nums text-muted-foreground">
             {formatTime(t)}

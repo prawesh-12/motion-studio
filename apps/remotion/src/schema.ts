@@ -3,6 +3,7 @@ export type PrimitiveField =
   | { kind: "textarea"; key: string; label: string; rows?: number }
   | { kind: "number"; key: string; label: string; min?: number; max?: number }
   | { kind: "color"; key: string; label: string }
+  | { kind: "image"; key: string; label: string; placeholder?: string }
   | {
       kind: "select";
       key: string;
@@ -10,7 +11,9 @@ export type PrimitiveField =
       options: { value: string; label: string }[];
     };
 
-export type ShapeField = { kind: "chat"; key: string; label: string };
+export type ShapeField =
+  | { kind: "chat"; key: string; label: string }
+  | { kind: "composition"; key: string; label: string; exclude?: string[] };
 
 export type Field = PrimitiveField | ShapeField;
 

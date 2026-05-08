@@ -1,8 +1,17 @@
 "use client";
 
 import type { Field } from "../schema";
+import { compositions } from "../registry";
 import { PrimitiveControl } from "./primitives";
 import { ChatEditor } from "./ChatEditor";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@workspace/ui/components/select";
+import { Label } from "@workspace/ui/components/label";
 
 type Props = {
   fields: Field[];
@@ -16,28 +25,42 @@ export function FieldsRenderer({ fields, value, onChange }: Props) {
   }
 
   const hasChatField = fields.some((f) => f.kind === "chat");
-  const primitives = fields.filter((f) => f.kind !== "chat");
+  const flatFields = fields.filter((f) => f.kind !== "chat");
   const chatField = fields.find((f) => f.kind === "chat");
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      {primitives.length > 0 && (
+      {flatFields.length > 0 && (
         <div
           className={`shrink-0 space-y-4 px-5 py-5 ${
             hasChatField ? "border-b border-border" : ""
           }`}
         >
-          {primitives.map((field) => (
-            <PrimitiveControl
-              key={field.key}
-              field={field}
-              value={value[field.key]}
-              onChange={(v) => set(field.key, v)}
-            />
-          ))}
+          {flatFields.map((field) => {
+            if (field.kind === "composition") {
+              return (
+                <CompositionPicker
+                  key={field.key}
+                  fieldKey={field.key}
+                  label={field.label}
+                  exclude={field.exclude}
+                  value={(value[field.key] as string) ?? ""}
+                  onChange={(v) => set(field.key, v)}
+                />
+              );
+            }
+            return (
+              <PrimitiveControl
+                key={field.key}
+                field={field}
+                value={value[field.key]}
+                onChange={(v) => set(field.key, v)}
+              />
+            );
+          })}
         </div>
       )}
-      {chatField && (
+      {chatField && chatField.kind === "chat" && (
         <div className="flex min-h-0 flex-1 flex-col">
           <ChatEditor
             value={(value[chatField.key] ?? []) as never}
@@ -45,6 +68,44 @@ export function FieldsRenderer({ fields, value, onChange }: Props) {
           />
         </div>
       )}
+    </div>
+  );
+}
+
+function CompositionPicker({
+  fieldKey,
+  label,
+  exclude,
+  value,
+  onChange,
+}: {
+  fieldKey: string;
+  label: string;
+  exclude?: string[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const excluded = new Set(exclude ?? []);
+  const options = compositions.filter((c) => !excluded.has(c.id));
+  const current = value || options[0]?.id || "";
+
+  return (
+    <div className="space-y-1.5">
+      <Label htmlFor={fieldKey} className="text-[12px]">
+        {label}
+      </Label>
+      <Select value={current} onValueChange={onChange}>
+        <SelectTrigger id={fieldKey}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((o) => (
+            <SelectItem key={o.id} value={o.id}>
+              {o.title}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
