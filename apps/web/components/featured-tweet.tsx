@@ -1,32 +1,32 @@
-"use client"
+"use client";
 
-import { useRef, useState } from "react"
-import { Player, type PlayerRef } from "@remotion/player"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { VolumeHighIcon, VolumeOffIcon } from "@hugeicons/core-free-icons"
-import { compositionsById } from "@workspace/compositions/registry"
-import { componentsById } from "@workspace/compositions/components"
+import { VolumeHighIcon, VolumeOffIcon } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Player, type PlayerRef } from "@remotion/player";
+import { componentsById } from "@workspace/compositions/components";
+import { compositionsById } from "@workspace/compositions/registry";
+import { useRef, useState } from "react";
 
-const ID = "TweetCard"
+const ID = "TweetCard";
 
 export function FeaturedTweet() {
-  const info = compositionsById[ID]
-  const Component = info ? componentsById[ID] : undefined
-  const playerRef = useRef<PlayerRef>(null)
-  const [muted, setMuted] = useState(true)
+  const info = compositionsById[ID];
+  const Component = info ? componentsById[ID] : undefined;
+  const playerRef = useRef<PlayerRef>(null);
+  const [muted, setMuted] = useState(true);
 
-  if (!info || !Component) return null
+  if (!info || !Component) return null;
 
   function toggleMute() {
-    const player = playerRef.current
-    if (!player) return
+    const player = playerRef.current;
+    if (!player) return;
     if (muted) {
-      player.unmute()
-      player.setVolume(1)
-      setMuted(false)
+      player.unmute();
+      player.setVolume(1);
+      setMuted(false);
     } else {
-      player.mute()
-      setMuted(true)
+      player.mute();
+      setMuted(true);
     }
   }
 
@@ -53,6 +53,7 @@ export function FeaturedTweet() {
       </div>
 
       <button
+        type="button"
         onClick={toggleMute}
         className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-border bg-background/85 px-3.5 py-1.5 text-[12px] font-medium text-foreground shadow-md backdrop-blur transition-colors hover:bg-background"
         aria-label={muted ? "Unmute preview" : "Mute preview"}
@@ -64,5 +65,5 @@ export function FeaturedTweet() {
         <span>{muted ? "Tap for sound" : "Sound on"}</span>
       </button>
     </div>
-  )
+  );
 }

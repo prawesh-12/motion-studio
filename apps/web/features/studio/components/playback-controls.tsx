@@ -1,23 +1,23 @@
-"use client"
+"use client";
 
-import { HugeiconsIcon } from "@hugeicons/react"
 import {
   BackwardIcon,
   ForwardIcon,
   PauseIcon,
   PlayIcon,
-} from "@hugeicons/core-free-icons"
-import { cn } from "@workspace/ui/lib/utils"
-import { useIsPlaying, usePlayerFrame } from "../state/player-context"
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Button } from "@workspace/ui/components/button";
+import { useIsPlaying, usePlayerFrame } from "../state/player-context";
 
 type Props = {
-  totalDuration: number
-  fps: number
-  disabled: boolean
-  onPlayPause: () => void
-  onSkipToStart: () => void
-  onSkipToEnd: () => void
-}
+  totalDuration: number;
+  fps: number;
+  disabled: boolean;
+  onPlayPause: () => void;
+  onSkipToStart: () => void;
+  onSkipToEnd: () => void;
+};
 
 export function PlaybackControls({
   totalDuration,
@@ -47,17 +47,17 @@ export function PlaybackControls({
 
       <TimeReadout fps={fps} totalDuration={totalDuration} />
     </div>
-  )
+  );
 }
 
 function PlayPauseButton({
   onClick,
   disabled,
 }: {
-  onClick: () => void
-  disabled: boolean
+  onClick: () => void;
+  disabled: boolean;
 }) {
-  const isPlaying = useIsPlaying()
+  const isPlaying = useIsPlaying();
   return (
     <ControlButton
       onClick={onClick}
@@ -65,26 +65,26 @@ function PlayPauseButton({
       title={isPlaying ? "Pause" : "Play"}
       icon={isPlaying ? PauseIcon : PlayIcon}
     />
-  )
+  );
 }
 
 function TimeReadout({
   fps,
   totalDuration,
 }: {
-  fps: number
-  totalDuration: number
+  fps: number;
+  totalDuration: number;
 }) {
-  const currentFrame = usePlayerFrame()
-  const currentSeconds = currentFrame / fps
-  const totalSeconds = totalDuration / fps
+  const currentFrame = usePlayerFrame();
+  const currentSeconds = currentFrame / fps;
+  const totalSeconds = totalDuration / fps;
   return (
     <p className="text-[11px] tabular-nums text-muted-foreground">
       <span className="text-foreground">{formatClock(currentSeconds)}</span>
       <span className="mx-1 opacity-50">/</span>
       <span>{formatClock(totalSeconds)}</span>
     </p>
-  )
+  );
 }
 
 function ControlButton({
@@ -93,33 +93,28 @@ function ControlButton({
   title,
   icon,
 }: {
-  onClick: () => void
-  disabled: boolean
-  title: string
-  icon: unknown
+  onClick: () => void;
+  disabled: boolean;
+  title: string;
+  icon: typeof PlayIcon;
 }) {
   return (
-    <button
-      type="button"
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={onClick}
       disabled={disabled}
       title={title}
-      className={cn(
-        "flex size-9 items-center justify-center rounded-md text-muted-foreground transition-colors",
-        "hover:bg-muted hover:text-foreground",
-        "disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-muted-foreground",
-      )}
     >
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <HugeiconsIcon icon={icon as any} size={16} strokeWidth={2} />
-    </button>
-  )
+      <HugeiconsIcon icon={icon} size={16} strokeWidth={2} />
+    </Button>
+  );
 }
 
 function formatClock(s: number): string {
-  const safe = Math.max(0, s)
-  const mm = Math.floor(safe / 60)
-  const ss = Math.floor(safe % 60)
-  const cs = Math.floor((safe - Math.floor(safe)) * 100)
-  return `${mm}:${ss.toString().padStart(2, "0")}.${cs.toString().padStart(2, "0")}`
+  const safe = Math.max(0, s);
+  const mm = Math.floor(safe / 60);
+  const ss = Math.floor(safe % 60);
+  const cs = Math.floor((safe - Math.floor(safe)) * 100);
+  return `${mm}:${ss.toString().padStart(2, "0")}.${cs.toString().padStart(2, "0")}`;
 }
