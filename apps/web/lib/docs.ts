@@ -21,6 +21,9 @@ import DiscordMessagesMDX, {
 import PhoneFrameMDX, {
   meta as phoneFrameMeta,
 } from "@/content/docs/phone-frame.mdx"
+import SplitSceneMDX, {
+  meta as splitSceneMeta,
+} from "@/content/docs/split-scene.mdx"
 import TitleSlideUpMDX, {
   meta as titleSlideUpMeta,
 } from "@/content/docs/title-slide-up.mdx"
@@ -178,6 +181,12 @@ export const docs: Doc[] = [
     href: "/docs/PhoneFrame",
     meta: phoneFrameMeta,
     Content: PhoneFrameMDX,
+  },
+  {
+    slug: "SplitScene",
+    href: "/docs/SplitScene",
+    meta: splitSceneMeta,
+    Content: SplitSceneMDX,
   },
 ]
 

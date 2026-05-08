@@ -13,7 +13,15 @@ export type PrimitiveField =
 
 export type ShapeField =
   | { kind: "chat"; key: string; label: string }
-  | { kind: "composition"; key: string; label: string; exclude?: string[] };
+  | { kind: "composition"; key: string; label: string; exclude?: string[] }
+  | {
+      kind: "slots";
+      key: string;
+      label: string;
+      layoutKey: string;
+      counts: Record<string, number>;
+      exclude?: string[];
+    };
 
 export type Field = PrimitiveField | ShapeField;
 

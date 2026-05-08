@@ -49,6 +49,20 @@ export function FieldsRenderer({ fields, value, onChange }: Props) {
                 />
               );
             }
+            if (field.kind === "slots") {
+              return (
+                <SlotsControl
+                  key={field.key}
+                  fieldKey={field.key}
+                  label={field.label}
+                  exclude={field.exclude}
+                  counts={field.counts}
+                  layoutValue={(value[field.layoutKey] as string) ?? ""}
+                  value={(value[field.key] as string[]) ?? []}
+                  onChange={(v) => set(field.key, v)}
+                />
+              );
+            }
             return (
               <PrimitiveControl
                 key={field.key}
@@ -106,6 +120,52 @@ function CompositionPicker({
           ))}
         </SelectContent>
       </Select>
+    </div>
+  );
+}
+
+function SlotsControl({
+  fieldKey,
+  label,
+  exclude,
+  counts,
+  layoutValue,
+  value,
+  onChange,
+}: {
+  fieldKey: string;
+  label: string;
+  exclude?: string[];
+  counts: Record<string, number>;
+  layoutValue: string;
+  value: string[];
+  onChange: (next: string[]) => void;
+}) {
+  const slotCount = counts[layoutValue] ?? 2;
+  const current = Array.from(
+    { length: slotCount },
+    (_, i) => value[i] ?? "",
+  );
+
+  function setSlot(i: number, id: string) {
+    const next = current.slice();
+    next[i] = id;
+    onChange(next);
+  }
+
+  return (
+    <div className="space-y-3 rounded-md border border-border/60 bg-muted/20 p-3">
+      <div className="text-[12px] font-medium">{label}</div>
+      {current.map((id, i) => (
+        <CompositionPicker
+          key={i}
+          fieldKey={`${fieldKey}-${i}`}
+          label={`Slot ${i + 1}`}
+          exclude={exclude}
+          value={id}
+          onChange={(v) => setSlot(i, v)}
+        />
+      ))}
     </div>
   );
 }
