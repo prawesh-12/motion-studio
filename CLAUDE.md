@@ -39,3 +39,27 @@ Wrapper compositions (any component that embeds other compositions via `componen
 2. Live in `components.ts` (not in `componentsBase.ts`)
 
 Violating this causes a circular-import TDZ crash at runtime.
+
+## Adding a Composition — Required Sync Points
+
+When you add a new composition under `apps/remotion/src/compositions/<Name>/`, **all** of these must be updated in the same change. Skipping any one of them leaves the composition partially wired (silently missing from docs, broken in the studio, or invisible in the registry):
+
+1. **`apps/remotion/src/compositions/<Name>/<Name>.tsx`** — the React component.
+2. **`apps/remotion/src/compositions/<Name>/meta.ts`** — exports `<name>Info: CompositionInfo<Props>` with `id`, `title`, `description`, dimensions, `defaultProps`, `fields`. The `id` must be a unique PascalCase string.
+3. **`apps/remotion/src/registry.ts`** — import the `<name>Info` and add it to the `compositions` array. This drives the studio Library, the docs sidebar, and `generateStaticParams` for `/docs/[id]` and `/component/[id]/edit`.
+4. **`apps/remotion/src/componentsBase.ts`** (or **`components.ts`** for wrapper compositions) — import the component and add it to `componentsByIdBase` (or the wrapper map). The `<Project>` composition and the renderer look the component up by `id` from this map; missing here = silent black screen in the timeline / studio export.
+5. **`apps/web/content/docs/<kebab-name>.mdx`** — docs page. Mirror an existing one: `meta` export with `title`, `description`, `toc`, plus the `<Preview id />`, `<EditorLink id />`, `<PropsTable id />`, `<CompositionStats id />` blocks. The filename is the kebab-case form of the id.
+6. **`apps/web/lib/docs.ts`** — import the MDX module + `meta as <camel>Meta`, then add a `Doc` entry with `slug` (= the composition id), `href` (`/docs/<id>`), `meta`, and `Content`. Order matters: the entry's position determines prev/next nav order.
+
+Quick sanity check after the change:
+
+```bash
+# Every registered composition id should also appear as a slug in lib/docs.ts.
+grep '  id:' apps/remotion/src/compositions/*/meta.ts \
+  | grep -oE '"[^"]+"' | tr -d '"' | sort -u > /tmp/ids.txt
+grep -oE 'slug: "[A-Z][a-zA-Z]+"' apps/web/lib/docs.ts \
+  | sed 's/slug: "//;s/"$//' | sort -u > /tmp/slugs.txt
+comm -23 /tmp/ids.txt /tmp/slugs.txt   # should print nothing
+```
+
+If that command prints anything, those compositions are registered in Remotion but don't have a docs page wired up.

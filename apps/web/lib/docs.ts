@@ -35,6 +35,78 @@ import SplitSceneMDX, {
 import StatCounterMDX, {
   meta as statCounterMeta,
 } from "@/content/docs/stat-counter.mdx";
+import TextBlurOutUpMDX, {
+  meta as textBlurOutUpMeta,
+} from "@/content/docs/text-blur-out-up.mdx";
+import TextBottomUpLettersMDX, {
+  meta as textBottomUpLettersMeta,
+} from "@/content/docs/text-bottom-up-letters.mdx";
+import TextDepthParallaxWordsMDX, {
+  meta as textDepthParallaxWordsMeta,
+} from "@/content/docs/text-depth-parallax-words.mdx";
+import TextFadeThroughMDX, {
+  meta as textFadeThroughMeta,
+} from "@/content/docs/text-fade-through.mdx";
+import TextFocusBlurResolveMDX, {
+  meta as textFocusBlurResolveMeta,
+} from "@/content/docs/text-focus-blur-resolve.mdx";
+import TextKineticCenterBuildMDX, {
+  meta as textKineticCenterBuildMeta,
+} from "@/content/docs/text-kinetic-center-build.mdx";
+import TextLineByLineSlideMDX, {
+  meta as textLineByLineSlideMeta,
+} from "@/content/docs/text-line-by-line-slide.mdx";
+import TextMaskRevealUpMDX, {
+  meta as textMaskRevealUpMeta,
+} from "@/content/docs/text-mask-reveal-up.mdx";
+import TextMicroScaleFadeMDX, {
+  meta as textMicroScaleFadeMeta,
+} from "@/content/docs/text-micro-scale-fade.mdx";
+import TextPerCharacterRiseMDX, {
+  meta as textPerCharacterRiseMeta,
+} from "@/content/docs/text-per-character-rise.mdx";
+import TextPerWordCrossfadeMDX, {
+  meta as textPerWordCrossfadeMeta,
+} from "@/content/docs/text-per-word-crossfade.mdx";
+import TextScaleDownFadeMDX, {
+  meta as textScaleDownFadeMeta,
+} from "@/content/docs/text-scale-down-fade.mdx";
+import TextSharedAxisXMDX, {
+  meta as textSharedAxisXMeta,
+} from "@/content/docs/text-shared-axis-x.mdx";
+import TextSharedAxisYMDX, {
+  meta as textSharedAxisYMeta,
+} from "@/content/docs/text-shared-axis-y.mdx";
+import TextSharedAxisZMDX, {
+  meta as textSharedAxisZMeta,
+} from "@/content/docs/text-shared-axis-z.mdx";
+import TextShimmerSweepMDX, {
+  meta as textShimmerSweepMeta,
+} from "@/content/docs/text-shimmer-sweep.mdx";
+import TextShortSlideDownMDX, {
+  meta as textShortSlideDownMeta,
+} from "@/content/docs/text-short-slide-down.mdx";
+import TextShortSlideRightMDX, {
+  meta as textShortSlideRightMeta,
+} from "@/content/docs/text-short-slide-right.mdx";
+import TextSoftBlurInMDX, {
+  meta as textSoftBlurInMeta,
+} from "@/content/docs/text-soft-blur-in.mdx";
+import TextSpringScaleInMDX, {
+  meta as textSpringScaleInMeta,
+} from "@/content/docs/text-spring-scale-in.mdx";
+import TextStaggerFromCenterMDX, {
+  meta as textStaggerFromCenterMeta,
+} from "@/content/docs/text-stagger-from-center.mdx";
+import TextStaggerFromEdgesMDX, {
+  meta as textStaggerFromEdgesMeta,
+} from "@/content/docs/text-stagger-from-edges.mdx";
+import TextTopDownLettersMDX, {
+  meta as textTopDownLettersMeta,
+} from "@/content/docs/text-top-down-letters.mdx";
+import TextTypewriterMDX, {
+  meta as textTypewriterMeta,
+} from "@/content/docs/text-typewriter.mdx";
 import TitleFadeMDX, {
   meta as titleFadeMeta,
 } from "@/content/docs/title-fade.mdx";
@@ -105,6 +177,150 @@ export const docs: Doc[] = [
     href: "/docs/TitleFade",
     meta: titleFadeMeta,
     Content: TitleFadeMDX,
+  },
+  {
+    slug: "TextBlurOutUp",
+    href: "/docs/TextBlurOutUp",
+    meta: textBlurOutUpMeta,
+    Content: TextBlurOutUpMDX,
+  },
+  {
+    slug: "TextBottomUpLetters",
+    href: "/docs/TextBottomUpLetters",
+    meta: textBottomUpLettersMeta,
+    Content: TextBottomUpLettersMDX,
+  },
+  {
+    slug: "TextDepthParallaxWords",
+    href: "/docs/TextDepthParallaxWords",
+    meta: textDepthParallaxWordsMeta,
+    Content: TextDepthParallaxWordsMDX,
+  },
+  {
+    slug: "TextFadeThrough",
+    href: "/docs/TextFadeThrough",
+    meta: textFadeThroughMeta,
+    Content: TextFadeThroughMDX,
+  },
+  {
+    slug: "TextFocusBlurResolve",
+    href: "/docs/TextFocusBlurResolve",
+    meta: textFocusBlurResolveMeta,
+    Content: TextFocusBlurResolveMDX,
+  },
+  {
+    slug: "TextKineticCenterBuild",
+    href: "/docs/TextKineticCenterBuild",
+    meta: textKineticCenterBuildMeta,
+    Content: TextKineticCenterBuildMDX,
+  },
+  {
+    slug: "TextLineByLineSlide",
+    href: "/docs/TextLineByLineSlide",
+    meta: textLineByLineSlideMeta,
+    Content: TextLineByLineSlideMDX,
+  },
+  {
+    slug: "TextMaskRevealUp",
+    href: "/docs/TextMaskRevealUp",
+    meta: textMaskRevealUpMeta,
+    Content: TextMaskRevealUpMDX,
+  },
+  {
+    slug: "TextMicroScaleFade",
+    href: "/docs/TextMicroScaleFade",
+    meta: textMicroScaleFadeMeta,
+    Content: TextMicroScaleFadeMDX,
+  },
+  {
+    slug: "TextPerCharacterRise",
+    href: "/docs/TextPerCharacterRise",
+    meta: textPerCharacterRiseMeta,
+    Content: TextPerCharacterRiseMDX,
+  },
+  {
+    slug: "TextPerWordCrossfade",
+    href: "/docs/TextPerWordCrossfade",
+    meta: textPerWordCrossfadeMeta,
+    Content: TextPerWordCrossfadeMDX,
+  },
+  {
+    slug: "TextScaleDownFade",
+    href: "/docs/TextScaleDownFade",
+    meta: textScaleDownFadeMeta,
+    Content: TextScaleDownFadeMDX,
+  },
+  {
+    slug: "TextSharedAxisX",
+    href: "/docs/TextSharedAxisX",
+    meta: textSharedAxisXMeta,
+    Content: TextSharedAxisXMDX,
+  },
+  {
+    slug: "TextSharedAxisY",
+    href: "/docs/TextSharedAxisY",
+    meta: textSharedAxisYMeta,
+    Content: TextSharedAxisYMDX,
+  },
+  {
+    slug: "TextSharedAxisZ",
+    href: "/docs/TextSharedAxisZ",
+    meta: textSharedAxisZMeta,
+    Content: TextSharedAxisZMDX,
+  },
+  {
+    slug: "TextShimmerSweep",
+    href: "/docs/TextShimmerSweep",
+    meta: textShimmerSweepMeta,
+    Content: TextShimmerSweepMDX,
+  },
+  {
+    slug: "TextShortSlideDown",
+    href: "/docs/TextShortSlideDown",
+    meta: textShortSlideDownMeta,
+    Content: TextShortSlideDownMDX,
+  },
+  {
+    slug: "TextShortSlideRight",
+    href: "/docs/TextShortSlideRight",
+    meta: textShortSlideRightMeta,
+    Content: TextShortSlideRightMDX,
+  },
+  {
+    slug: "TextSoftBlurIn",
+    href: "/docs/TextSoftBlurIn",
+    meta: textSoftBlurInMeta,
+    Content: TextSoftBlurInMDX,
+  },
+  {
+    slug: "TextSpringScaleIn",
+    href: "/docs/TextSpringScaleIn",
+    meta: textSpringScaleInMeta,
+    Content: TextSpringScaleInMDX,
+  },
+  {
+    slug: "TextStaggerFromCenter",
+    href: "/docs/TextStaggerFromCenter",
+    meta: textStaggerFromCenterMeta,
+    Content: TextStaggerFromCenterMDX,
+  },
+  {
+    slug: "TextStaggerFromEdges",
+    href: "/docs/TextStaggerFromEdges",
+    meta: textStaggerFromEdgesMeta,
+    Content: TextStaggerFromEdgesMDX,
+  },
+  {
+    slug: "TextTopDownLetters",
+    href: "/docs/TextTopDownLetters",
+    meta: textTopDownLettersMeta,
+    Content: TextTopDownLettersMDX,
+  },
+  {
+    slug: "TextTypewriter",
+    href: "/docs/TextTypewriter",
+    meta: textTypewriterMeta,
+    Content: TextTypewriterMDX,
   },
   {
     slug: "TypingSearch",
