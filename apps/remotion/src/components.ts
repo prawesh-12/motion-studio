@@ -12,6 +12,7 @@ import { TweetCard } from "./compositions/TweetCard/TweetCard";
 import { CursorWalkthrough } from "./compositions/CursorWalkthrough/CursorWalkthrough";
 import { BrowserWindow } from "./compositions/BrowserWindow/BrowserWindow";
 import { CaptionTrack } from "./compositions/CaptionTrack/CaptionTrack";
+import { TwitterFollow } from "./compositions/TwitterFollow/TwitterFollow";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const componentsById: Record<string, ComponentType<any>> = {
@@ -27,4 +28,5 @@ export const componentsById: Record<string, ComponentType<any>> = {
   CursorWalkthrough,
   BrowserWindow,
   CaptionTrack,
+  TwitterFollow,
 };

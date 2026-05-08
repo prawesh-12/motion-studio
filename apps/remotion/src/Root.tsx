@@ -32,6 +32,12 @@ import {
 } from "./compositions/BrowserScroll";
 import { compositions } from "./registry";
 import { componentsById } from "./components";
+import { ProjectComposition } from "./compositions/Project/Project";
+import {
+  DEFAULT_PROJECT,
+  projectDuration,
+  type Project,
+} from "./project";
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -98,6 +104,24 @@ export const RemotionRoot: React.FC = () => {
         fps={30}
         width={1280}
         height={720}
+      />
+      <Composition
+        id="Project"
+        component={ProjectComposition}
+        durationInFrames={projectDuration(DEFAULT_PROJECT)}
+        fps={DEFAULT_PROJECT.fps}
+        width={DEFAULT_PROJECT.width}
+        height={DEFAULT_PROJECT.height}
+        defaultProps={DEFAULT_PROJECT}
+        calculateMetadata={({ props }) => {
+          const project = props as Project;
+          return {
+            durationInFrames: projectDuration(project),
+            fps: project.fps,
+            width: project.width,
+            height: project.height,
+          };
+        }}
       />
     </>
   );

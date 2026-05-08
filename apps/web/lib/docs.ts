@@ -30,6 +30,9 @@ import StatCounterMDX, {
 import TweetCardMDX, {
   meta as tweetCardMeta,
 } from "@/content/docs/tweet-card.mdx"
+import TwitterFollowMDX, {
+  meta as twitterFollowMeta,
+} from "@/content/docs/twitter-follow.mdx"
 import CursorWalkthroughMDX, {
   meta as cursorWalkthroughMeta,
 } from "@/content/docs/cursor-walkthrough.mdx"
@@ -103,6 +106,12 @@ export const docs: Doc[] = [
     href: "/docs/TweetCard",
     meta: tweetCardMeta,
     Content: TweetCardMDX,
+  },
+  {
+    slug: "TwitterFollow",
+    href: "/docs/TwitterFollow",
+    meta: twitterFollowMeta,
+    Content: TwitterFollowMDX,
   },
   {
     slug: "CursorWalkthrough",

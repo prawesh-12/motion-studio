@@ -11,7 +11,7 @@ export const tweetCardDefaultProps: TweetCardProps = {
   handle: "@t3dotgg",
   avatarUrl: "https://github.com/t3dotgg.png?size=200",
   verified: "yes",
-  text: "shipped something cool today. ship more, talk less.",
+  text: "Oh boy, we have a lot to talk about today.",
   timestamp: "10:30 PM · Mar 15, 2025",
   replies: 248,
   retweets: 1924,

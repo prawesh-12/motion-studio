@@ -3,10 +3,10 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
-@source "../../../apps/**/*.{ts,tsx}";
-@source "../../../apps/web/node_modules/streamdown/dist/*.js";
-@source "../../../components/**/*.{ts,tsx}";
-@source "../**/*.{ts,tsx}";
+@source "../../../../apps/**/*.{ts,tsx}";
+@source "../../../../apps/**/*.mdx";
+@source "../../../../apps/web/node_modules/streamdown/dist/*.js";
+@source "../../../../packages/**/*.{ts,tsx}";
 
 @theme inline {
     --font-heading: var(--font-sans);

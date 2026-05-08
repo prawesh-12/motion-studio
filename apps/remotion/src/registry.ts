@@ -11,6 +11,7 @@ import { tweetCardInfo } from "./compositions/TweetCard/meta";
 import { cursorWalkthroughInfo } from "./compositions/CursorWalkthrough/meta";
 import { browserWindowInfo } from "./compositions/BrowserWindow/meta";
 import { captionTrackInfo } from "./compositions/CaptionTrack/meta";
+import { twitterFollowInfo } from "./compositions/TwitterFollow/meta";
 
 export const compositions: AnyCompositionInfo[] = [
   titleSlideUpInfo,
@@ -23,6 +24,7 @@ export const compositions: AnyCompositionInfo[] = [
   captionTrackInfo,
   statCounterInfo,
   tweetCardInfo,
+  twitterFollowInfo,
   messagePopupInfo,
   messageBubblesInfo,
 ];

@@ -3,9 +3,7 @@ import { Search } from "lucide-react"
 
 const navLinks = [
   { label: "Docs", href: "/docs" },
-  { label: "Components", href: "/docs/components/button" },
-  { label: "Blocks", href: "/blocks" },
-  { label: "Themes", href: "/themes" },
+  { label: "Studio", href: "/studio" },
 ]
 
 export function DocsHeader() {
