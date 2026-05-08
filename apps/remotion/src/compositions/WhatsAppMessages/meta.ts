@@ -20,7 +20,7 @@ export const whatsappMessagesDefaultProps: WhatsAppMessagesProps = {
       delay: 560,
     },
   ],
-  theme: "dark",
+  theme: "light",
 };
 
 export const whatsappMessagesInfo: CompositionInfo<WhatsAppMessagesProps> = {

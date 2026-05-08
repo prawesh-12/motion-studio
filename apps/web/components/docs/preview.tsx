@@ -15,9 +15,9 @@ export function Preview({ id }: { id: string }) {
     )
   }
   return (
-    <div className="not-prose my-6 lg:-mx-16 xl:-mx-24">
+    <div className="not-prose my-6">
       <div
-        className="overflow-hidden rounded-lg border border-border bg-background"
+        className="w-full overflow-hidden rounded-lg border border-border bg-background"
         style={{ aspectRatio: `${info.width} / ${info.height}` }}
       >
         <Player

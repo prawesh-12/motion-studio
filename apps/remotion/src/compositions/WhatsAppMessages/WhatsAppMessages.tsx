@@ -426,13 +426,19 @@ function Conversation({
   messages: ChatMessage[];
   palette: Palette;
 }) {
+  const heights = messages.map((msg) => {
+    const local = frame - msg.delay;
+    if (local < 0) return 0;
+    const isTyping = local < msg.typingFrames;
+    return isTyping ? TYPING_BUBBLE_HEIGHT : estimateBubbleHeight(msg.text);
+  });
+
   return (
     <div
       style={{
         flex: 1,
         position: "relative",
         overflow: "hidden",
-        padding: `0 ${SIDE_PADDING}px`,
       }}
     >
       {messages.map((msg, i) => (
@@ -441,6 +447,7 @@ function Conversation({
           msg={msg}
           index={i}
           messages={messages}
+          heights={heights}
           frame={frame}
           fps={fps}
           palette={palette}
@@ -454,6 +461,7 @@ function MessageRow({
   msg,
   index,
   messages,
+  heights,
   frame,
   fps,
   palette,
@@ -461,6 +469,7 @@ function MessageRow({
   msg: ChatMessage;
   index: number;
   messages: ChatMessage[];
+  heights: number[];
   frame: number;
   fps: number;
   palette: Palette;
@@ -477,13 +486,12 @@ function MessageRow({
     const progress = spring({
       frame: newerLocal,
       fps,
-      config: { damping: 22, stiffness: 130, mass: 0.7 },
+      config: { damping: 24, stiffness: 130, mass: 0.7 },
     });
-    stackOffset += progress;
+    stackOffset += progress * (heights[j]! + ROW_GAP);
   }
 
-  const rowHeight = isTyping ? 64 : estimateBubbleHeight(msg.text);
-  const bottom = BOTTOM_PADDING + stackOffset * (rowHeight + ROW_GAP);
+  const bottom = BOTTOM_PADDING + stackOffset;
 
   return (
     <div
@@ -494,6 +502,7 @@ function MessageRow({
         right: SIDE_PADDING,
         display: "flex",
         justifyContent: msg.side === "right" ? "flex-end" : "flex-start",
+        willChange: "transform",
       }}
     >
       {isTyping ? (
@@ -516,14 +525,16 @@ function MessageRow({
   );
 }
 
+const TYPING_BUBBLE_HEIGHT = 56;
+
 function estimateBubbleHeight(text: string): number {
   const charsPerLine = 38;
+  const explicitNewlines = text.match(/\n/g)?.length ?? 0;
   const lines = Math.max(
     1,
-    Math.ceil(text.length / charsPerLine) +
-      (text.match(/\n/g)?.length ?? 0),
+    Math.ceil(text.length / charsPerLine) + explicitNewlines,
   );
-  return 36 + lines * 32;
+  return 50 + (lines - 1) * 32;
 }
 
 function TypingBubble({
@@ -631,7 +642,7 @@ function MessageBubble({
       <BubbleTail side={side} palette={palette} />
       <div
         style={{
-          paddingRight: isRight ? 88 : 64,
+          paddingRight: isRight ? 64 : 44,
           whiteSpace: "pre-wrap",
         }}
       >
@@ -640,8 +651,8 @@ function MessageBubble({
       <div
         style={{
           position: "absolute",
-          right: 12,
-          bottom: 8,
+          right: 10,
+          bottom: 6,
           display: "flex",
           alignItems: "center",
           gap: 4,
