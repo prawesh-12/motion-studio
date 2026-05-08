@@ -7,9 +7,17 @@ import {
   FilmRoll02Icon,
   PaintBrush02Icon,
 } from "@hugeicons/core-free-icons"
+import { compositions } from "@workspace/compositions/registry"
 import { Button } from "@workspace/ui/components/button"
 import { DocsHeader } from "@/components/docs-header"
-import { FeaturedTweet } from "@/components/featured-tweet"
+import { FeaturedComponents } from "@/components/featured-components"
+
+const FEATURED_IDS = [
+  "TweetCard",
+  "TitleSlideUp",
+  "MessageBubbles",
+  "BrowserWindow",
+]
 
 const features = [
   {
@@ -38,6 +46,10 @@ const features = [
 ]
 
 export default function LandingPage() {
+  const featured = FEATURED_IDS.map((id) =>
+    compositions.find((c) => c.id === id)
+  ).filter((c): c is (typeof compositions)[number] => Boolean(c))
+
   return (
     <div className="mx-auto min-h-screen max-w-[1600px] border-x border-dashed border-border">
       <DocsHeader />
@@ -110,7 +122,7 @@ export default function LandingPage() {
             </Button>
           </div>
 
-          <FeaturedTweet />
+          <FeaturedComponents items={featured} />
         </div>
       </section>
 
