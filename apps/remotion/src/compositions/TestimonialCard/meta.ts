@@ -14,9 +14,6 @@ export const testimonialCardDefaultProps: TestimonialCardProps = {
   role: "Founder",
   company: "Ping",
   theme: "light",
-  // Empty = inherit from project Brand Kit.
-  accentColor: "",
-  backgroundColor: "",
 };
 
 export const testimonialCardInfo: CompositionInfo<TestimonialCardProps> = {
@@ -44,7 +41,5 @@ export const testimonialCardInfo: CompositionInfo<TestimonialCardProps> = {
         { value: "dark", label: "Dark" },
       ],
     },
-    { kind: "color", key: "accentColor", label: "Accent color" },
-    { kind: "color", key: "backgroundColor", label: "Background color" },
   ],
 };

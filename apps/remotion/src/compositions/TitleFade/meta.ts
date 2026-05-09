@@ -10,8 +10,6 @@ export const TITLE_FADE_HEIGHT = 1080;
 export const titleFadeDefaultProps: TitleFadeProps = {
   headline: "Quietly perfect",
   subtitle: "No fanfare needed",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const titleFadeInfo: CompositionInfo<TitleFadeProps> = {

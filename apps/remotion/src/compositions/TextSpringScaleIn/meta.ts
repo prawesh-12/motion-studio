@@ -7,8 +7,6 @@ export const TEXT_SPRING_SCALE_IN_DURATION = 220;
 const defaultProps: TextSpringScaleInProps = {
   headline: "Bold and alive",
   subtitle: "Spring into action",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textSpringScaleInInfo: CompositionInfo<TextSpringScaleInProps> = {

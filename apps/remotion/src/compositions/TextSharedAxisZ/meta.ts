@@ -13,8 +13,6 @@ export const textSharedAxisZInfo: CompositionInfo<TextSharedAxisZProps> = {
   defaultProps: {
     headline: "Focus and depth",
     subtitle: "Context through scale",
-    backgroundColor: "#0a0a0a",
-    textColor: "#ffffff",
   },
   fields: TITLE_FIELDS,
 };

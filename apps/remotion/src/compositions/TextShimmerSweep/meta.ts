@@ -13,8 +13,6 @@ export const textShimmerSweepInfo: CompositionInfo<TextShimmerSweepProps> = {
   defaultProps: {
     headline: "Sweeping clarity",
     subtitle: "A premium micro-transition",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

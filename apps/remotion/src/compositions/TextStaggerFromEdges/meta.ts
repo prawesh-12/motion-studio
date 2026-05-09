@@ -10,8 +10,6 @@ export const TEXT_STAGGER_FROM_EDGES_HEIGHT = 1080;
 export const textStaggerFromEdgesDefaultProps: TextStaggerFromEdgesProps = {
   headline: "Converging text",
   subtitle: "Edges meet center",
-  backgroundColor: "#0f1014",
-  textColor: "#ffffff",
 };
 
 export const textStaggerFromEdgesInfo: CompositionInfo<TextStaggerFromEdgesProps> = {

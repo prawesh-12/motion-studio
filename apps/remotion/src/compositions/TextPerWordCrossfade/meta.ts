@@ -7,8 +7,6 @@ export const TEXT_PER_WORD_CROSSFADE_DURATION = 220;
 const defaultProps: TextPerWordCrossfadeProps = {
   headline: "Move the world forward",
   subtitle: "One word at a time",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textPerWordCrossfadeInfo: CompositionInfo<TextPerWordCrossfadeProps> = {

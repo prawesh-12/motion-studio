@@ -10,8 +10,6 @@ export const TEXT_SHORT_SLIDE_DOWN_HEIGHT = 1080;
 export const textShortSlideDownDefaultProps: TextShortSlideDownProps = {
   headline: "Drop it down",
   subtitle: "Top-down kinetic build",
-  backgroundColor: "#0f1014",
-  textColor: "#ffffff",
 };
 
 export const textShortSlideDownInfo: CompositionInfo<TextShortSlideDownProps> =

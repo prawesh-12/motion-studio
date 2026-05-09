@@ -7,8 +7,6 @@ export const TEXT_SHORT_SLIDE_RIGHT_DURATION = 220;
 const defaultProps: TextShortSlideRightProps = {
   headline: "Words slide into place",
   subtitle: "One shared motion",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textShortSlideRightInfo: CompositionInfo<TextShortSlideRightProps> = {

@@ -13,8 +13,6 @@ export const textScaleDownFadeInfo: CompositionInfo<TextScaleDownFadeProps> = {
   defaultProps: {
     headline: "Premium settle",
     subtitle: "Restrained and precise",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

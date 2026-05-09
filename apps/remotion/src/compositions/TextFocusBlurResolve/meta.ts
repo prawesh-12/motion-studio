@@ -13,8 +13,6 @@ export const textFocusBlurResolveInfo: CompositionInfo<TextFocusBlurResolveProps
   defaultProps: {
     headline: "Sharp resolve",
     subtitle: "From blur to clarity",
-    backgroundColor: "#0a0a0a",
-    textColor: "#ffffff",
   },
   fields: TITLE_FIELDS,
 };

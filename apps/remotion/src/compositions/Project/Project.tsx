@@ -1,46 +1,46 @@
 "use client";
 import { AbsoluteFill, Sequence } from "remotion";
-import { BrandProvider, brandCssVars, DEFAULT_BRAND } from "../../brand";
 import { componentsById } from "../../components";
 import { EffectsWrap } from "../../effects/EffectsWrap";
 import type { Project } from "../../project";
+import { compositionsById } from "../../registry";
 
-export const ProjectComposition: React.FC<Project> = ({ clips, brand }) => {
-  const activeBrand = brand ?? DEFAULT_BRAND;
+export const ProjectComposition: React.FC<Project> = ({ clips }) => {
   let cursor = 0;
   return (
-    <AbsoluteFill
-      style={{
-        background: "#000",
-        ...brandCssVars(activeBrand),
-      }}
-    >
-      <BrandProvider value={activeBrand}>
-        {clips.map((clip) => {
-          const Component = componentsById[clip.compositionId];
-          const from = cursor;
-          cursor += clip.durationInFrames;
-          const inner = Component ? (
-            <Component {...clip.props} />
-          ) : (
-            <MissingClip compositionId={clip.compositionId} />
-          );
-          return (
-            <Sequence
-              key={clip.id}
-              from={from}
-              durationInFrames={clip.durationInFrames}
+    <AbsoluteFill style={{ background: "#000" }}>
+      {clips.map((clip) => {
+        const Component = componentsById[clip.compositionId];
+        const info = compositionsById[clip.compositionId];
+        const from = cursor;
+        cursor += clip.durationInFrames;
+
+        // Locked compositions impersonate real apps and ignore universal
+        // ClipStyle. Everything else receives the user's per-clip overrides
+        // via the `clipStyle` prop.
+        const isLocked = info?.brandMode === "locked";
+        const styleProps = isLocked ? {} : { clipStyle: clip.style };
+
+        const inner = Component ? (
+          <Component {...clip.props} {...styleProps} />
+        ) : (
+          <MissingClip compositionId={clip.compositionId} />
+        );
+        return (
+          <Sequence
+            key={clip.id}
+            from={from}
+            durationInFrames={clip.durationInFrames}
+          >
+            <EffectsWrap
+              effects={clip.effects}
+              clipDurationInFrames={clip.durationInFrames}
             >
-              <EffectsWrap
-                effects={clip.effects}
-                clipDurationInFrames={clip.durationInFrames}
-              >
-                {inner}
-              </EffectsWrap>
-            </Sequence>
-          );
-        })}
-      </BrandProvider>
+              {inner}
+            </EffectsWrap>
+          </Sequence>
+        );
+      })}
     </AbsoluteFill>
   );
 };

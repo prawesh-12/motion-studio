@@ -15,9 +15,6 @@ export const pricingCardDefaultProps: PricingCardProps = {
   cta: "Start free trial",
   highlighted: "yes",
   theme: "light",
-  // Empty = inherit from project Brand Kit.
-  accentColor: "",
-  backgroundColor: "",
 };
 
 export const pricingCardInfo: CompositionInfo<PricingCardProps> = {
@@ -59,7 +56,5 @@ export const pricingCardInfo: CompositionInfo<PricingCardProps> = {
         { value: "dark", label: "Dark" },
       ],
     },
-    { kind: "color", key: "accentColor", label: "Accent color" },
-    { kind: "color", key: "backgroundColor", label: "Background color" },
   ],
 };

@@ -10,8 +10,6 @@ export const TEXT_SOFT_BLUR_IN_HEIGHT = 1080;
 export const textSoftBlurInDefaultProps: TextSoftBlurInProps = {
   headline: "Precision in motion",
   subtitle: "Character by character",
-  backgroundColor: "#0a0a0a",
-  textColor: "#ffffff",
 };
 
 export const textSoftBlurInInfo: CompositionInfo<TextSoftBlurInProps> = {

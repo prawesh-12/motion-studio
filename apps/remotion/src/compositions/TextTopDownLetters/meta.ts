@@ -10,8 +10,6 @@ export const TEXT_TOP_DOWN_LETTERS_HEIGHT = 1080;
 export const textTopDownLettersDefaultProps: TextTopDownLettersProps = {
   headline: "DESCEND",
   subtitle: "From above",
-  backgroundColor: "#0f1014",
-  textColor: "#ffffff",
 };
 
 export const textTopDownLettersInfo: CompositionInfo<TextTopDownLettersProps> = {

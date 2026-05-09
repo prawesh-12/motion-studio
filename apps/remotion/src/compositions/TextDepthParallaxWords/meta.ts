@@ -7,8 +7,6 @@ export const TEXT_DEPTH_PARALLAX_WORDS_DURATION = 220;
 const defaultProps: TextDepthParallaxWordsProps = {
   headline: "Depth of meaning",
   subtitle: "Layer upon layer",
-  backgroundColor: "#0a0a0a",
-  textColor: "#ffffff",
 };
 
 export const textDepthParallaxWordsInfo: CompositionInfo<TextDepthParallaxWordsProps> =

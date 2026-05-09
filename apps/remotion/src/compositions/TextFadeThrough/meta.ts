@@ -13,8 +13,6 @@ export const textFadeThroughInfo: CompositionInfo<TextFadeThroughProps> = {
   defaultProps: {
     headline: "Content transitions",
     subtitle: "Material-inspired motion",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

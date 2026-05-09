@@ -7,8 +7,6 @@ export const TEXT_BLUR_OUT_UP_DURATION = 220;
 const defaultProps: TextBlurOutUpProps = {
   headline: "Light as air",
   subtitle: "Words arrive clean",
-  backgroundColor: "#0a0a0a",
-  textColor: "#ffffff",
 };
 
 export const textBlurOutUpInfo: CompositionInfo<TextBlurOutUpProps> = {

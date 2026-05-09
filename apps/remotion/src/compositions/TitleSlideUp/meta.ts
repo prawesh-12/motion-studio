@@ -10,8 +10,6 @@ export const TITLE_SLIDE_UP_HEIGHT = 1080;
 export const titleSlideUpDefaultProps: TitleSlideUpProps = {
   headline: "Designed in California",
   subtitle: "Assembled with care",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const titleSlideUpInfo: CompositionInfo<TitleSlideUpProps> = {

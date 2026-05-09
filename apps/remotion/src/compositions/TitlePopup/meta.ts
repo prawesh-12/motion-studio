@@ -10,8 +10,6 @@ export const TITLE_POPUP_HEIGHT = 1080;
 export const titlePopupDefaultProps: TitlePopupProps = {
   headline: "Boom.",
   subtitle: "Just like that.",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const titlePopupInfo: CompositionInfo<TitlePopupProps> = {

@@ -10,8 +10,6 @@ export const TEXT_PER_CHARACTER_RISE_HEIGHT = 1080;
 export const textPerCharacterRiseDefaultProps: TextPerCharacterRiseProps = {
   headline: "Rise and shine",
   subtitle: "Clean and crisp",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textPerCharacterRiseInfo: CompositionInfo<TextPerCharacterRiseProps> = {

@@ -13,8 +13,6 @@ export const textLineByLineSlideInfo: CompositionInfo<TextLineByLineSlideProps> 
   defaultProps: {
     headline: "First comes clarity\nThen comes conviction\nThen comes change",
     subtitle: "Line by line",
-    backgroundColor: "#0a0a0a",
-    textColor: "#ffffff",
   },
   fields: TITLE_FIELDS,
 };

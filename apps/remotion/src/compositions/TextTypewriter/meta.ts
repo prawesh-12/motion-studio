@@ -10,8 +10,6 @@ export const TEXT_TYPEWRITER_HEIGHT = 1080;
 export const textTypewriterDefaultProps: TextTypewriterProps = {
   headline: "Type it out",
   subtitle: "Editorial rhythm",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textTypewriterInfo: CompositionInfo<TextTypewriterProps> = {

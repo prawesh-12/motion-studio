@@ -10,8 +10,6 @@ export const TITLE_TYPE_HEIGHT = 1080;
 export const titleTypeDefaultProps: TitleTypeProps = {
   headline: "hello, world.",
   subtitle: "now typing live",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const titleTypeInfo: CompositionInfo<TitleTypeProps> = {

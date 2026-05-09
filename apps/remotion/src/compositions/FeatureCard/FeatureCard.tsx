@@ -5,15 +5,14 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { pickBrand, useBrand } from "../../brand";
+import { type ClipStyle, resolveClipStyle } from "../../clip-style";
 
 export type FeatureCardProps = {
   icon: string;
   title: string;
   body: string;
   theme: "light" | "dark";
-  accentColor?: string;
-  backgroundColor?: string;
+  clipStyle?: ClipStyle;
 };
 
 const D_CARD = 0;
@@ -26,16 +25,21 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   title,
   body,
   theme,
-  accentColor,
-  backgroundColor,
+  clipStyle,
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const brand = useBrand();
-  const accent = pickBrand(accentColor, brand.accent);
-  const bg = pickBrand(backgroundColor, brand.background);
-  const fontFamily = brand.fontFamily;
   const isDark = theme === "dark";
+  const s = resolveClipStyle(clipStyle, {
+    background: "#f7f7f9",
+    color: isDark ? "#ffffff" : "#0f1014",
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+    accent: "#6366f1",
+  });
+  const accent = s.accent;
+  const bg = s.background;
+  const fontFamily = s.fontFamily;
 
   const cardBg = isDark ? "#15161A" : "#ffffff";
   const text = isDark ? "#ffffff" : "#0f1014";

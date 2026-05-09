@@ -10,8 +10,6 @@ export const TEXT_KINETIC_CENTER_BUILD_HEIGHT = 1080;
 export const textKineticCenterBuildDefaultProps: TextKineticCenterBuildProps = {
   headline: "Words push left",
   subtitle: "Kinetic center build",
-  backgroundColor: "#0f1014",
-  textColor: "#ffffff",
 };
 
 export const textKineticCenterBuildInfo: CompositionInfo<TextKineticCenterBuildProps> =

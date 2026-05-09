@@ -13,8 +13,6 @@ export const textMaskRevealUpInfo: CompositionInfo<TextMaskRevealUpProps> = {
   defaultProps: {
     headline: "Line one\nLine two\nLine three",
     subtitle: "Lines rise together",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

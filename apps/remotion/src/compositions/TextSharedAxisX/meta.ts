@@ -13,8 +13,6 @@ export const textSharedAxisXInfo: CompositionInfo<TextSharedAxisXProps> = {
   defaultProps: {
     headline: "Moving forward",
     subtitle: "Horizontal continuity",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

@@ -7,8 +7,6 @@ export const TEXT_SHARED_AXIS_Y_DURATION = 220;
 const defaultProps: TextSharedAxisYProps = {
   headline: "Sharp and direct",
   subtitle: "Word by word",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textSharedAxisYInfo: CompositionInfo<TextSharedAxisYProps> = {

@@ -10,8 +10,6 @@ export const TEXT_STAGGER_FROM_CENTER_HEIGHT = 1080;
 export const textStaggerFromCenterDefaultProps: TextStaggerFromCenterProps = {
   headline: "Centered focus",
   subtitle: "From the core outward",
-  backgroundColor: "#ffffff",
-  textColor: "#0f1014",
 };
 
 export const textStaggerFromCenterInfo: CompositionInfo<TextStaggerFromCenterProps> = {

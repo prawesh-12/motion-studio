@@ -13,8 +13,6 @@ export const textMicroScaleFadeInfo: CompositionInfo<TextMicroScaleFadeProps> = 
   defaultProps: {
     headline: "Quietly brilliant",
     subtitle: "Subtle is powerful",
-    backgroundColor: "#ffffff",
-    textColor: "#0f1014",
   },
   fields: TITLE_FIELDS,
 };

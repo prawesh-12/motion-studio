@@ -11,10 +11,6 @@ export const featureCardDefaultProps: FeatureCardProps = {
   title: "Lightning fast",
   body: "Built for speed. Every interaction takes under 50ms — your users never wait.",
   theme: "light",
-  // Empty strings = inherit from project Brand Kit. Override with a hex
-  // value to lock this clip to a specific color.
-  accentColor: "",
-  backgroundColor: "",
 };
 
 export const featureCardInfo: CompositionInfo<FeatureCardProps> = {
@@ -40,7 +36,5 @@ export const featureCardInfo: CompositionInfo<FeatureCardProps> = {
         { value: "dark", label: "Dark" },
       ],
     },
-    { kind: "color", key: "accentColor", label: "Accent color" },
-    { kind: "color", key: "backgroundColor", label: "Background color" },
   ],
 };
