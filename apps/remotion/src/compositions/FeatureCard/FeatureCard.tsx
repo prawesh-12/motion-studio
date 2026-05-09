@@ -5,14 +5,15 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { pickBrand, useBrand } from "../../brand";
 
 export type FeatureCardProps = {
   icon: string;
   title: string;
   body: string;
   theme: "light" | "dark";
-  accentColor: string;
-  backgroundColor: string;
+  accentColor?: string;
+  backgroundColor?: string;
 };
 
 const D_CARD = 0;
@@ -30,6 +31,10 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const brand = useBrand();
+  const accent = pickBrand(accentColor, brand.accent);
+  const bg = pickBrand(backgroundColor, brand.background);
+  const fontFamily = brand.fontFamily;
   const isDark = theme === "dark";
 
   const cardBg = isDark ? "#15161A" : "#ffffff";
@@ -46,12 +51,11 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: backgroundColor,
+        background: bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+        fontFamily,
       }}
     >
       <div
@@ -74,8 +78,8 @@ export const FeatureCard: React.FC<FeatureCardProps> = ({
               width: 72,
               height: 72,
               borderRadius: 18,
-              background: `${accentColor}1A`,
-              border: `1px solid ${accentColor}33`,
+              background: `${accent}1A`,
+              border: `1px solid ${accent}33`,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

@@ -5,6 +5,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { pickBrand, useBrand } from "../../brand";
 
 export type PricingCardProps = {
   tier: string;
@@ -14,8 +15,8 @@ export type PricingCardProps = {
   cta: string;
   highlighted: "yes" | "no";
   theme: "light" | "dark";
-  accentColor: string;
-  backgroundColor: string;
+  accentColor?: string;
+  backgroundColor?: string;
 };
 
 const D_CARD = 0;
@@ -38,6 +39,10 @@ export const PricingCard: React.FC<PricingCardProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const brand = useBrand();
+  const accent = pickBrand(accentColor, brand.accent);
+  const bg = pickBrand(backgroundColor, brand.background);
+  const fontFamily = brand.fontFamily;
   const isDark = theme === "dark";
   const isHighlighted = highlighted === "yes";
 
@@ -45,7 +50,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   const text = isDark ? "#ffffff" : "#0f1014";
   const muted = isDark ? "rgba(255,255,255,0.55)" : "rgba(15,16,20,0.55)";
   const border = isHighlighted
-    ? accentColor
+    ? accent
     : isDark
       ? "rgba(255,255,255,0.1)"
       : "rgba(15,16,20,0.1)";
@@ -69,12 +74,11 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: backgroundColor,
+        background: bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+        fontFamily,
       }}
     >
       <div
@@ -86,7 +90,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           padding: "44px 40px",
           position: "relative",
           boxShadow: isHighlighted
-            ? `0 30px 80px ${accentColor}33, 0 0 0 6px ${accentColor}1A`
+            ? `0 30px 80px ${accent}33, 0 0 0 6px ${accent}1A`
             : isDark
               ? "0 30px 80px rgba(0,0,0,0.45)"
               : "0 30px 80px rgba(15,16,20,0.08)",
@@ -101,7 +105,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
               top: -16,
               left: "50%",
               transform: "translateX(-50%)",
-              background: accentColor,
+              background: accent,
               color: "#ffffff",
               fontSize: 13,
               fontWeight: 700,
@@ -120,7 +124,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
             style={{
               fontSize: 22,
               fontWeight: 700,
-              color: isHighlighted ? accentColor : text,
+              color: isHighlighted ? accent : text,
               letterSpacing: "-0.005em",
               textTransform: "uppercase",
             }}
@@ -191,7 +195,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
                   lineHeight: 1.4,
                 }}
               >
-                <CheckMark color={accentColor} />
+                <CheckMark color={accent} />
                 <span>{f}</span>
               </li>
             </RevealItem>
@@ -204,7 +208,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
               width: "100%",
               padding: "16px",
               borderRadius: 14,
-              background: isHighlighted ? accentColor : "transparent",
+              background: isHighlighted ? accent : "transparent",
               color: isHighlighted ? "#ffffff" : text,
               border: isHighlighted ? "none" : `1px solid ${border}`,
               fontSize: 18,

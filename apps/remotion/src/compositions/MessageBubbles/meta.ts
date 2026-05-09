@@ -34,6 +34,7 @@ export const messageBubblesInfo: CompositionInfo<MessageBubblesProps> = {
   width: MESSAGE_BUBBLES_WIDTH,
   height: MESSAGE_BUBBLES_HEIGHT,
   defaultProps: messageBubblesDefaultProps,
+  brandMode: "locked",
   fields: [
     { kind: "text", key: "contactName", label: "Contact name" },
     { kind: "text", key: "contactAvatar", label: "Avatar URL" },

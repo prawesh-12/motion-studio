@@ -16,7 +16,8 @@ export const logoCloudDefaultProps: LogoCloudProps = {
     { name: "Figma", url: "" },
   ],
   theme: "light",
-  backgroundColor: "#f7f7f9",
+  // Empty = inherit from project Brand Kit.
+  backgroundColor: "",
 };
 
 export const logoCloudInfo: CompositionInfo<LogoCloudProps> = {

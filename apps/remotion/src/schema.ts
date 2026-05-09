@@ -25,6 +25,16 @@ export type ShapeField =
 
 export type Field = PrimitiveField | ShapeField;
 
+/**
+ * brandMode controls whether a composition inherits the project Brand Kit:
+ *   - "branded" (default): accent / background / font fall back to the brand
+ *     when the per-clip prop is omitted or empty.
+ *   - "locked": the composition impersonates a real product (Twitter,
+ *     WhatsApp, Slack, Discord, iMessage, etc.) and ignores the brand kit
+ *     to keep the look authentic.
+ */
+export type BrandMode = "branded" | "locked";
+
 export type CompositionInfo<P extends Record<string, unknown>> = {
   id: string;
   title: string;
@@ -35,6 +45,7 @@ export type CompositionInfo<P extends Record<string, unknown>> = {
   height: number;
   defaultProps: P;
   fields: Field[];
+  brandMode?: BrandMode;
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

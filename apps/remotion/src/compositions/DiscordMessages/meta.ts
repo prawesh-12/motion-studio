@@ -53,6 +53,7 @@ export const discordMessagesInfo: CompositionInfo<DiscordMessagesProps> = {
   width: DISCORD_MESSAGES_WIDTH,
   height: DISCORD_MESSAGES_HEIGHT,
   defaultProps: discordMessagesDefaultProps,
+  brandMode: "locked",
   fields: [
     { kind: "text", key: "contactName", label: "Channel name" },
     { kind: "chat", key: "messages", label: "Messages" },

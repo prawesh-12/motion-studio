@@ -201,11 +201,7 @@ function TitleBar({
           padding: "0 18px",
         }}
       >
-        <HugeiconsIcon
-          icon={LockIcon}
-          size={18}
-          color="rgba(15,16,20,0.55)"
-        />
+        <HugeiconsIcon icon={LockIcon} size={18} color="rgba(15,16,20,0.55)" />
         <div
           style={{
             flex: 1,

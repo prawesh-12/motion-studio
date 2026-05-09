@@ -6,6 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { pickBrand, useBrand } from "../../brand";
 
 export type LogoItem = {
   name: string;
@@ -16,7 +17,7 @@ export type LogoCloudProps = {
   headline: string;
   logos: LogoItem[];
   theme: "light" | "dark";
-  backgroundColor: string;
+  backgroundColor?: string;
 };
 
 const D_HEADLINE = 0;
@@ -31,6 +32,9 @@ export const LogoCloud: React.FC<LogoCloudProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const brand = useBrand();
+  const bg = pickBrand(backgroundColor, brand.background);
+  const fontFamily = brand.fontFamily;
   const isDark = theme === "dark";
 
   const text = isDark ? "#ffffff" : "#0f1014";
@@ -45,14 +49,13 @@ export const LogoCloud: React.FC<LogoCloudProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: backgroundColor,
+        background: bg,
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         padding: "0 80px",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+        fontFamily,
       }}
     >
       <div

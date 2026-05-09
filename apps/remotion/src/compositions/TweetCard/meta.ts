@@ -31,6 +31,7 @@ export const tweetCardInfo: CompositionInfo<TweetCardProps> = {
   width: TWEET_CARD_WIDTH,
   height: TWEET_CARD_HEIGHT,
   defaultProps: tweetCardDefaultProps,
+  brandMode: "locked",
   fields: [
     { kind: "text", key: "displayName", label: "Display name" },
     { kind: "text", key: "handle", label: "Handle" },

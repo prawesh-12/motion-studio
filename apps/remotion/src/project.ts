@@ -1,3 +1,5 @@
+import type { BrandKit } from "./brand";
+import { DEFAULT_BRAND } from "./brand";
 import type { ClipEffect } from "./effects/schema";
 
 export type Clip = {
@@ -13,6 +15,7 @@ export type Project = {
   width: number;
   height: number;
   clips: Clip[];
+  brand?: BrandKit;
 };
 
 export const DEFAULT_PROJECT: Project = {
@@ -20,6 +23,7 @@ export const DEFAULT_PROJECT: Project = {
   width: 1920,
   height: 1080,
   clips: [],
+  brand: DEFAULT_BRAND,
 };
 
 export function projectDuration(project: Project): number {

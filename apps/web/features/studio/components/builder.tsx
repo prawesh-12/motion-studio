@@ -12,6 +12,7 @@ import { PlayerProvider } from "../state/player-context";
 import { initialStudioState, studioReducer } from "../state/reducer";
 
 import { AgentPanel } from "./agent-panel";
+import { BrandPanel } from "./brand-panel";
 import { ExportProgressOverlay } from "./export-progress-overlay";
 import { Inspector } from "./inspector";
 import { LibraryPanel } from "./library-panel";
@@ -126,6 +127,15 @@ export function Builder() {
           {openPanel === "agent" && (
             <AgentPanel
               onClose={() => dispatch({ type: "TOGGLE_PANEL", panel: "agent" })}
+            />
+          )}
+
+          {openPanel === "brand" && (
+            <BrandPanel
+              brand={project.brand}
+              onPatch={(patch) => dispatch({ type: "UPDATE_BRAND", patch })}
+              onReset={() => dispatch({ type: "RESET_BRAND" })}
+              onClose={() => dispatch({ type: "TOGGLE_PANEL", panel: "brand" })}
             />
           )}
 

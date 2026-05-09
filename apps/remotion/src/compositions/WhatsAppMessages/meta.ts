@@ -34,6 +34,7 @@ export const whatsappMessagesInfo: CompositionInfo<WhatsAppMessagesProps> = {
   width: WHATSAPP_MESSAGES_WIDTH,
   height: WHATSAPP_MESSAGES_HEIGHT,
   defaultProps: whatsappMessagesDefaultProps,
+  brandMode: "locked",
   fields: [
     { kind: "text", key: "contactName", label: "Contact name" },
     { kind: "text", key: "contactAvatar", label: "Avatar URL" },

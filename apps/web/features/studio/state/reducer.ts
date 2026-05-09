@@ -1,3 +1,5 @@
+import type { BrandKit } from "@workspace/compositions/brand";
+import { DEFAULT_BRAND } from "@workspace/compositions/brand";
 import { effectsById } from "@workspace/compositions/effects/registry";
 import type { ClipEffect } from "@workspace/compositions/effects/schema";
 import {
@@ -7,7 +9,7 @@ import {
 } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
 
-export type StudioPanel = "library" | "agent" | null;
+export type StudioPanel = "library" | "agent" | "brand" | null;
 
 export type StudioState = {
   project: Project;
@@ -35,6 +37,8 @@ export type StudioAction =
     }
   | { type: "SELECT_CLIP"; clipId: string | null }
   | { type: "TOGGLE_PANEL"; panel: StudioPanel }
+  | { type: "UPDATE_BRAND"; patch: Partial<BrandKit> }
+  | { type: "RESET_BRAND" }
   | { type: "LOAD_PROJECT"; project: Project };
 
 export const initialStudioState: StudioState = {
@@ -136,6 +140,21 @@ export function studioReducer(
       );
       return { ...state, project: { ...state.project, clips } };
     }
+    case "UPDATE_BRAND": {
+      const current = state.project.brand ?? DEFAULT_BRAND;
+      return {
+        ...state,
+        project: {
+          ...state.project,
+          brand: { ...current, ...action.patch },
+        },
+      };
+    }
+    case "RESET_BRAND":
+      return {
+        ...state,
+        project: { ...state.project, brand: DEFAULT_BRAND },
+      };
     case "SELECT_CLIP":
       return { ...state, selectedClipId: action.clipId };
     case "TOGGLE_PANEL":

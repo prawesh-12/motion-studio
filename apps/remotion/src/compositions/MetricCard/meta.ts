@@ -13,8 +13,9 @@ export const metricCardDefaultProps: MetricCardProps = {
   label: "faster than ever",
   sublabel: "Average response time vs. last quarter",
   theme: "light",
-  accentColor: "#6366f1",
-  backgroundColor: "#f7f7f9",
+  // Empty = inherit from project Brand Kit.
+  accentColor: "",
+  backgroundColor: "",
 };
 
 export const metricCardInfo: CompositionInfo<MetricCardProps> = {

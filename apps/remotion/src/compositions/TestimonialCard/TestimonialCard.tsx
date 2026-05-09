@@ -6,6 +6,7 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import { pickBrand, useBrand } from "../../brand";
 
 export type TestimonialCardProps = {
   quote: string;
@@ -14,8 +15,8 @@ export type TestimonialCardProps = {
   role: string;
   company: string;
   theme: "light" | "dark";
-  accentColor: string;
-  backgroundColor: string;
+  accentColor?: string;
+  backgroundColor?: string;
 };
 
 const D_CARD = 0;
@@ -35,6 +36,10 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({
 }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
+  const brand = useBrand();
+  const accent = pickBrand(accentColor, brand.accent);
+  const bg = pickBrand(backgroundColor, brand.background);
+  const fontFamily = brand.fontFamily;
   const isDark = theme === "dark";
 
   const cardBg = isDark ? "#15161A" : "#ffffff";
@@ -57,12 +62,11 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: backgroundColor,
+        background: bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
+        fontFamily,
       }}
     >
       <div
@@ -87,7 +91,7 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({
             left: 36,
             fontSize: 180,
             lineHeight: 1,
-            color: accentColor,
+            color: accent,
             fontFamily: "Georgia, serif",
             fontWeight: 800,
             opacity: markPop * 0.18,
@@ -160,7 +164,7 @@ export const TestimonialCard: React.FC<TestimonialCardProps> = ({
               >
                 {role}
                 {company ? (
-                  <span style={{ color: accentColor }}> · {company}</span>
+                  <span style={{ color: accent }}> · {company}</span>
                 ) : null}
               </div>
             </div>
