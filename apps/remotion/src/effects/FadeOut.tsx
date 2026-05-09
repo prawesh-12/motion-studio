@@ -1,6 +1,6 @@
 "use client";
 
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { useClipDurationInFrames } from "./clip-context";
 import type { EffectInfo } from "./schema";
 
@@ -17,6 +17,7 @@ export function FadeOut({ durationInFrames, children }: FadeOutProps) {
   const opacity = interpolate(frame, [start, total - 1], [1, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
+    easing: Easing.bezier(0.4, 0, 1, 1),
   });
 
   return <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;

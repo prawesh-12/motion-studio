@@ -1,6 +1,6 @@
 "use client";
 
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { useClipDurationInFrames } from "./clip-context";
 import type { EffectInfo } from "./schema";
 
@@ -21,9 +21,11 @@ export function SlideOut({
   const total = useClipDurationInFrames();
   const start = Math.max(0, total - durationInFrames);
 
+  // Cubic ease-in: content sits for a beat, then accelerates off screen.
   const t = interpolate(frame, [start, total - 1], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
+    easing: Easing.bezier(0.55, 0, 1, 0.45),
   });
 
   const sign = direction === "up" || direction === "left" ? -1 : 1;

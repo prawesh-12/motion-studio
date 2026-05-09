@@ -1,6 +1,6 @@
 "use client";
 
-import { AbsoluteFill, interpolate, useCurrentFrame } from "remotion";
+import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
 import { useClipDurationInFrames } from "./clip-context";
 import type { EffectInfo } from "./schema";
 
@@ -22,6 +22,7 @@ export function ZoomOut({
   const t = interpolate(frame, [start, total - 1], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
+    easing: Easing.bezier(0.55, 0, 1, 0.45),
   });
 
   const scale = interpolate(t, [0, 1], [1, toScale]);
