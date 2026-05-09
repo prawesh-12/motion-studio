@@ -35,7 +35,6 @@ export function SlideOut({
     <AbsoluteFill
       style={{
         transform: `translate(${tx}px, ${ty}px)`,
-        opacity: 1 - t,
       }}
     >
       {children}
