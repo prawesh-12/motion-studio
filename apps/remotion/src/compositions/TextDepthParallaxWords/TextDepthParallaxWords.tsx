@@ -1,6 +1,10 @@
 "use client";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
-import { getSubtitleColor, resolveTitleStyle, type TitleProps } from "../title-shared";
+import {
+  getSubtitleColor,
+  resolveTitleStyle,
+  type TitleProps,
+} from "../title-shared";
 
 export type TextDepthParallaxWordsProps = TitleProps;
 
@@ -63,11 +67,16 @@ export const TextDepthParallaxWords: React.FC<TextDepthParallaxWordsProps> = ({
       >
         {words.map((word, i) => {
           const start = HEADLINE_START + i * WORD_STAGGER;
-          const progress = interpolate(frame, [start, start + WORD_DURATION], [0, 1], {
-            extrapolateLeft: "clamp",
-            extrapolateRight: "clamp",
-            easing: EASE,
-          });
+          const progress = interpolate(
+            frame,
+            [start, start + WORD_DURATION],
+            [0, 1],
+            {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+              easing: EASE,
+            },
+          );
           const y = 18 * (1 - progress);
           const scale = 0.92 + 0.08 * progress;
           const blurPx = 3 * (1 - progress);

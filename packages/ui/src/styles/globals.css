@@ -7,6 +7,11 @@
 @source "../../../../apps/**/*.mdx";
 @source "../../../../apps/web/node_modules/streamdown/dist/*.js";
 @source "../../../../packages/**/*.{ts,tsx}";
+/* @heygaia/chat-ui inlines Tailwind utility classes inside its bundled
+   JS — Tailwind v4 in lyon won't scan node_modules .js by default, so
+   GaiaScenario.tsx ships a small <style> tag for the few rules that
+   actually need to render (animate-shine, pl-11.5, outline-dashed).
+   No global Tailwind config changes needed. */
 
 @theme inline {
   --font-heading: var(--font-sans);
@@ -58,7 +63,7 @@
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.746 0.156 233.796);
+  --primary: #00bbff;
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
@@ -78,7 +83,7 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.746 0.156 233.796);
+  --sidebar-primary: #00bbff;
   --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.97 0 0);
   --sidebar-accent-foreground: oklch(0.205 0 0);
@@ -93,7 +98,7 @@
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.746 0.156 233.796);
+  --primary: #00bbff;
   --primary-foreground: oklch(0.145 0 0);
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
@@ -112,7 +117,7 @@
   --chart-5: oklch(0.269 0 0);
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.746 0.156 233.796);
+  --sidebar-primary: #00bbff;
   --sidebar-primary-foreground: oklch(0.145 0 0);
   --sidebar-accent: oklch(0.269 0 0);
   --sidebar-accent-foreground: oklch(0.985 0 0);
@@ -176,64 +181,70 @@
   }
 }
 
-/* iMessage-style chat bubbles (mirrors GAIA implementation) */
-.imessage-bubble {
-  position: relative;
-  border-radius: 20px;
-  word-wrap: break-word;
+/* Pin brand primary against third-party CSS that also targets :root
+   (e.g. @heygaia/chat-ui resets --primary to a neutral tone). */
+html:root,
+html:root.dark {
+  --primary: #00bbff;
+  --sidebar-primary: #00bbff;
 }
 
-.imessage-bubble::before,
-.imessage-bubble::after {
+/* iMessage-style chat bubbles (mirrors GAIA onboarding-revamp). The tail is
+   a single ::before with a clip-path silhouette, so it composites correctly
+   over any background (no matching background-color hack needed). */
+.imessage-bubble {
+  position: relative;
+  word-wrap: break-word;
+  line-height: 24px;
+  padding: 8px 20px;
+  max-width: 60vw;
+  border-radius: 20px;
+}
+
+.imessage-bubble::before {
   content: "";
   position: absolute;
   bottom: 0;
+  width: 20px;
   height: 18px;
 }
 
+.imessage-grouped-first,
+.imessage-grouped-last,
+.imessage-grouped-middle {
+  border-radius: 20px;
+}
+
 .imessage-from-them {
-  background: #e9e9eb;
-  color: #0f1014;
+  background: #27272a;
+  color: #ffffff;
+  align-self: flex-start;
 }
 
 .imessage-from-them::before {
   left: -7px;
-  width: 20px;
-  background-color: #e9e9eb;
-  border-bottom-right-radius: 16px;
-}
-
-.imessage-from-them::after {
-  left: -26px;
-  width: 26px;
-  background-color: var(--imessage-bg);
-  border-bottom-right-radius: 10px;
-}
-
-.dark .imessage-from-them {
-  background: #3a3a3c;
-  color: #ffffff;
-}
-
-.dark .imessage-from-them::before {
-  background-color: #3a3a3c;
+  background-color: #27272a;
+  clip-path: path(
+    "M 20 0 L 20 2 A 16 16 0 0 1 4 18 L 0 18 L 0 17.54 A 10 10 0 0 0 7 8 L 7 0 Z"
+  );
 }
 
 .imessage-from-me {
-  background: #007aff;
-  color: #ffffff;
+  background: #00bbff;
+  color: #000000;
+  align-self: flex-end;
 }
 
 .imessage-from-me::before {
   right: -7px;
-  width: 20px;
-  background-color: #007aff;
-  border-bottom-left-radius: 16px 14px;
+  background-color: #00bbff;
+  clip-path: path(
+    "M 0 0 L 0 2 A 16 16 0 0 0 16 18 L 20 18 L 20 17.54 A 10 10 0 0 1 13 8 L 13 0 Z"
+  );
 }
 
-.imessage-from-me::after {
-  right: -26px;
-  width: 26px;
-  background-color: var(--imessage-bg);
-  border-bottom-left-radius: 10px;
+/* Hide tails for grouped messages except the last one. */
+.imessage-grouped-first::before,
+.imessage-grouped-middle::before {
+  display: none;
 }

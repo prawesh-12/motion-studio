@@ -1,6 +1,10 @@
 "use client";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
-import { getSubtitleColor, resolveTitleStyle, type TitleProps } from "../title-shared";
+import {
+  getSubtitleColor,
+  resolveTitleStyle,
+  type TitleProps,
+} from "../title-shared";
 
 export type TextPerWordCrossfadeProps = TitleProps;
 
@@ -62,11 +66,16 @@ export const TextPerWordCrossfade: React.FC<TextPerWordCrossfadeProps> = ({
       >
         {words.map((word, i) => {
           const start = HEADLINE_START + i * WORD_STAGGER;
-          const progress = interpolate(frame, [start, start + WORD_DURATION], [0, 1], {
-            extrapolateLeft: "clamp",
-            extrapolateRight: "clamp",
-            easing: APPLE_EASE,
-          });
+          const progress = interpolate(
+            frame,
+            [start, start + WORD_DURATION],
+            [0, 1],
+            {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+              easing: APPLE_EASE,
+            },
+          );
           const y = 8 * (1 - progress);
           return (
             <span

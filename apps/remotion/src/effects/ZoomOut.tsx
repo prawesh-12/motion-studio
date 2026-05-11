@@ -10,11 +10,7 @@ export type ZoomOutProps = {
   children?: React.ReactNode;
 };
 
-export function ZoomOut({
-  toScale,
-  durationInFrames,
-  children,
-}: ZoomOutProps) {
+export function ZoomOut({ toScale, durationInFrames, children }: ZoomOutProps) {
   const frame = useCurrentFrame();
   const total = useClipDurationInFrames();
   const start = Math.max(0, total - durationInFrames);

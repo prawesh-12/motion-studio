@@ -1,6 +1,10 @@
 "use client";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
-import { getSubtitleColor, resolveTitleStyle, type TitleProps } from "../title-shared";
+import {
+  getSubtitleColor,
+  resolveTitleStyle,
+  type TitleProps,
+} from "../title-shared";
 
 export type TextFocusBlurResolveProps = TitleProps;
 

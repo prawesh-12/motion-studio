@@ -1,5 +1,12 @@
 "use client";
 import {
+  ArrowLeft02Icon,
+  ArrowRight02Icon,
+  LockIcon,
+  RefreshIcon,
+} from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
   AbsoluteFill,
   Easing,
   Img,
@@ -8,13 +15,6 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowLeft02Icon,
-  ArrowRight02Icon,
-  LockIcon,
-  RefreshIcon,
-} from "@hugeicons/core-free-icons";
 import { type ClipStyle, resolveClipStyle } from "../../clip-style";
 
 export type BrowserWindowProps = {

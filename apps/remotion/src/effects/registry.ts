@@ -4,8 +4,8 @@ import { KenBurns, kenBurnsInfo } from "./KenBurns";
 import { Pop, popInfo } from "./Pop";
 import { Shake, shakeInfo } from "./Shake";
 import { SlideOut, slideOutInfo } from "./SlideOut";
-import { ZoomOut, zoomOutInfo } from "./ZoomOut";
 import type { AnyEffectInfo } from "./schema";
+import { ZoomOut, zoomOutInfo } from "./ZoomOut";
 
 export const effects: AnyEffectInfo[] = [
   popInfo,

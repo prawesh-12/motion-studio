@@ -9,15 +9,16 @@ const defaultProps: TextShortSlideRightProps = {
   subtitle: "One shared motion",
 };
 
-export const textShortSlideRightInfo: CompositionInfo<TextShortSlideRightProps> = {
-  id: "TextShortSlideRight",
-  title: "Short Slide Right",
-  description:
-    "The whole phrase glides in from the left as one compact move, while the words themselves are revealed in sequence only through opacity.",
-  durationInFrames: TEXT_SHORT_SLIDE_RIGHT_DURATION,
-  fps: 60,
-  width: 1920,
-  height: 1080,
-  defaultProps,
-  fields: TITLE_FIELDS,
-};
+export const textShortSlideRightInfo: CompositionInfo<TextShortSlideRightProps> =
+  {
+    id: "TextShortSlideRight",
+    title: "Short Slide Right",
+    description:
+      "The whole phrase glides in from the left as one compact move, while the words themselves are revealed in sequence only through opacity.",
+    durationInFrames: TEXT_SHORT_SLIDE_RIGHT_DURATION,
+    fps: 60,
+    width: 1920,
+    height: 1080,
+    defaultProps,
+    fields: TITLE_FIELDS,
+  };

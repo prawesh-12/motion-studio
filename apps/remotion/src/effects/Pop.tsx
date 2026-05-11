@@ -1,6 +1,11 @@
 "use client";
 
-import { AbsoluteFill, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import {
+  AbsoluteFill,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 import type { EffectInfo } from "./schema";
 
 export type PopProps = {

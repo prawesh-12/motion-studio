@@ -12,15 +12,16 @@ export const textPerCharacterRiseDefaultProps: TextPerCharacterRiseProps = {
   subtitle: "Clean and crisp",
 };
 
-export const textPerCharacterRiseInfo: CompositionInfo<TextPerCharacterRiseProps> = {
-  id: "TextPerCharacterRise",
-  title: "Character Rise",
-  description:
-    "Letters slide up from below with no blur — crisp, deliberate, kinetic. Apple's clean tvOS-style reveal.",
-  durationInFrames: TEXT_PER_CHARACTER_RISE_DURATION,
-  fps: TEXT_PER_CHARACTER_RISE_FPS,
-  width: TEXT_PER_CHARACTER_RISE_WIDTH,
-  height: TEXT_PER_CHARACTER_RISE_HEIGHT,
-  defaultProps: textPerCharacterRiseDefaultProps,
-  fields: TITLE_FIELDS,
-};
+export const textPerCharacterRiseInfo: CompositionInfo<TextPerCharacterRiseProps> =
+  {
+    id: "TextPerCharacterRise",
+    title: "Character Rise",
+    description:
+      "Letters slide up from below with no blur — crisp, deliberate, kinetic. Apple's clean tvOS-style reveal.",
+    durationInFrames: TEXT_PER_CHARACTER_RISE_DURATION,
+    fps: TEXT_PER_CHARACTER_RISE_FPS,
+    width: TEXT_PER_CHARACTER_RISE_WIDTH,
+    height: TEXT_PER_CHARACTER_RISE_HEIGHT,
+    defaultProps: textPerCharacterRiseDefaultProps,
+    fields: TITLE_FIELDS,
+  };

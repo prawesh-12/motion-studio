@@ -12,15 +12,16 @@ export const textStaggerFromEdgesDefaultProps: TextStaggerFromEdgesProps = {
   subtitle: "Edges meet center",
 };
 
-export const textStaggerFromEdgesInfo: CompositionInfo<TextStaggerFromEdgesProps> = {
-  id: "TextStaggerFromEdges",
-  title: "Edge Stagger",
-  description:
-    "Characters start from both edges and converge toward the center.",
-  durationInFrames: TEXT_STAGGER_FROM_EDGES_DURATION,
-  fps: TEXT_STAGGER_FROM_EDGES_FPS,
-  width: TEXT_STAGGER_FROM_EDGES_WIDTH,
-  height: TEXT_STAGGER_FROM_EDGES_HEIGHT,
-  defaultProps: textStaggerFromEdgesDefaultProps,
-  fields: TITLE_FIELDS,
-};
+export const textStaggerFromEdgesInfo: CompositionInfo<TextStaggerFromEdgesProps> =
+  {
+    id: "TextStaggerFromEdges",
+    title: "Edge Stagger",
+    description:
+      "Characters start from both edges and converge toward the center.",
+    durationInFrames: TEXT_STAGGER_FROM_EDGES_DURATION,
+    fps: TEXT_STAGGER_FROM_EDGES_FPS,
+    width: TEXT_STAGGER_FROM_EDGES_WIDTH,
+    height: TEXT_STAGGER_FROM_EDGES_HEIGHT,
+    defaultProps: textStaggerFromEdgesDefaultProps,
+    fields: TITLE_FIELDS,
+  };

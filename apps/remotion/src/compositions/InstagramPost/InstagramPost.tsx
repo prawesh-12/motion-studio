@@ -1,19 +1,19 @@
 "use client";
 import {
-  AbsoluteFill,
-  Img,
-  spring,
-  useCurrentFrame,
-  useVideoConfig,
-} from "remotion";
-import { HugeiconsIcon } from "@hugeicons/react";
-import {
   Bookmark01Icon,
   Chat01Icon,
   FavouriteIcon,
   MoreHorizontalIcon,
   SentIcon,
 } from "@hugeicons/core-free-icons";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  AbsoluteFill,
+  Img,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+} from "remotion";
 
 export type InstagramPostProps = {
   username: string;
@@ -130,11 +130,7 @@ export const InstagramPost: React.FC<InstagramPostProps> = ({
               </div>
             )}
           </div>
-          <HugeiconsIcon
-            icon={MoreHorizontalIcon}
-            size={32}
-            color={cardText}
-          />
+          <HugeiconsIcon icon={MoreHorizontalIcon} size={32} color={cardText} />
         </div>
 
         <div

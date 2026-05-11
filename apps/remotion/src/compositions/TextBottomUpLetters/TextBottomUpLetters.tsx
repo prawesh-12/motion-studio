@@ -1,6 +1,10 @@
 "use client";
 import { AbsoluteFill, Easing, interpolate, useCurrentFrame } from "remotion";
-import { getSubtitleColor, resolveTitleStyle, type TitleProps } from "../title-shared";
+import {
+  getSubtitleColor,
+  resolveTitleStyle,
+  type TitleProps,
+} from "../title-shared";
 
 export type TextBottomUpLettersProps = TitleProps;
 
@@ -20,7 +24,8 @@ export const TextBottomUpLetters: React.FC<TextBottomUpLettersProps> = ({
   const s = resolveTitleStyle(clipStyle);
   const chars = headline.split("");
 
-  const lastCharEnd = HEADLINE_START + (chars.length - 1) * CHAR_STAGGER + CHAR_DURATION;
+  const lastCharEnd =
+    HEADLINE_START + (chars.length - 1) * CHAR_STAGGER + CHAR_DURATION;
   const subtitleStart = lastCharEnd + 14;
   const subtitleProgress = interpolate(
     frame,

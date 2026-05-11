@@ -1,7 +1,7 @@
 import {
   type ClipStyle,
-  resolveClipStyle,
   type ClipStyleDefaults,
+  resolveClipStyle,
 } from "../clip-style";
 
 /**
