@@ -3,17 +3,20 @@
 import type { PlayerRef } from "@remotion/player";
 import { type Project, projectDuration } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
+import { resolveTransition } from "@workspace/compositions/transitions";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { useExportRender } from "../hooks/use-export-render";
 import { usePlayerControls } from "../hooks/use-player-controls";
 import { useProjectIO } from "../hooks/use-project-io";
+import type { ExportOptions } from "../lib/export-options";
+import { registerImageProxy } from "../lib/register-image-proxy";
 import { PlayerProvider } from "../state/player-context";
 import { initialStudioState, studioReducer } from "../state/reducer";
-
 import { AgentPanel } from "./agent-panel";
 import { ExportProgressOverlay } from "./export-progress-overlay";
-import { Inspector } from "./inspector";
+import { ExportSettingsModal } from "./export-settings-modal";
+import { Inspector, type InspectorTab } from "./inspector";
 import { LibraryPanel } from "./library-panel";
 import { PlaybackControls } from "./playback-controls";
 import { PreviewStage } from "./preview-stage";
@@ -27,6 +30,7 @@ export function Builder() {
   // ----------------------------------------------------------------------
   const [state, dispatch] = useReducer(studioReducer, initialStudioState);
   const { project, selectedClipId, openPanel } = state;
+  const [inspectorTab, setInspectorTab] = useState<InspectorTab>("content");
 
   const totalDuration = projectDuration(project);
   const totalSeconds = totalDuration / project.fps;
@@ -46,9 +50,25 @@ export function Builder() {
     state: exportState,
     start: startExport,
     reset: resetExport,
+    cancel: cancelExport,
+    download: downloadExport,
   } = useExportRender();
   const isExporting =
     exportState.phase === "starting" || exportState.phase === "rendering";
+  const [exportSettingsOpen, setExportSettingsOpen] = useState(false);
+  const lastExportOptionsRef = useRef<ExportOptions | null>(null);
+
+  const handleStartExport = (options: ExportOptions) => {
+    lastExportOptionsRef.current = options;
+    startExport(project, options);
+  };
+  const handleRetryExport = () => {
+    if (lastExportOptionsRef.current) {
+      startExport(project, lastExportOptionsRef.current);
+    } else {
+      setExportSettingsOpen(true);
+    }
+  };
 
   // ----------------------------------------------------------------------
   // Player ref + version
@@ -65,6 +85,13 @@ export function Builder() {
   useEffect(() => {
     if (hasClips) setPlayerVersion((v) => v + 1);
   }, [hasClips]);
+
+  // Register the image-proxy service worker once. It transparently routes
+  // every cross-origin image fetch through `/api/img/<base64>` so the
+  // browser doesn't taint the export canvas on external avatars.
+  useEffect(() => {
+    void registerImageProxy();
+  }, []);
 
   const playerControls = usePlayerControls(playerRef, totalDuration);
 
@@ -94,7 +121,12 @@ export function Builder() {
           exporting={isExporting}
           canExport={hasClips}
           canSave={hasClips}
-          onExport={() => startExport(project)}
+          fps={project.fps}
+          projectDefaultTransition={project.defaultTransition}
+          onUpdateProjectTransition={(transition) =>
+            dispatch({ type: "UPDATE_PROJECT_TRANSITION", transition })
+          }
+          onExport={() => setExportSettingsOpen(true)}
           onSaveProject={handleSaveProject}
           onLoadProjectFile={handleLoadProjectFile}
         />
@@ -165,6 +197,17 @@ export function Builder() {
                   durationInFrames,
                 })
               }
+              onUpdateTransition={(id, transition) =>
+                dispatch({
+                  type: "UPDATE_CLIP_TRANSITION",
+                  clipId: id,
+                  transition,
+                })
+              }
+              onSelectTransition={(id) => {
+                dispatch({ type: "SELECT_CLIP", clipId: id });
+                setInspectorTab("motion");
+              }}
               onSeek={playerControls.handleSeek}
               onScrubStart={playerControls.handleScrubStart}
               onScrubEnd={playerControls.handleScrubEnd}
@@ -175,6 +218,11 @@ export function Builder() {
             <Inspector
               clip={selectedClip}
               info={selectedInfo}
+              isFirst={project.clips[0]?.id === selectedClip.id}
+              fps={project.fps}
+              projectDefaultTransition={project.defaultTransition}
+              tab={inspectorTab}
+              onTabChange={setInspectorTab}
               onChange={(next) =>
                 dispatch({
                   type: "UPDATE_CLIP_PROPS",
@@ -193,6 +241,13 @@ export function Builder() {
                 dispatch({
                   type: "RESET_CLIP_STYLE",
                   clipId: selectedClip.id,
+                })
+              }
+              onUpdateTransition={(transition) =>
+                dispatch({
+                  type: "UPDATE_CLIP_TRANSITION",
+                  clipId: selectedClip.id,
+                  transition,
                 })
               }
               onUpdateEffect={(effectInstanceId, props) =>
@@ -215,7 +270,24 @@ export function Builder() {
           )}
         </div>
 
-        <ExportProgressOverlay state={exportState} onClose={resetExport} />
+        <ExportProgressOverlay
+          state={exportState}
+          onClose={resetExport}
+          onCancel={cancelExport}
+          onDownload={downloadExport}
+          onRetry={handleRetryExport}
+        />
+
+        <ExportSettingsModal
+          open={exportSettingsOpen}
+          onOpenChange={setExportSettingsOpen}
+          onStart={handleStartExport}
+          project={project}
+          projectWidth={project.width}
+          projectHeight={project.height}
+          durationInFrames={totalDuration}
+          fps={project.fps}
+        />
       </div>
     </PlayerProvider>
   );
@@ -235,10 +307,17 @@ function useSeekToClipOnSelect(
   project: Project,
   selectedClipId: string | null,
 ) {
+  // Read project through a ref so the effect only re-runs when the user
+  // changes which clip is selected — NOT on every reducer dispatch. Resizing
+  // a clip otherwise re-fires `player.seekTo` on every pointermove, which
+  // (via Remotion's synchronous frameupdate event) trips React's max-update
+  // depth guard.
+  const projectRef = useRef(project);
+  projectRef.current = project;
+
   useEffect(() => {
     if (!selectedClipId) return;
-
-    const startFrame = clipStartFrame(project, selectedClipId);
+    const startFrame = clipStartFrame(projectRef.current, selectedClipId);
     let cancelled = false;
 
     function attempt(retriesLeft: number) {
@@ -257,7 +336,7 @@ function useSeekToClipOnSelect(
     return () => {
       cancelled = true;
     };
-  }, [selectedClipId, project, playerRef]);
+  }, [selectedClipId, playerRef]);
 }
 
 /**
@@ -284,8 +363,18 @@ function useSpacebarPlayPause(hasClips: boolean, onPlayPause: () => void) {
 
 function clipStartFrame(project: Project, clipId: string): number {
   let sum = 0;
-  for (const clip of project.clips) {
-    if (clip.id === clipId) return sum;
+  for (let i = 0; i < project.clips.length; i++) {
+    const clip = project.clips[i];
+    if (!clip) continue;
+    if (i > 0) {
+      const t = resolveTransition({
+        clipTransition: clip.transition,
+        projectDefault: project.defaultTransition,
+        index: i,
+      });
+      if (t.kind !== "none") sum -= t.durationInFrames;
+    }
+    if (clip.id === clipId) return Math.max(0, sum);
     sum += clip.durationInFrames;
   }
   return 0;

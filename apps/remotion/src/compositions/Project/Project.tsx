@@ -1,46 +1,76 @@
 "use client";
-import { AbsoluteFill, Sequence } from "remotion";
+import { TransitionSeries } from "@remotion/transitions";
+import { AbsoluteFill, useVideoConfig } from "remotion";
 import { componentsById } from "../../components";
 import { EffectsWrap } from "../../effects/EffectsWrap";
 import type { Project } from "../../project";
 import { compositionsById } from "../../registry";
+import { resolveTransition, toPresentation, toTiming } from "../../transitions";
 
-export const ProjectComposition: React.FC<Project> = ({ clips }) => {
-  let cursor = 0;
+export const ProjectComposition: React.FC<Project> = ({
+  clips,
+  defaultTransition,
+}) => {
+  const { width, height } = useVideoConfig();
   return (
     <AbsoluteFill style={{ background: "#000" }}>
-      {clips.map((clip) => {
-        const Component = componentsById[clip.compositionId];
-        const info = compositionsById[clip.compositionId];
-        const from = cursor;
-        cursor += clip.durationInFrames;
+      <TransitionSeries>
+        {clips.flatMap((clip, index) => {
+          const Component = componentsById[clip.compositionId];
+          const info = compositionsById[clip.compositionId];
+          const isLocked = info?.brandMode === "locked";
+          const styleProps = isLocked ? {} : { clipStyle: clip.style };
 
-        // Locked compositions impersonate real apps and ignore universal
-        // ClipStyle. Everything else receives the user's per-clip overrides
-        // via the `clipStyle` prop.
-        const isLocked = info?.brandMode === "locked";
-        const styleProps = isLocked ? {} : { clipStyle: clip.style };
+          const inner = Component ? (
+            <Component key={`c-${clip.id}`} {...clip.props} {...styleProps} />
+          ) : (
+            <MissingClip
+              key={`c-${clip.id}`}
+              compositionId={clip.compositionId}
+            />
+          );
 
-        const inner = Component ? (
-          <Component {...clip.props} {...styleProps} />
-        ) : (
-          <MissingClip compositionId={clip.compositionId} />
-        );
-        return (
-          <Sequence
-            key={clip.id}
-            from={from}
-            durationInFrames={clip.durationInFrames}
-          >
-            <EffectsWrap
-              effects={clip.effects}
-              clipDurationInFrames={clip.durationInFrames}
+          const sequence = (
+            <TransitionSeries.Sequence
+              key={`seq-${clip.id}`}
+              durationInFrames={clip.durationInFrames}
             >
-              {inner}
-            </EffectsWrap>
-          </Sequence>
-        );
-      })}
+              <EffectsWrap
+                effects={clip.effects}
+                clipDurationInFrames={clip.durationInFrames}
+              >
+                {inner}
+              </EffectsWrap>
+            </TransitionSeries.Sequence>
+          );
+
+          if (index === 0) {
+            return [sequence];
+          }
+
+          const t = resolveTransition({
+            clipTransition: clip.transition,
+            projectDefault: defaultTransition,
+            index,
+          });
+
+          // Skip transition entirely when duration is 0 or kind is "none" —
+          // TransitionSeries handles zero-duration transitions, but emitting
+          // them as a hard cut is cleaner.
+          if (t.kind === "none" || t.durationInFrames <= 0) {
+            return [sequence];
+          }
+
+          return [
+            <TransitionSeries.Transition
+              key={`tx-${clip.id}`}
+              timing={toTiming(t)}
+              presentation={toPresentation(t, { width, height })}
+            />,
+            sequence,
+          ];
+        })}
+      </TransitionSeries>
     </AbsoluteFill>
   );
 };

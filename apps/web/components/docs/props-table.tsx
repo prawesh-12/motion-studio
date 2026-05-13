@@ -59,10 +59,16 @@ function describeType(field: Field): string {
       return "number";
     case "select":
       return field.options.map((o) => `"${o.value}"`).join(" | ");
+    case "switch":
+      return "boolean";
     case "section":
       return "(group)";
     case "scenario":
       return "string (Scenario JSON)";
+    case "imageList":
+      return "Array<{ name: string; url: string }>";
+    case "terminalLines":
+      return "Array<{ kind: string; text: string }>";
   }
 }
 

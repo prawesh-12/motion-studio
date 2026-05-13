@@ -8,13 +8,21 @@ import { compositionsById } from "@workspace/compositions/registry";
 import { Button } from "@workspace/ui/components/button";
 import type React from "react";
 import { useRef, useState } from "react";
-import { colorForCompositionId, PX_PER_SECOND } from "../lib/clip-colors";
+import { colorForCompositionId } from "../lib/clip-colors";
 
 const MIN_DURATION_FRAMES = 15;
 
 type Props = {
   clip: Clip;
   fps: number;
+  /**
+   * Visible width in px. Equals the clip's full duration in px minus the
+   * leading and trailing transition-overlap regions, which are rendered as
+   * separate `TransitionStrip` siblings.
+   */
+  bodyWidthPx: number;
+  /** Timeline scale; passed in so the resize math tracks the current zoom. */
+  framesPerPx: number;
   selected: boolean;
   onSelect: () => void;
   onDelete: () => void;
@@ -24,6 +32,8 @@ type Props = {
 export function SortableClipBlock({
   clip,
   fps,
+  bodyWidthPx,
+  framesPerPx,
   selected,
   onSelect,
   onDelete,
@@ -33,7 +43,7 @@ export function SortableClipBlock({
   const [resizing, setResizing] = useState<"left" | "right" | null>(null);
 
   const seconds = clip.durationInFrames / fps;
-  const widthPx = seconds * PX_PER_SECOND;
+  const widthPx = Math.max(2, bodyWidthPx);
   const colorClass = colorForCompositionId(clip.compositionId);
 
   const {
@@ -52,8 +62,6 @@ export function SortableClipBlock({
     opacity: isDragging ? 0.6 : 1,
     zIndex: isDragging || resizing ? 10 : 1,
   };
-
-  const framesPerPx = fps / PX_PER_SECOND;
 
   function startResize(side: "left" | "right", startEvent: React.PointerEvent) {
     startEvent.preventDefault();

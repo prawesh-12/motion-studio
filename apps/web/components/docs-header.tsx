@@ -1,19 +1,18 @@
 "use client";
 
 import {
-  Moon02Icon,
   NewTwitterIcon,
   Search01Icon,
   StarIcon,
-  Sun03Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
+import Image from "next/image";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import * as React from "react";
 import { BrandLink } from "@/components/brand-link";
 import { DocsSearch } from "@/components/docs-search";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 function GitHubMark({ className }: { className?: string }) {
   return (
@@ -72,24 +71,36 @@ function GitHubButton() {
   );
 }
 
-function ThemeToggle() {
-  const { resolvedTheme, setTheme } = useTheme();
-
+function GaiaButton() {
   return (
     <Button
       variant="ghost"
-      size="icon-sm"
-      onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      title="Toggle theme"
+      size="sm"
+      className="hidden gap-1.5 px-2.5 sm:inline-flex"
+      asChild
     >
-      <HugeiconsIcon icon={Sun03Icon} className="size-4 hidden dark:block" />
-      <HugeiconsIcon icon={Moon02Icon} className="size-4 block dark:hidden" />
+      <Link
+        href="https://heygaia.io"
+        target="_blank"
+        rel="noopener noreferrer"
+        title="GAIA — the personal AI assistant Motion Studio is built for"
+      >
+        <Image
+          src="/gaia_logo.png"
+          alt="GAIA"
+          width={20}
+          height={20}
+          className="rounded-sm"
+        />
+        <span className="text-xs font-medium">GAIA</span>
+      </Link>
     </Button>
   );
 }
 
 const navLinks = [
   { label: "Docs", href: "/docs" },
+  { label: "Components", href: "/docs/components" },
   { label: "Studio", href: "/studio" },
 ];
 
@@ -142,7 +153,7 @@ export function DocsHeader() {
             </Button>
 
             <div className="flex items-center gap-0.5">
-              <ThemeToggle />
+              <GaiaButton />
               <GitHubButton />
               <Button
                 variant="ghost"
@@ -154,6 +165,7 @@ export function DocsHeader() {
                   <HugeiconsIcon icon={NewTwitterIcon} className="size-4" />
                 </Link>
               </Button>
+              <ThemeToggle />
             </div>
           </div>
         </div>

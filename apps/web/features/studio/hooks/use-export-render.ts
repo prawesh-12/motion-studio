@@ -1,7 +1,16 @@
 "use client";
 
 import type { Project } from "@workspace/compositions/project";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  DEFAULT_EXPORT_OPTIONS,
+  type ExportOptions,
+} from "../lib/export-options";
+import {
+  downloadMp4Blob,
+  isLocalExportSupported,
+  renderProjectLocally,
+} from "../lib/local-export";
 
 export type ExportPhase = "idle" | "starting" | "rendering" | "done" | "error";
 
@@ -9,104 +18,167 @@ export type ExportState = {
   phase: ExportPhase;
   progress: number;
   error: string | null;
+  errorStack?: string | null;
+  blobUrl: string | null;
+  filename: string | null;
 };
 
-const POLL_INTERVAL_MS = 400;
+const INITIAL_STATE: ExportState = {
+  phase: "idle",
+  progress: 0,
+  error: null,
+  blobUrl: null,
+  filename: null,
+};
 
+/**
+ * Drives the in-browser MP4 export via `@remotion/web-renderer`. Owns the
+ * UI state machine, a generation counter to discard stale callbacks, and an
+ * AbortController so the modal can offer a Cancel button.
+ */
 export function useExportRender() {
-  const [state, setState] = useState<ExportState>({
-    phase: "idle",
-    progress: 0,
-    error: null,
-  });
+  const [state, setState] = useState<ExportState>(INITIAL_STATE);
 
-  const pollTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const generationRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
+  const lastOptionsRef = useRef<ExportOptions>(DEFAULT_EXPORT_OPTIONS);
+
+  const revokeBlobUrl = useCallback(() => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, []);
 
   const reset = useCallback(() => {
-    if (pollTimer.current) clearTimeout(pollTimer.current);
-    pollTimer.current = null;
-    setState({ phase: "idle", progress: 0, error: null });
+    generationRef.current += 1;
+    controllerRef.current?.abort();
+    controllerRef.current = null;
+    revokeBlobUrl();
+    setState(INITIAL_STATE);
+  }, [revokeBlobUrl]);
+
+  const cancel = useCallback(() => {
+    controllerRef.current?.abort();
   }, []);
 
-  const start = useCallback(async (project: Project) => {
-    setState({ phase: "starting", progress: 0, error: null });
+  const start = useCallback(
+    async (project: Project, options?: ExportOptions) => {
+      const resolved = options ?? DEFAULT_EXPORT_OPTIONS;
+      lastOptionsRef.current = resolved;
+      const myGeneration = ++generationRef.current;
+      if (blobUrlRef.current) {
+        URL.revokeObjectURL(blobUrlRef.current);
+        blobUrlRef.current = null;
+      }
+      const controller = new AbortController();
+      controllerRef.current = controller;
 
-    let jobId: string;
-    try {
-      const startRes = await fetch("/api/render-project", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(project),
+      console.info("[export-hook] start", {
+        width: project.width,
+        height: project.height,
+        fps: project.fps,
+        clips: project.clips?.length,
+        preset: resolved.preset,
       });
-      if (!startRes.ok)
-        throw new Error(`Failed to start render: ${startRes.status}`);
-      const data = (await startRes.json()) as {
-        jobId?: string;
-        error?: string;
-      };
-      if (!data.jobId) throw new Error(data.error ?? "Missing jobId");
-      jobId = data.jobId;
-    } catch (e) {
-      setState({
-        phase: "error",
-        progress: 0,
-        error: e instanceof Error ? e.message : "Unknown error",
-      });
-      return;
-    }
 
-    setState({ phase: "rendering", progress: 0, error: null });
-
-    function poll() {
-      fetch(`/api/render-project/${jobId}`)
-        .then((r) => r.json())
-        .then(
-          (status: {
-            progress: number;
-            status: "rendering" | "done" | "error";
-            error?: string;
-          }) => {
-            if (status.status === "error") {
-              setState({
-                phase: "error",
-                progress: status.progress ?? 0,
-                error: status.error ?? "Render failed",
-              });
-              return;
-            }
-            if (status.status === "done") {
-              setState({ phase: "done", progress: 1, error: null });
-              triggerDownload(jobId);
-              return;
-            }
-            setState({
-              phase: "rendering",
-              progress: status.progress ?? 0,
-              error: null,
-            });
-            pollTimer.current = setTimeout(poll, POLL_INTERVAL_MS);
-          },
-        )
-        .catch((e: unknown) => {
-          setState({
-            phase: "error",
-            progress: 0,
-            error: e instanceof Error ? e.message : "Polling failed",
-          });
+      const supported = await isLocalExportSupported(project);
+      if (generationRef.current !== myGeneration) return;
+      if (!supported.ok) {
+        setState({
+          ...INITIAL_STATE,
+          phase: "error",
+          error:
+            supported.reason ??
+            "Your browser cannot render MP4 locally. Try the latest Chrome or Edge.",
+          errorStack: null,
         });
-    }
+        return;
+      }
 
-    poll();
-  }, []);
+      setState({ ...INITIAL_STATE, phase: "starting", errorStack: null });
 
-  return { state, start, reset };
-}
+      await new Promise<void>((r) => setTimeout(r, 0));
+      if (generationRef.current !== myGeneration) return;
 
-function triggerDownload(jobId: string) {
-  const a = document.createElement("a");
-  a.href = `/api/render-project/${jobId}/download`;
-  a.download = "project.mp4";
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
+      setState({ ...INITIAL_STATE, phase: "rendering", errorStack: null });
+
+      const handleProgress = (progress: number) => {
+        if (generationRef.current !== myGeneration) return;
+        setState((prev) => ({
+          ...prev,
+          phase: "rendering",
+          progress,
+          error: null,
+          errorStack: null,
+        }));
+      };
+
+      try {
+        const { blob, filename } = await renderProjectLocally({
+          project,
+          options: resolved,
+          signal: controller.signal,
+          onProgress: handleProgress,
+        });
+
+        if (generationRef.current !== myGeneration) return;
+
+        const url = URL.createObjectURL(blob);
+        blobUrlRef.current = url;
+
+        console.info("[export-hook] done", blob.size, "bytes");
+        setState({
+          phase: "done",
+          progress: 1,
+          error: null,
+          errorStack: null,
+          blobUrl: url,
+          filename,
+        });
+      } catch (e) {
+        if (generationRef.current !== myGeneration) return;
+        const err = e instanceof Error ? e : new Error(String(e));
+        if (err.name === "AbortError") {
+          console.info("[export-hook] cancelled");
+          setState(INITIAL_STATE);
+          return;
+        }
+        console.error("[export-hook] failed", e);
+        setState({
+          ...INITIAL_STATE,
+          phase: "error",
+          error: err.message || "Render failed",
+          errorStack: err.stack ?? null,
+        });
+      } finally {
+        if (controllerRef.current === controller) {
+          controllerRef.current = null;
+        }
+      }
+    },
+    [],
+  );
+
+  useEffect(
+    () => () => {
+      controllerRef.current?.abort();
+      controllerRef.current = null;
+      revokeBlobUrl();
+    },
+    [revokeBlobUrl],
+  );
+
+  const download = useCallback(() => {
+    const url = blobUrlRef.current;
+    const filename = state.filename ?? "project.mp4";
+    if (!url) return;
+    fetch(url)
+      .then((r) => r.blob())
+      .then((b) => downloadMp4Blob(b, filename))
+      .catch((err) => console.error("[export-hook] download failed", err));
+  }, [state.filename]);
+
+  return { state, start, reset, cancel, download };
 }

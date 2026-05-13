@@ -4,6 +4,7 @@ export type PrimitiveField =
   | { kind: "number"; key: string; label: string; min?: number; max?: number }
   | { kind: "color"; key: string; label: string }
   | { kind: "image"; key: string; label: string; placeholder?: string }
+  | { kind: "switch"; key: string; label: string }
   | {
       kind: "select";
       key: string;
@@ -22,6 +23,18 @@ export type ShapeField =
       layoutKey: string;
       counts: Record<string, number>;
       exclude?: string[];
+    }
+  | {
+      kind: "imageList";
+      key: string;
+      label: string;
+      itemLabel?: string;
+      max?: number;
+    }
+  | {
+      kind: "terminalLines";
+      key: string;
+      label: string;
     };
 
 // A collapsible section that groups primitive fields under a label.

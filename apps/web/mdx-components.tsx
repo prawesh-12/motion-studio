@@ -1,6 +1,9 @@
 import type { MDXComponents } from "mdx/types";
 import Link from "next/link";
+import { ComponentCode } from "@/components/docs/component-code";
+import { ComponentsGrid } from "@/components/docs/components-grid";
 import { CompositionStats } from "@/components/docs/composition-stats";
+import { ContributorsGrid } from "@/components/docs/contributors-grid";
 import { EditorLink } from "@/components/docs/editor-link";
 import { Preview } from "@/components/docs/preview";
 import { PropsTable } from "@/components/docs/props-table";
@@ -104,6 +107,9 @@ export function useMDXComponents(components: MDXComponents): MDXComponents {
     PropsTable,
     CompositionStats,
     EditorLink,
+    ComponentCode,
+    ComponentsGrid,
+    ContributorsGrid,
     ...components,
   };
 }

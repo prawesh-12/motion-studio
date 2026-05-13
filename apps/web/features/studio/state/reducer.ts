@@ -7,6 +7,7 @@ import {
   type Project,
 } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
+import type { SceneTransition } from "@workspace/compositions/transitions";
 
 export type StudioPanel = "library" | "agent" | null;
 
@@ -38,6 +39,15 @@ export type StudioAction =
   | { type: "TOGGLE_PANEL"; panel: StudioPanel }
   | { type: "UPDATE_CLIP_STYLE"; clipId: string; patch: Partial<ClipStyle> }
   | { type: "RESET_CLIP_STYLE"; clipId: string }
+  | {
+      type: "UPDATE_CLIP_TRANSITION";
+      clipId: string;
+      transition: SceneTransition | undefined;
+    }
+  | {
+      type: "UPDATE_PROJECT_TRANSITION";
+      transition: SceneTransition | undefined;
+    }
   | { type: "LOAD_PROJECT"; project: Project };
 
 export const initialStudioState: StudioState = {
@@ -155,6 +165,18 @@ export function studioReducer(
         c.id === action.clipId ? { ...c, style: undefined } : c,
       );
       return { ...state, project: { ...state.project, clips } };
+    }
+    case "UPDATE_CLIP_TRANSITION": {
+      const clips = state.project.clips.map((c) =>
+        c.id === action.clipId ? { ...c, transition: action.transition } : c,
+      );
+      return { ...state, project: { ...state.project, clips } };
+    }
+    case "UPDATE_PROJECT_TRANSITION": {
+      return {
+        ...state,
+        project: { ...state.project, defaultTransition: action.transition },
+      };
     }
     case "SELECT_CLIP":
       return { ...state, selectedClipId: action.clipId };

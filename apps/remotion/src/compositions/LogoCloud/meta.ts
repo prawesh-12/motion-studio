@@ -9,11 +9,11 @@ export const LOGO_CLOUD_HEIGHT = 720;
 export const logoCloudDefaultProps: LogoCloudProps = {
   headline: "Trusted by teams at",
   logos: [
-    { name: "Vercel", url: "" },
-    { name: "Linear", url: "" },
-    { name: "Stripe", url: "" },
-    { name: "Notion", url: "" },
-    { name: "Figma", url: "" },
+    { name: "Vercel", url: "https://cdn.simpleicons.org/vercel/0f1014" },
+    { name: "Linear", url: "https://cdn.simpleicons.org/linear/0f1014" },
+    { name: "Stripe", url: "https://cdn.simpleicons.org/stripe/0f1014" },
+    { name: "Notion", url: "https://cdn.simpleicons.org/notion/0f1014" },
+    { name: "Figma", url: "https://cdn.simpleicons.org/figma/0f1014" },
   ],
   theme: "light",
 };
@@ -38,6 +38,13 @@ export const logoCloudInfo: CompositionInfo<LogoCloudProps> = {
         { value: "light", label: "Light" },
         { value: "dark", label: "Dark" },
       ],
+    },
+    {
+      kind: "imageList",
+      key: "logos",
+      label: "Logos",
+      itemLabel: "Logo",
+      max: 12,
     },
   ],
 };

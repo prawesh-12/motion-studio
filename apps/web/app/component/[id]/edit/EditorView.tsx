@@ -1,11 +1,13 @@
 "use client";
 
 import { Player } from "@remotion/player";
+import { renderMediaOnWeb } from "@remotion/web-renderer";
 import { componentsById } from "@workspace/compositions/components";
 import { FieldsRenderer } from "@workspace/compositions/editors";
 import type { AnyCompositionInfo } from "@workspace/compositions/schema";
 import { Button } from "@workspace/ui/components/button";
 import { useMemo, useState } from "react";
+import { downloadMp4Blob } from "@/features/studio/lib/local-export";
 
 export function EditorView({
   info,
@@ -17,29 +19,34 @@ export function EditorView({
     () => structuredClone(info.defaultProps) as Record<string, unknown>,
   );
   const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const playerProps = useMemo(() => props, [props]);
 
   async function handleDownload() {
+    if (!Component) return;
     setLoading(true);
+    setProgress(0);
     setError(null);
     try {
-      const res = await fetch(`/api/render/${info.id}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(props),
+      const result = await renderMediaOnWeb({
+        composition: {
+          id: info.id,
+          component: Component as React.ComponentType<Record<string, unknown>>,
+          width: info.width,
+          height: info.height,
+          fps: info.fps,
+          durationInFrames: info.durationInFrames,
+        },
+        inputProps: props,
+        container: "mp4",
+        videoCodec: "h264",
+        hardwareAcceleration: "prefer-hardware",
+        onProgress: ({ progress: p }) => setProgress(p),
       });
-      if (!res.ok) throw new Error(`Render failed: ${res.status}`);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${info.id}.mp4`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
+      const blob = await result.getBlob();
+      downloadMp4Blob(blob, `${info.id}.mp4`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -57,8 +64,8 @@ export function EditorView({
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] lg:min-h-0 lg:flex-1">
-      <aside className="flex flex-col border-b border-border lg:border-b-0 lg:border-r lg:min-h-0">
-        <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-hidden">
+      <aside className="flex flex-col border-b border-border lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+        <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
           <FieldsRenderer
             fields={info.fields}
             value={props}
@@ -71,7 +78,9 @@ export function EditorView({
             onClick={handleDownload}
             disabled={loading}
           >
-            {loading ? "Rendering…" : "Download MP4"}
+            {loading
+              ? `Rendering… ${Math.round(progress * 100)}%`
+              : "Download MP4"}
           </Button>
           {error && <p className="mt-2 text-[12px] text-red-500">{error}</p>}
         </div>
