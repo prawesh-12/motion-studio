@@ -8,6 +8,7 @@ import { CursorWalkthrough } from "./compositions/CursorWalkthrough/CursorWalkth
 import { DiscordMessages } from "./compositions/DiscordMessages/DiscordMessages";
 import { FeatureCard } from "./compositions/FeatureCard/FeatureCard";
 import { GaiaScenario } from "./compositions/GaiaScenario/GaiaScenario";
+import { GitHubFollowerCount } from "./compositions/GitHubFollowerCount/GitHubFollowerCount";
 import { GitHubStarButton } from "./compositions/GitHubStarButton/GitHubStarButton";
 import { InstagramMessages } from "./compositions/InstagramMessages/InstagramMessages";
 import { InstagramPost } from "./compositions/InstagramPost/InstagramPost";
@@ -118,6 +119,7 @@ export const componentsByIdBase: Record<string, ComponentType<any>> = {
   PricingCard,
   Terminal,
   GitHubStarButton,
+  GitHubFollowerCount,
   Toast,
   PerspectiveMarquee,
   BarChart,

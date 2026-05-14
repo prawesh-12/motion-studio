@@ -132,7 +132,7 @@ function RevealWord({
       <span
         style={{
           display: "inline-block",
-          transform: `translateY(${translateY}%)`,
+          transform: `translate3d(0, ${translateY}%, 0)`,
           willChange: "transform",
         }}
       >

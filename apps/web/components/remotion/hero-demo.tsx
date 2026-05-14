@@ -81,7 +81,9 @@ export function HeroDemo() {
         <div
           style={{
             opacity: logoOpacity,
-            transform: `scale(${logoScale})`,
+            transform: `translate3d(0, 0, 0) scale(${logoScale})`,
+            willChange: "transform, opacity",
+            backfaceVisibility: "hidden",
             width: 96,
             height: 96,
             borderRadius: 24,
@@ -102,7 +104,9 @@ export function HeroDemo() {
         <div
           style={{
             opacity: titleOpacity,
-            transform: `translateY(${titleY}px)`,
+            transform: `translate3d(0, ${titleY}px, 0)`,
+            willChange: "transform, opacity",
+            backfaceVisibility: "hidden",
             fontSize: 80,
             fontWeight: 700,
             letterSpacing: "-0.04em",
@@ -115,7 +119,9 @@ export function HeroDemo() {
         <div
           style={{
             opacity: subtitleOpacity,
-            transform: `translateY(${subtitleY}px)`,
+            transform: `translate3d(0, ${subtitleY}px, 0)`,
+            willChange: "transform, opacity",
+            backfaceVisibility: "hidden",
             fontSize: 26,
             color: "rgba(255,255,255,0.6)",
             fontWeight: 400,
@@ -141,7 +147,9 @@ export function HeroDemo() {
                 key={label}
                 style={{
                   opacity,
-                  transform: `translateY(${y}px)`,
+                  transform: `translate3d(0, ${y}px, 0)`,
+                  willChange: "transform, opacity",
+                  backfaceVisibility: "hidden",
                   padding: "10px 18px",
                   borderRadius: 9999,
                   border: "1px solid rgba(255,255,255,0.15)",
@@ -149,7 +157,6 @@ export function HeroDemo() {
                   fontSize: 16,
                   fontWeight: 500,
                   color: "rgba(255,255,255,0.85)",
-                  backdropFilter: "blur(6px)",
                 }}
               >
                 {label}
