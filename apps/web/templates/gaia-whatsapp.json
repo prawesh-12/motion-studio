@@ -4,7 +4,7 @@
   "height": 1080,
   "defaultTransition": {
     "kind": "fade",
-    "durationInFrames": 10,
+    "durationInFrames": 12,
     "timing": { "kind": "linear" }
   },
   "clips": [
@@ -13,82 +13,112 @@
       "compositionId": "MessagePopup",
       "durationInFrames": 120,
       "props": {
-        "sender": "GAIA · WhatsApp",
-        "time": "9:14 AM",
-        "body": "Sarah needs the deck by 5. Want me to draft a heads-up?",
-        "theme": "light"
+        "sender": "GAIA",
+        "time": "9:02 AM",
+        "body": "morning. 3 things on the radar today",
+        "theme": "light",
+        "iconPreset": "whatsapp"
       }
     },
     {
       "id": "clip_title",
       "compositionId": "TextSoftBlurIn",
-      "durationInFrames": 180,
+      "durationInFrames": 130,
       "props": {
         "headline": "Your AI lives in your DMs.",
         "subtitle": "GAIA. On WhatsApp."
       }
     },
     {
-      "id": "clip_chat",
+      "id": "clip_chat_large",
+      "compositionId": "WhatsAppMessages",
+      "durationInFrames": 480,
+      "props": {
+        "contactName": "GAIA",
+        "contactAvatar": "/images/logos/logo.webp",
+        "theme": "light",
+        "orientation": "landscape",
+        "scale": 2.3,
+        "messages": [
+          {
+            "text": "morning, what's the rundown",
+            "side": "right",
+            "typingFrames": 40,
+            "delay": 20
+          },
+          {
+            "text": "on it 👀",
+            "side": "left",
+            "typingFrames": 25,
+            "delay": 140
+          },
+          {
+            "text": "standup at 10:30, alex from acme at 2pm, design review at 4. naval emailed about coffee, still owe him a reply.",
+            "side": "left",
+            "typingFrames": 100,
+            "delay": 230
+          }
+        ]
+      }
+    },
+    {
+      "id": "clip_marquee",
+      "compositionId": "PerspectiveMarquee",
+      "durationInFrames": 420,
+      "props": {
+        "items": "Already drafted, Already booked, Already moved, Already done",
+        "speedPxPerFrame": 14,
+        "perspective": 1400,
+        "rotateY": -18,
+        "rotateX": 5,
+        "fontSize": 150,
+        "fontWeight": 700,
+        "textTransform": "none"
+      }
+    },
+    {
+      "id": "clip_chat_phone",
       "compositionId": "PhoneFrame",
-      "durationInFrames": 1080,
+      "durationInFrames": 540,
       "props": {
         "device": "dynamic-island",
         "innerCompositionId": "WhatsAppMessages",
         "screenImage": "",
         "innerProps": {
           "contactName": "GAIA",
-          "contactAvatar": "https://github.com/theexperiencecompany.png?size=200",
+          "contactAvatar": "/images/logos/logo.webp",
           "theme": "light",
           "orientation": "portrait",
           "messages": [
             {
-              "text": "yo morning",
+              "text": "morning, what's the rundown",
               "side": "right",
-              "typingFrames": 30,
-              "delay": 20
+              "typingFrames": 0,
+              "delay": 0
             },
             {
-              "text": "Morning. 1pm w/ Alex, design @ 3, Sarah's deck still open. Brief?",
+              "text": "on it 👀",
               "side": "left",
-              "typingFrames": 90,
-              "delay": 90
+              "typingFrames": 0,
+              "delay": 0
             },
             {
-              "text": "yes",
+              "text": "standup at 10:30, alex from acme at 2pm, design review at 4. naval emailed about coffee, still owe him a reply.",
+              "side": "left",
+              "typingFrames": 0,
+              "delay": 0
+            },
+            {
+              "text": "draft naval saying thursday works. push my 2pm to 4.",
               "side": "right",
-              "typingFrames": 18,
-              "delay": 280
+              "typingFrames": 80,
+              "delay": 60
             },
             {
-              "text": "Alex from Acme. Met 2 wks ago re: pricing. Still owes you a Q3 reply.",
+              "text": "drafted it. alex moved to 4, design review bumped to 5.",
               "side": "left",
-              "typingFrames": 100,
-              "delay": 340
-            },
-            {
-              "text": "draft a reply. push the call to 4",
-              "side": "right",
-              "typingFrames": 55,
-              "delay": 580
-            },
-            {
-              "text": "Drafted ✓  Moved to 4pm ✓",
-              "side": "left",
-              "typingFrames": 45,
-              "delay": 700
-            },
-            {
-              "text": "ping me if Naval emails",
-              "side": "right",
-              "typingFrames": 45,
-              "delay": 830
-            },
-            {
-              "text": "Watching 👀",
-              "side": "left",
-              "typingFrames": 35,
-              "delay": 940
+              "typingFrames": 75,
+              "delay": 240
             }
           ]
         }
@@ -97,54 +127,34 @@
     {
       "id": "clip_proof",
       "compositionId": "Toast",
-      "durationInFrames": 150,
+      "durationInFrames": 200,
       "props": {
-        "title": "Handled",
-        "description": "Reply drafted · Call moved to 4pm · Watching Naval",
+        "title": "Done",
+        "description": "Reply drafted. Calendar shuffled. PRs queued up.",
         "position": "bottom-right",
         "variant": "success",
         "showIcon": true,
-        "durationVisibleSec": 2.0
+        "durationVisibleSec": 3.0
       },
       "style": {
         "background": "#0f1014"
       }
     },
     {
-      "id": "clip_stat",
-      "compositionId": "StatCounter",
-      "durationInFrames": 180,
-      "props": {
-        "target": 47,
-        "prefix": "",
-        "suffix": " min",
-        "label": "saved before lunch"
-      }
-    },
-    {
       "id": "clip_pitch",
       "compositionId": "TextLineByLineSlide",
-      "durationInFrames": 240,
+      "durationInFrames": 220,
       "props": {
-        "headline": "No new app.\nNo new tab.\nJust message GAIA.",
-        "subtitle": ""
-      }
-    },
-    {
-      "id": "clip_brandline",
-      "compositionId": "TextShimmerSweep",
-      "durationInFrames": 150,
-      "props": {
-        "headline": "The AI that ships work.",
+        "headline": "No new app.\nNo new tab.\nJust text.",
         "subtitle": ""
       }
     },
     {
       "id": "clip_cta",
       "compositionId": "TypingSearch",
-      "durationInFrames": 240,
+      "durationInFrames": 220,
       "props": {
-        "query": "heygaia.io/bots",
+        "query": "wa.me/12762088737",
         "placeholder": "Start a chat with GAIA…"
       },
       "style": {

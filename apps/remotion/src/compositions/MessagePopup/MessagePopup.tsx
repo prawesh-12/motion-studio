@@ -6,17 +6,42 @@ import {
   staticFile,
   useVideoConfig,
 } from "remotion";
+import { proxyExternalImg } from "../../proxy-image";
 import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
+import { ICON_PRESETS, resolveIconPreset } from "./icon-presets";
 
-const ICON_SRC = staticFile("message_icon.png");
+const DEFAULT_ICON_SRC = staticFile("message_icon.png");
+
+/**
+ * Resolve an icon path to a renderable URL:
+ *   - data: / blob: URIs pass through unchanged
+ *   - absolute http(s) URLs route through `/api/img/<encoded>` so the
+ *     export canvas stays untainted
+ *   - relative paths get `staticFile()`'d so the Remotion bundle server
+ *     serves them in both studio and `remotion render`
+ */
+function resolveAsset(src: string | undefined): string | undefined {
+  // Return undefined (not the empty string) so the `??` fallback chain in
+  // the caller actually falls through when an upstream field is unset.
+  if (!src) return undefined;
+  if (/^(data:|blob:)/i.test(src)) return src;
+  if (/^https?:/i.test(src)) return proxyExternalImg(src);
+  return staticFile(src.replace(/^\//, ""));
+}
 
 export type MessagePopupProps = {
   sender: string;
   time: string;
   body: string;
   theme: "light" | "dark";
+  /** Key into the macOS icon preset map (e.g. "whatsapp", "slack"). */
+  iconPreset?: string;
+  /** Custom uploaded/pasted icon — takes precedence over `iconPreset`. */
+  iconCustom?: string;
 };
+
+export { ICON_PRESETS };
 
 type Palette = {
   bg: string;
@@ -64,10 +89,18 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
   time,
   body,
   theme,
+  iconPreset,
+  iconCustom,
 }) => {
   const frame = useDesignFrame();
   const { fps } = useVideoConfig();
   const palette = getPalette(theme);
+
+  // Render priority: explicit custom upload > preset key > default icon.
+  const iconSrc =
+    resolveAsset(iconCustom) ??
+    resolveAsset(resolveIconPreset(iconPreset)) ??
+    DEFAULT_ICON_SRC;
 
   return (
     <AbsoluteFill
@@ -94,6 +127,7 @@ export const MessagePopup: React.FC<MessagePopupProps> = ({
           sender={sender}
           time={time}
           body={body}
+          iconSrc={iconSrc}
           palette={palette}
         />
       </div>
@@ -107,6 +141,7 @@ function NotificationBanner({
   sender,
   time,
   body,
+  iconSrc,
   palette,
 }: {
   frame: number;
@@ -114,6 +149,7 @@ function NotificationBanner({
   sender: string;
   time: string;
   body: string;
+  iconSrc: string;
   palette: Palette;
 }) {
   const bodyWords = body.split(" ");
@@ -144,7 +180,7 @@ function NotificationBanner({
       }}
     >
       <Img
-        src={ICON_SRC}
+        src={iconSrc}
         alt={sender}
         width={ICON_SIZE}
         height={ICON_SIZE}

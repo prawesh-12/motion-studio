@@ -25,6 +25,44 @@ export type Clip = {
   transition?: SceneTransition;
 };
 
+/**
+ * Project-level background music. Sits at the AbsoluteFill root in the
+ * `Project` composition — outside the TransitionSeries — so it spans the
+ * whole timeline regardless of how the clips above are arranged or
+ * transitioned. Optional: a project without `audio` set renders silent.
+ */
+export type ProjectAudio = {
+  /** URL to mp3: pixabay direct, proxied, or browser blob: URL from upload. */
+  src: string;
+  /** Display label in the inspector. */
+  title?: string;
+  /** Royalty attribution string if the source requires it. */
+  attribution?: string;
+  /** 0..1, default 0.2 — sits politely under any future voiceover. */
+  volume: number;
+  /** Seek into the source file before playback starts. Seconds. Default 0. */
+  trimStartSec?: number;
+  /**
+   * How many frames the audio plays for. Defaults to the project's total
+   * duration (audio runs the whole video). Clamped to ≤ projectDuration in
+   * the UI — audio can never outlast the video.
+   */
+  durationFrames?: number;
+  /** Linear fade-in over this many frames. Default 15 (0.25s @ 60fps). */
+  fadeInFrames?: number;
+  /** Linear fade-out over this many frames at the END of durationFrames. Default 30. */
+  fadeOutFrames?: number;
+  /** If the source is shorter than durationFrames, loop to fill. */
+  loop?: boolean;
+  /**
+   * Length of the source mp3 in seconds, when known. Pixabay results
+   * provide this directly; for browser-uploaded mp3s the studio decodes
+   * it via `<audio>` metadata events. Drives the trim-start slider's
+   * upper bound and the "fits whole video?" UI hint.
+   */
+  sourceDurationSec?: number;
+};
+
 export type Project = {
   fps: number;
   width: number;
@@ -36,6 +74,8 @@ export type Project = {
    * all slides) once instead of per-clip.
    */
   defaultTransition?: SceneTransition;
+  /** Optional background music for the whole project. */
+  audio?: ProjectAudio;
 };
 
 export const DEFAULT_PROJECT: Project = {

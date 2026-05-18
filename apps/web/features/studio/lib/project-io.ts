@@ -1,7 +1,8 @@
 import type { ClipStyle } from "@workspace/compositions/clip-style";
 import type { ClipEffect } from "@workspace/compositions/effects/schema";
-import type { Project } from "@workspace/compositions/project";
+import type { Project, ProjectAudio } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
+import type { SceneTransition } from "@workspace/compositions/transitions";
 
 export type ParseResult =
   | { ok: true; project: Project; warnings: string[] }
@@ -113,11 +114,76 @@ export function parseProjectJson(text: string): ParseResult {
     });
   }
 
+  // Optional top-level fields. `defaultTransition` and `audio` survived the
+  // earliest project saves untouched, so a missing key just means "no
+  // preference"; bad shapes get dropped with a warning rather than failing
+  // the whole load.
+  const defaultTransition =
+    obj.defaultTransition && typeof obj.defaultTransition === "object"
+      ? (obj.defaultTransition as SceneTransition)
+      : undefined;
+
+  const audio = parseAudio(obj.audio, warnings);
+
   return {
     ok: true,
     warnings,
-    project: { fps, width, height, clips: validClips },
+    project: {
+      fps,
+      width,
+      height,
+      clips: validClips,
+      ...(defaultTransition ? { defaultTransition } : {}),
+      ...(audio ? { audio } : {}),
+    },
   };
+}
+
+function parseAudio(raw: unknown, warnings: string[]): ProjectAudio | null {
+  if (!raw) return null;
+  if (typeof raw !== "object") {
+    warnings.push("`audio` must be an object — ignored.");
+    return null;
+  }
+  const a = raw as Record<string, unknown>;
+  if (typeof a.src !== "string" || a.src.length === 0) {
+    warnings.push("`audio.src` missing — audio not loaded.");
+    return null;
+  }
+  // `blob:` URLs only resolve inside the originating browser session, so
+  // a JSON file written by one tab and opened by another will lose its
+  // blob audio. Warn loudly — the user can re-upload.
+  if (a.src.startsWith("blob:")) {
+    warnings.push(
+      "`audio.src` is a blob: URL from a previous browser session — re-upload the MP3 to restore audio.",
+    );
+  }
+  const result: ProjectAudio = {
+    src: a.src,
+    volume:
+      typeof a.volume === "number" && Number.isFinite(a.volume)
+        ? a.volume
+        : 0.2,
+  };
+  if (typeof a.title === "string") result.title = a.title;
+  if (typeof a.attribution === "string") result.attribution = a.attribution;
+  if (typeof a.trimStartSec === "number" && a.trimStartSec >= 0) {
+    result.trimStartSec = a.trimStartSec;
+  }
+  if (typeof a.durationFrames === "number" && a.durationFrames > 0) {
+    result.durationFrames = a.durationFrames;
+  }
+  if (typeof a.fadeInFrames === "number" && a.fadeInFrames >= 0) {
+    result.fadeInFrames = a.fadeInFrames;
+  }
+  if (typeof a.fadeOutFrames === "number" && a.fadeOutFrames >= 0) {
+    result.fadeOutFrames = a.fadeOutFrames;
+  }
+  if (typeof a.loop === "boolean") result.loop = a.loop;
+  if (typeof a.sourceDurationSec === "number" && a.sourceDurationSec > 0) {
+    result.sourceDurationSec = a.sourceDurationSec;
+  }
+  return result;
 }
 
 export function downloadProject(project: Project, filename = "project.json") {

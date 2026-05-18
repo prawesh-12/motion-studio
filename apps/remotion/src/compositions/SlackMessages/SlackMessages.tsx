@@ -13,7 +13,7 @@ export type SlackMessagesProps = {
   scale?: number;
 };
 
-const LEFT_AVATAR = "default-avatar.png";
+const LEFT_AVATAR = "images/logos/aryan-avatar.png";
 const RIGHT_AVATAR = "gaia-glow.png";
 
 function buildItems(messages: ChatMessage[], frame: number): ChatMessageItem[] {
@@ -23,12 +23,15 @@ function buildItems(messages: ChatMessage[], frame: number): ChatMessageItem[] {
     if (frame < m.delay) continue;
     const local = frame - m.delay;
     const isTyping = local < m.typingFrames;
-    const isMe = m.side === "right";
+    const isGaia = m.side === "right";
     out.push({
       id: i,
-      from: isMe ? "me" : "them",
-      author: isMe ? "GAIA" : "Aryan",
-      avatar: isMe ? RIGHT_AVATAR : LEFT_AVATAR,
+      // Slack is a channel — every message is left-aligned next to its
+      // author's avatar, regardless of who sent it. `from` here only drives
+      // bubble alignment, so it's always "them".
+      from: "them",
+      author: isGaia ? "GAIA" : "Aryan",
+      avatar: isGaia ? RIGHT_AVATAR : LEFT_AVATAR,
       text: m.text,
       typing: isTyping,
       enterFrames: local,

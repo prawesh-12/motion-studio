@@ -11,6 +11,8 @@ export const messagePopupDefaultProps: MessagePopupProps = {
   time: "now",
   body: "babe what is this claude code?",
   theme: "light",
+  iconPreset: "",
+  iconCustom: "",
 };
 
 export const messagePopupInfo: CompositionInfo<MessagePopupProps> = {
@@ -36,6 +38,13 @@ export const messagePopupInfo: CompositionInfo<MessagePopupProps> = {
         { value: "light", label: "Light" },
         { value: "dark", label: "Dark" },
       ],
+    },
+    {
+      kind: "iconPreset",
+      key: "iconPreset",
+      customKey: "iconCustom",
+      label: "App Icon",
+      presetSet: "macos",
     },
   ],
 };

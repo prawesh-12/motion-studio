@@ -13,7 +13,11 @@ import {
   horizontalListSortingStrategy,
   SortableContext,
 } from "@dnd-kit/sortable";
-import { ZoomInAreaIcon, ZoomOutAreaIcon } from "@hugeicons/core-free-icons";
+import {
+  CameraIcon,
+  ZoomInAreaIcon,
+  ZoomOutAreaIcon,
+} from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { type Project, projectDuration } from "@workspace/compositions/project";
 import {
@@ -59,6 +63,11 @@ type Props = {
   onSeek: (frame: number) => void;
   onScrubStart: () => void;
   onScrubEnd: () => void;
+  /**
+   * Fires when the user wants to download a PNG of the current frame.
+   * Disabled when there are no clips on the timeline.
+   */
+  onCapture: () => void;
 };
 
 type ClipLayout = {
@@ -80,6 +89,7 @@ export function Timeline({
   onSeek,
   onScrubStart,
   onScrubEnd,
+  onCapture,
 }: Props) {
   const total = projectDuration(project);
   const totalSeconds = total / project.fps;
@@ -283,6 +293,17 @@ export function Timeline({
               {project.width}×{project.height}
             </MetaPill>
           </div>
+          <div className="h-4 w-px bg-border" />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onCapture}
+            disabled={project.clips.length === 0}
+            title="Screenshot current frame (PNG)"
+            aria-label="Screenshot current frame (PNG)"
+          >
+            <HugeiconsIcon icon={CameraIcon} className="size-3.5" />
+          </Button>
           <div className="h-4 w-px bg-border" />
           <div className="flex items-center gap-1">
             <Button

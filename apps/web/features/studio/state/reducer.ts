@@ -5,11 +5,12 @@ import {
   type Clip,
   DEFAULT_PROJECT,
   type Project,
+  type ProjectAudio,
 } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
 import type { SceneTransition } from "@workspace/compositions/transitions";
 
-export type StudioPanel = "library" | "agent" | null;
+export type StudioPanel = "library" | "agent" | "audio" | null;
 
 export type StudioState = {
   project: Project;
@@ -48,6 +49,9 @@ export type StudioAction =
       type: "UPDATE_PROJECT_TRANSITION";
       transition: SceneTransition | undefined;
     }
+  | { type: "SET_PROJECT_AUDIO"; audio: ProjectAudio }
+  | { type: "UPDATE_PROJECT_AUDIO"; patch: Partial<ProjectAudio> }
+  | { type: "CLEAR_PROJECT_AUDIO" }
   | { type: "LOAD_PROJECT"; project: Project };
 
 export const initialStudioState: StudioState = {
@@ -176,6 +180,30 @@ export function studioReducer(
       return {
         ...state,
         project: { ...state.project, defaultTransition: action.transition },
+      };
+    }
+    case "SET_PROJECT_AUDIO": {
+      return {
+        ...state,
+        project: { ...state.project, audio: action.audio },
+      };
+    }
+    case "UPDATE_PROJECT_AUDIO": {
+      const current = state.project.audio;
+      if (!current) return state;
+      return {
+        ...state,
+        project: {
+          ...state.project,
+          audio: { ...current, ...action.patch },
+        },
+      };
+    }
+    case "CLEAR_PROJECT_AUDIO": {
+      const { audio: _omit, ...rest } = state.project;
+      return {
+        ...state,
+        project: rest,
       };
     }
     case "SELECT_CLIP":

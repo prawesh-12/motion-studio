@@ -4,22 +4,37 @@ import type { PlayerRef } from "@remotion/player";
 import { type Project, projectDuration } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
 import { resolveTransition } from "@workspace/compositions/transitions";
-import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
+import { toast } from "sonner";
 
 import { useExportRender } from "../hooks/use-export-render";
 import { usePlayerControls } from "../hooks/use-player-controls";
 import { useProjectIO } from "../hooks/use-project-io";
 import type { ExportOptions } from "../lib/export-options";
+import {
+  captureCurrentFrame,
+  downloadPngBlob,
+  screenshotFilename,
+} from "../lib/local-screenshot";
 import { registerImageProxy } from "../lib/register-image-proxy";
 import { PlayerProvider } from "../state/player-context";
 import { initialStudioState, studioReducer } from "../state/reducer";
 import { AgentPanel } from "./agent-panel";
+import { AudioPanel } from "./audio-panel";
 import { ExportProgressOverlay } from "./export-progress-overlay";
 import { ExportSettingsModal } from "./export-settings-modal";
 import { Inspector, type InspectorTab } from "./inspector";
 import { LibraryPanel } from "./library-panel";
 import { PlaybackControls } from "./playback-controls";
 import { PreviewStage } from "./preview-stage";
+import { ProjectAudioControl } from "./project-audio-control";
 import { Timeline } from "./timeline";
 import { ToolRail } from "./tool-rail";
 import { TopBar } from "./top-bar";
@@ -96,6 +111,39 @@ export function Builder() {
   const playerControls = usePlayerControls(playerRef, totalDuration);
 
   // ----------------------------------------------------------------------
+  // Screenshot current frame → PNG download
+  //
+  // Pauses the player first so the rendered still actually matches the
+  // user's visible viewport (any in-flight playback would have already
+  // advanced past the frame the user is "looking at"). If playback was
+  // running, restore it after the capture resolves.
+  // ----------------------------------------------------------------------
+  const projectRef = useRef(project);
+  projectRef.current = project;
+  const handleCaptureFrame = useCallback(async () => {
+    const player = playerRef.current;
+    if (!player) return;
+    const wasPlaying = player.isPlaying();
+    if (wasPlaying) player.pause();
+    try {
+      const blob = await captureCurrentFrame(playerRef, projectRef.current);
+      downloadPngBlob(blob, screenshotFilename());
+      toast.success("Frame saved to Downloads");
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to capture frame";
+      console.error("[screenshot] capture failed", err);
+      toast.error(message);
+    } finally {
+      if (wasPlaying) {
+        // Re-read the ref — the player might have unmounted while we waited
+        // on the render (e.g. user cleared the timeline).
+        playerRef.current?.play();
+      }
+    }
+  }, []);
+
+  // ----------------------------------------------------------------------
   // Save / Load Project JSON
   // ----------------------------------------------------------------------
   const { handleSaveProject, handleLoadProjectFile } = useProjectIO(
@@ -155,6 +203,14 @@ export function Builder() {
             />
           )}
 
+          {openPanel === "audio" && (
+            <AudioPanel
+              currentAudio={project.audio}
+              onSet={(audio) => dispatch({ type: "SET_PROJECT_AUDIO", audio })}
+              onClose={() => dispatch({ type: "TOGGLE_PANEL", panel: "audio" })}
+            />
+          )}
+
           {openPanel === "agent" && (
             <AgentPanel
               onClose={() => dispatch({ type: "TOGGLE_PANEL", panel: "agent" })}
@@ -211,6 +267,7 @@ export function Builder() {
               onSeek={playerControls.handleSeek}
               onScrubStart={playerControls.handleScrubStart}
               onScrubEnd={playerControls.handleScrubEnd}
+              onCapture={handleCaptureFrame}
             />
           </main>
 
@@ -267,6 +324,36 @@ export function Builder() {
               }
               onClose={() => dispatch({ type: "SELECT_CLIP", clipId: null })}
             />
+          )}
+
+          {/*
+            Project-level Audio inspector. Mirrors how the Project default
+            transition control lives in the top bar — except audio has
+            more controls than fit in a popover, so it gets its own right-
+            rail slot when no clip is selected. Tucked inside the inspector
+            column when a clip IS selected via the inspector's own
+            footer, this would crowd the clip controls; for now we surface
+            it only when nothing is selected.
+          */}
+          {!selectedClip && project.audio && (
+            <aside className="flex w-80 shrink-0 flex-col gap-3 overflow-y-auto border-l border-border bg-background p-3">
+              <p className="px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Project audio
+              </p>
+              <ProjectAudioControl
+                audio={project.audio}
+                fps={project.fps}
+                videoDurationFrames={totalDuration}
+                sourceDurationSec={project.audio.sourceDurationSec}
+                onPatch={(patch) =>
+                  dispatch({ type: "UPDATE_PROJECT_AUDIO", patch })
+                }
+                onClear={() => dispatch({ type: "CLEAR_PROJECT_AUDIO" })}
+                onOpenLibrary={() =>
+                  dispatch({ type: "TOGGLE_PANEL", panel: "audio" })
+                }
+              />
+            </aside>
           )}
         </div>
 

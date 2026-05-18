@@ -71,6 +71,8 @@ function describeType(field: Field): string {
       return "Array<{ kind: string; text: string }>";
     case "innerProps":
       return "Record<string, unknown>";
+    case "iconPreset":
+      return "string (preset key, custom URL on sibling key)";
   }
 }
 

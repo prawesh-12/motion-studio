@@ -17,7 +17,8 @@
  * SSR-safe: deterministic between server and client renders, so it never
  * triggers a hydration mismatch.
  */
-const PROXY_PREFIX = "/api/img/";
+const IMG_PROXY_PREFIX = "/api/img/";
+const AUDIO_PROXY_PREFIX = "/api/audio/proxy/";
 
 function base64Url(input: string): string {
   // btoa needs binary-string input. encodeURIComponent + unescape is the
@@ -29,7 +30,13 @@ function base64Url(input: string): string {
   return bytes.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
-export function proxyExternalImg(src: string | undefined | null): string {
+/**
+ * Wraps an arbitrary URL with a same-origin proxy prefix when the URL is
+ * a cross-origin http/https resource. Local, data:, and blob: URLs pass
+ * through unchanged so user-uploaded audio (blob:) and bundled static
+ * assets (`/...`) keep working.
+ */
+function proxyExternal(src: string | undefined | null, prefix: string): string {
   if (!src) return src ?? "";
   if (
     src.startsWith("/") ||
@@ -38,7 +45,7 @@ export function proxyExternalImg(src: string | undefined | null): string {
   ) {
     return src;
   }
-  if (src.startsWith(PROXY_PREFIX)) return src;
+  if (src.startsWith(prefix)) return src;
 
   let parsed: URL;
   try {
@@ -58,5 +65,42 @@ export function proxyExternalImg(src: string | undefined | null): string {
   ) {
     return src;
   }
-  return `${PROXY_PREFIX}${base64Url(parsed.toString())}`;
+  return `${prefix}${base64Url(parsed.toString())}`;
+}
+
+export function proxyExternalImg(src: string | undefined | null): string {
+  return proxyExternal(src, IMG_PROXY_PREFIX);
+}
+
+/**
+ * Same idea as `proxyExternalImg` but routes through the audio proxy
+ * (`/api/audio/proxy/<base64url>`), which streams the upstream with an
+ * `audio/*` content-type and `Access-Control-Allow-Origin: *`. Required
+ * so the browser MP4 exporter (canvas + WebCodecs) can decode the audio
+ * without CORS issues, and so the canvas never becomes tainted.
+ *
+ * Render-context aware: during a CLI / headless render the page is
+ * served by remotion's own static bundler — the studio's `/api/*` routes
+ * are NOT reachable. We detect that case by sniffing remotion's bundle
+ * globals (`window.remotion_setFrame` only exists inside a remotion
+ * render bundle) and pass the URL through untouched. Pixabay's CDN
+ * serves MP3 with broad CORS, so the headless Chromium fetches it fine.
+ */
+type RemotionWindow = Window & {
+  remotion_setFrame?: unknown;
+  remotion_renderType?: string;
+};
+
+function isInsideRemotionBundle(): boolean {
+  if (typeof window === "undefined") return true;
+  const w = window as RemotionWindow;
+  return (
+    typeof w.remotion_setFrame !== "undefined" ||
+    typeof w.remotion_renderType !== "undefined"
+  );
+}
+
+export function proxyExternalAudio(src: string | undefined | null): string {
+  if (isInsideRemotionBundle()) return src ?? "";
+  return proxyExternal(src, AUDIO_PROXY_PREFIX);
 }
