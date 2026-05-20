@@ -38,3 +38,7 @@ npm-debug.log*
 
 # Local screenshots / scratch files
 .tmp/
+
+# Locally-uploaded audio (e.g. copyrighted tracks) used for renders
+apps/remotion/public/audio/uploads/
+apps/web/public/audio/uploads/

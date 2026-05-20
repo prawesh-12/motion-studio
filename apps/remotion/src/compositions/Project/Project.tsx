@@ -1,7 +1,11 @@
 "use client";
-import { Audio } from "@remotion/media";
 import { TransitionSeries } from "@remotion/transitions";
-import { AbsoluteFill, Sequence, useVideoConfig } from "remotion";
+// Classic `<Audio>` from `remotion` rather than `@remotion/media` —
+// the latter lazy-loads & decodes asynchronously which leaves the
+// first ~2–3s of any large remote MP3 silent until decoding finishes.
+// The classic Audio fetches & schedules synchronously, so playback
+// starts exactly at the sequence start.
+import { AbsoluteFill, Audio, Sequence, useVideoConfig } from "remotion";
 import { componentsById } from "../../components";
 import { EffectsWrap } from "../../effects/EffectsWrap";
 import {
@@ -140,26 +144,31 @@ function ProjectAudioTrack({
   videoDuration: number;
 }) {
   const { fps } = useVideoConfig();
-  const requestedDuration = audio.durationFrames ?? videoDuration;
-  // Audio can never outlast the video. Clamp at render time too so JSON
-  // produced before a clip got trimmed doesn't keep silent audio playing
-  // past the final frame.
-  const audioDuration = Math.max(1, Math.min(requestedDuration, videoDuration));
+  const startFrame = Math.max(
+    0,
+    Math.min(audio.startFrame ?? 0, Math.max(0, videoDuration - 1)),
+  );
+  const requestedDuration = audio.durationFrames ?? videoDuration - startFrame;
+  // Audio can never outlast the video (clamp from the start offset).
+  const audioDuration = Math.max(
+    1,
+    Math.min(requestedDuration, videoDuration - startFrame),
+  );
   const trimBefore = Math.max(0, Math.round((audio.trimStartSec ?? 0) * fps));
   // Route http/https through the same-origin audio proxy so the canvas
   // export stays untainted; blob:/data:/local paths pass through.
   const resolvedSrc = proxyExternalAudio(audio.src);
 
   return (
-    <Sequence durationInFrames={audioDuration} layout="none">
+    <Sequence from={startFrame} durationInFrames={audioDuration} layout="none">
       <Audio
         src={resolvedSrc}
-        // `@remotion/media`'s Audio uses `trimBefore` (frames into the
-        // source) — equivalent to the classic `<Audio startFrom>` API.
-        trimBefore={trimBefore}
+        // Skip `trimBefore` worth of frames into the source audio.
+        startFrom={trimBefore}
         loop={audio.loop ?? false}
-        // Per-frame volume envelope. Remotion calls this once per frame
-        // while the sequence is active.
+        // Per-frame volume envelope. The sequence-local frame starts at 0
+        // when `startFrame` hits, so fades remain anchored to the audio's
+        // own timeline regardless of when it begins in the project.
         volume={(frame) => audioVolumeAt(frame, audio, audioDuration)}
       />
     </Sequence>

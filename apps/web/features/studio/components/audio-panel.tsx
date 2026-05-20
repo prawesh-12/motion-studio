@@ -34,13 +34,14 @@ type SearchResponse = {
 type Props = {
   currentAudio?: ProjectAudio;
   onSet: (audio: ProjectAudio) => void;
+  onClear: () => void;
   onClose: () => void;
 };
 
 const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 const SEARCH_DEBOUNCE_MS = 300;
 
-export function AudioPanel({ currentAudio, onSet, onClose }: Props) {
+export function AudioPanel({ currentAudio, onSet, onClear, onClose }: Props) {
   const [query, setQuery] = useState("");
   const [debounced, setDebounced] = useState("");
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -231,6 +232,38 @@ export function AudioPanel({ currentAudio, onSet, onClose }: Props) {
           <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
         </Button>
       </div>
+
+      {currentAudio && (
+        <div className="mx-3 mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
+                Attached
+              </p>
+              <p
+                className="mt-0.5 truncate text-[12px] font-medium text-foreground"
+                title={currentAudio.title || currentAudio.src}
+              >
+                {currentAudio.title?.trim() || "Audio"}
+              </p>
+              {currentAudio.sourceDurationSec ? (
+                <p className="mt-0.5 text-[10px] text-muted-foreground tabular-nums">
+                  {currentAudio.sourceDurationSec.toFixed(1)}s source
+                </p>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClear}
+              className="shrink-0 rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              title="Remove attached audio"
+              aria-label="Remove attached audio"
+            >
+              <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="space-y-2 px-3 pb-2 pt-3">
         <div className="relative">
