@@ -135,6 +135,12 @@ Wrapper compositions (any component that embeds other compositions via `componen
 
 Violating this causes a circular-import TDZ crash at runtime.
 
+## Static Assets
+
+`apps/web/public/` is the **single source of truth** for every static asset (images, audio, fonts, logos, MP3 samples). `apps/remotion/public/` is a symlink to `../web/public`, so both apps see the same tree.
+
+When a composition references an asset via `staticFile()` (e.g. `staticFile("images/logos/aryan-avatar.png")`), the path is rooted at `apps/web/public/`. Drop new assets there only — do NOT create a real directory at `apps/remotion/public/`, or the studio Player and the in-browser export (which load from the Next dev server's public dir) will 404 on assets that only exist on the Remotion side.
+
 ## Adding a Composition — Required Sync Points
 
 `apps/remotion/src/registry.ts → compositions[]` is the **single source of truth**. The studio Library, Cmd-K palette, `/component/[id]/edit`, `/docs/[id]`, the docs sidebar, the home grid — every surface that lists compositions reads from this array. Adding a composition therefore requires only three files:
