@@ -1,9 +1,11 @@
 "use client";
-// Classic `<Audio>` from `remotion` rather than `@remotion/media` —
-// the latter lazy-loads & decodes asynchronously which leaves the
-// first ~2–3s of any large remote MP3 silent until decoding finishes.
-// The classic Audio fetches & schedules synchronously, so playback
-// starts exactly at the sequence start.
+// `<Audio>` from `@remotion/media` rather than the classic one from
+// `remotion`. The classic Audio is rendered as an HTML5 <audio> element
+// which `@remotion/web-renderer` (used by both the in-browser MP4 export
+// AND the screenshot path via `renderStillOnWeb`) refuses with
+// "Html5Audio is not supported". `@remotion/media`'s Audio is the
+// WebCodecs-backed replacement and works across CLI render +
+// web-renderer + Player preview.
 import { Audio } from "@remotion/media";
 import { TransitionSeries } from "@remotion/transitions";
 import { AbsoluteFill, Sequence, useVideoConfig } from "remotion";
