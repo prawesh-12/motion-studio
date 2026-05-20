@@ -22,6 +22,7 @@ export type QrCodeProps = {
   logoPreset: string;
   /** Custom logo path or URL. If set, takes precedence over `logoPreset`. */
   logoCustom: string;
+  logoPadding: number;
   clipStyle?: ClipStyle;
 };
 
@@ -42,13 +43,6 @@ function buildMatrix(value: string): Matrix {
   return { size, bits };
 }
 
-/**
- * Render the QR as inline SVG with a radial-stagger entry animation.
- * Each cell springs in from scale-0 with a per-cell delay based on
- * Manhattan distance from the QR center, so the wave radiates out from
- * the middle. The same timing is applied to the corner finder patterns so
- * they don't pop in late.
- */
 function QrSvg({
   matrix,
   fg,
@@ -70,9 +64,6 @@ function QrSvg({
   const total = size * pixelSize;
   const cells: React.ReactNode[] = [];
 
-  // Stagger window: ~36 frames (0.6s @ 60fps) from first cell to last;
-  // each cell takes ~24 frames to spring fully in. Bumped up for short
-  // clips? Adjust durationInFrames per spring below.
   const STAGGER_TOTAL = 36;
   const CELL_DURATION = 24;
   const ctr = (size - 1) / 2;
@@ -209,6 +200,7 @@ export const QrCode: React.FC<QrCodeProps> = ({
   moduleStyle,
   logoPreset,
   logoCustom,
+  logoPadding,
   clipStyle,
 }) => {
   const frame = useDesignFrame();
@@ -230,18 +222,12 @@ export const QrCode: React.FC<QrCodeProps> = ({
     ? resolveAsset(logoCustom)
     : resolveAsset(resolveQrLogo(logoPreset));
 
-  // Wrapper fade — purely an opacity ramp so the caption and any chrome
-  // join the scene smoothly. The QR itself animates per-cell via QrSvg's
-  // radial stagger, so we don't add a wrapper-level scale/translate here
-  // (it would fight with the cell-level transforms and look mushy).
   const wrapperFade = spring({
     frame,
     fps,
     durationInFrames: 12,
     config: { damping: 16, stiffness: 200, mass: 0.6 },
   });
-  // Center logo enters AFTER the QR's stagger crosses the middle ~36
-  // frames in. Same spring shape so it feels consistent with the cells.
   const logoEnter = spring({
     frame: frame - 36,
     fps,
@@ -249,9 +235,6 @@ export const QrCode: React.FC<QrCodeProps> = ({
     config: { damping: 13, stiffness: 160, mass: 0.7 },
   });
 
-  // Slight white plate behind the logo so it doesn't compete with the QR
-  // modules underneath — the H-level error correction tolerates ~30% of
-  // module loss, easily covering this.
   const logoPlate = Math.round(renderedSize * 0.26);
 
   return (
@@ -293,12 +276,12 @@ export const QrCode: React.FC<QrCodeProps> = ({
                 left: "50%",
                 width: logoPlate,
                 height: logoPlate,
-                background: s.background,
+                background: logoPadding > 0 ? s.background : "transparent",
+                padding: Math.max(0, logoPadding),
                 borderRadius: logoPlate * 0.22,
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                boxShadow: `0 0 0 ${Math.max(2, pixelSize)}px ${s.background}`,
                 opacity: logoEnter,
                 transform: `translate(-50%, -50%) scale(${0.6 + logoEnter * 0.4})`,
               }}
@@ -310,7 +293,7 @@ export const QrCode: React.FC<QrCodeProps> = ({
                   width: "100%",
                   height: "100%",
                   objectFit: "contain",
-                  borderRadius: logoPlate * 0.22,
+                  borderRadius: logoPlate * 0.18,
                 }}
               />
             </div>

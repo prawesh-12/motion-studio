@@ -110,7 +110,8 @@
         "caption": "heygaia.io/bots",
         "moduleStyle": "dots",
         "logoPreset": "slack",
-        "logoCustom": ""
+        "logoCustom": "",
+        "logoPadding": 0
       }
     }
   ]

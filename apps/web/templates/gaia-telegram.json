@@ -118,7 +118,8 @@
         "caption": "t.me/heygaia_bot",
         "moduleStyle": "dots",
         "logoPreset": "telegram",
-        "logoCustom": ""
+        "logoCustom": "",
+        "logoPadding": 0
       }
     }
   ]

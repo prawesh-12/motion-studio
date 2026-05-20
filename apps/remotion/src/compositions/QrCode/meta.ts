@@ -13,6 +13,7 @@ export const qrCodeDefaultProps: QrCodeProps = {
   moduleStyle: "dots",
   logoPreset: "gaia",
   logoCustom: "",
+  logoPadding: 0,
 };
 
 export const qrCodeInfo: CompositionInfo<QrCodeProps> = {
@@ -47,6 +48,13 @@ export const qrCodeInfo: CompositionInfo<QrCodeProps> = {
       kind: "image",
       key: "logoCustom",
       label: "Custom logo (overrides preset)",
+    },
+    {
+      kind: "number",
+      key: "logoPadding",
+      label: "Logo padding (px)",
+      min: 0,
+      max: 80,
     },
   ],
 };
