@@ -232,8 +232,6 @@ function NotificationBanner({
             fontWeight: 400,
             lineHeight: 1.3,
             letterSpacing: "-0.005em",
-            display: "flex",
-            flexWrap: "wrap",
           }}
         >
           {bodyWords.map((word, i) => (
