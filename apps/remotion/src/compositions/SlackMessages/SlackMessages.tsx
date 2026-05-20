@@ -52,7 +52,7 @@ export const SlackMessages: React.FC<SlackMessagesProps> = ({
   messages,
   theme,
   orientation = "landscape",
-  scale = 1.5,
+  scale = 2.5,
   leftAvatar = DEFAULT_LEFT_AVATAR,
   rightAvatar = DEFAULT_RIGHT_AVATAR,
 }) => {

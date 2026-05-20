@@ -48,7 +48,7 @@ export const DiscordMessages: React.FC<DiscordMessagesProps> = ({
   contactName,
   messages,
   orientation = "landscape",
-  scale = 1.5,
+  scale = 2,
   leftAvatar = DEFAULT_LEFT_AVATAR,
   rightAvatar = DEFAULT_RIGHT_AVATAR,
 }) => {

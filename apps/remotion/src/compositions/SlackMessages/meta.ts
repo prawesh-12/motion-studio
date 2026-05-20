@@ -16,7 +16,7 @@ export const slackMessagesDefaultProps: SlackMessagesProps = {
   ],
   theme: "light",
   orientation: "landscape",
-  scale: 1.2,
+  scale: 2.5,
   leftAvatar: "images/logos/aryan-avatar.png",
   rightAvatar: "gaia-glow.png",
 };

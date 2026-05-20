@@ -159,6 +159,7 @@ export function AudioPanel({ currentAudio, onSet, onClear, onClose }: Props) {
       attribution: track.user ? `Pixabay · ${track.user}` : "Pixabay",
       volume: currentAudio?.volume ?? 0.5,
       trimStartSec: 0,
+      startFrame: 0,
       fadeInFrames: currentAudio?.fadeInFrames ?? 15,
       fadeOutFrames: currentAudio?.fadeOutFrames ?? 30,
       loop: currentAudio?.loop ?? false,
@@ -195,6 +196,7 @@ export function AudioPanel({ currentAudio, onSet, onClear, onClose }: Props) {
       title: file.name,
       volume: currentAudio?.volume ?? 0.5,
       trimStartSec: 0,
+      startFrame: 0,
       fadeInFrames: currentAudio?.fadeInFrames ?? 15,
       fadeOutFrames: currentAudio?.fadeOutFrames ?? 30,
       loop: currentAudio?.loop ?? false,
@@ -234,34 +236,22 @@ export function AudioPanel({ currentAudio, onSet, onClear, onClose }: Props) {
       </div>
 
       {currentAudio && (
-        <div className="mx-3 mt-3 rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-500">
-                Attached
-              </p>
-              <p
-                className="mt-0.5 truncate text-[12px] font-medium text-foreground"
-                title={currentAudio.title || currentAudio.src}
-              >
-                {currentAudio.title?.trim() || "Audio"}
-              </p>
-              {currentAudio.sourceDurationSec ? (
-                <p className="mt-0.5 text-[10px] text-muted-foreground tabular-nums">
-                  {currentAudio.sourceDurationSec.toFixed(1)}s source
-                </p>
-              ) : null}
-            </div>
-            <button
-              type="button"
-              onClick={onClear}
-              className="shrink-0 rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              title="Remove attached audio"
-              aria-label="Remove attached audio"
-            >
-              <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
-            </button>
-          </div>
+        <div className="mx-3 mt-3 flex items-center gap-2 px-1">
+          <p
+            className="min-w-0 flex-1 truncate text-[12px] font-medium text-foreground"
+            title={currentAudio.title || currentAudio.src}
+          >
+            {currentAudio.title?.trim() || "Audio"}
+          </p>
+          <button
+            type="button"
+            onClick={onClear}
+            className="shrink-0 rounded p-1 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            title="Remove attached audio"
+            aria-label="Remove attached audio"
+          >
+            <HugeiconsIcon icon={Cancel01Icon} className="size-3.5" />
+          </button>
         </div>
       )}
 

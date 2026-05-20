@@ -41,7 +41,7 @@ export const discordMessagesDefaultProps: DiscordMessagesProps = {
     },
   ],
   orientation: "landscape",
-  scale: 1.5,
+  scale: 2,
   leftAvatar: "default-avatar.png",
   rightAvatar: "gaia-glow.png",
 };

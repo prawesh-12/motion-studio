@@ -622,7 +622,7 @@ function AudioTrackRow({
   const seconds = audioDuration / fps;
 
   return (
-    <div className="px-3 pb-3">
+    <div className="pb-3">
       <div
         style={{ height: AUDIO_ROW_HEIGHT, position: "relative" }}
         className="w-full"
