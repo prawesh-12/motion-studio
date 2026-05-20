@@ -10,7 +10,6 @@ import {
 } from "remotion";
 import { type ClipStyle, resolveClipStyle } from "../../clip-style";
 import { proxyExternalImg } from "../../proxy-image";
-import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
 import { QR_LOGO_PRESETS, resolveQrLogo } from "./logo-presets";
 
@@ -44,10 +43,11 @@ function buildMatrix(value: string): Matrix {
 }
 
 /**
- * Render the QR as inline SVG. We walk the module matrix and emit either
- * a rounded-square or circle per dark cell. Three corner "finder" patterns
- * stay as solid rounded squares for scanner reliability — circle-style
- * finders measurably hurt scan rate on phone cameras.
+ * Render the QR as inline SVG with a radial-stagger entry animation.
+ * Each cell springs in from scale-0 with a per-cell delay based on
+ * Manhattan distance from the QR center, so the wave radiates out from
+ * the middle. The same timing is applied to the corner finder patterns so
+ * they don't pop in late.
  */
 function QrSvg({
   matrix,
@@ -55,20 +55,40 @@ function QrSvg({
   bg,
   style,
   pixelSize,
+  frame,
+  fps,
 }: {
   matrix: Matrix;
   fg: string;
   bg: string;
   style: "squares" | "dots";
   pixelSize: number;
+  frame: number;
+  fps: number;
 }) {
   const { size, bits } = matrix;
   const total = size * pixelSize;
   const cells: React.ReactNode[] = [];
 
-  // The three 7×7 finder patterns sit in the top-left, top-right, and
-  // bottom-left corners. We render them as a single rounded outline + inner
-  // square so scanners can still lock onto them in dot mode.
+  // Stagger window: ~36 frames (0.6s @ 60fps) from first cell to last;
+  // each cell takes ~24 frames to spring fully in. Bumped up for short
+  // clips? Adjust durationInFrames per spring below.
+  const STAGGER_TOTAL = 36;
+  const CELL_DURATION = 24;
+  const ctr = (size - 1) / 2;
+  const maxDist = Math.max(1, ctr + ctr);
+
+  function cellProgress(r: number, c: number): number {
+    const dist = Math.abs(r - ctr) + Math.abs(c - ctr);
+    const delay = Math.round((dist / maxDist) * STAGGER_TOTAL);
+    return spring({
+      frame: frame - delay,
+      fps,
+      durationInFrames: CELL_DURATION,
+      config: { damping: 14, stiffness: 140, mass: 0.7 },
+    });
+  }
+
   const isFinder = (r: number, c: number) =>
     (r < 7 && c < 7) || (r < 7 && c >= size - 7) || (r >= size - 7 && c < 7);
 
@@ -79,14 +99,24 @@ function QrSvg({
       if (!on) continue;
       const x = c * pixelSize;
       const y = r * pixelSize;
+      const p = cellProgress(r, c);
+      // Cells whose stagger delay hasn't elapsed get skipped — keeps the
+      // SVG node count down during the early frames of the wave.
+      if (p <= 0.001) continue;
+      const tx = x + pixelSize / 2;
+      const ty = y + pixelSize / 2;
+      const transform = `translate(${tx} ${ty}) scale(${p}) translate(${-tx} ${-ty})`;
+      const opacity = Math.min(1, p);
       if (style === "dots") {
         cells.push(
           <circle
             key={`${r}-${c}`}
-            cx={x + pixelSize / 2}
-            cy={y + pixelSize / 2}
+            cx={tx}
+            cy={ty}
             r={pixelSize * 0.45}
             fill={fg}
+            opacity={opacity}
+            transform={transform}
           />,
         );
       } else {
@@ -98,6 +128,8 @@ function QrSvg({
             width={pixelSize}
             height={pixelSize}
             fill={fg}
+            opacity={opacity}
+            transform={transform}
           />,
         );
       }
@@ -105,14 +137,24 @@ function QrSvg({
   }
 
   // Finder pattern: outer 7×7 rounded square ring + inner 3×3 rounded
-  // square. Coords given as (row, col) of the top-left module.
+  // square. Coords given as (row, col) of the top-left module. Animates
+  // with the same radial-stagger spring as the surrounding cells (timing
+  // is taken from the finder's center module).
   const finder = (r: number, c: number, key: string) => {
     const outer = pixelSize * 7;
     const innerSize = pixelSize * 3;
     const ringR = style === "dots" ? pixelSize * 1.6 : pixelSize * 0.6;
     const innerR = style === "dots" ? pixelSize * 0.9 : pixelSize * 0.3;
+    const p = cellProgress(r + 3, c + 3);
+    if (p <= 0.001) return null;
+    const fx = (c + 3.5) * pixelSize;
+    const fy = (r + 3.5) * pixelSize;
     return (
-      <g key={key}>
+      <g
+        key={key}
+        opacity={Math.min(1, p)}
+        transform={`translate(${fx} ${fy}) scale(${p}) translate(${-fx} ${-fy})`}
+      >
         <rect
           x={c * pixelSize}
           y={r * pixelSize}
@@ -188,10 +230,23 @@ export const QrCode: React.FC<QrCodeProps> = ({
     ? resolveAsset(logoCustom)
     : resolveAsset(resolveQrLogo(logoPreset));
 
-  const enter = spring({
+  // Wrapper fade — purely an opacity ramp so the caption and any chrome
+  // join the scene smoothly. The QR itself animates per-cell via QrSvg's
+  // radial stagger, so we don't add a wrapper-level scale/translate here
+  // (it would fight with the cell-level transforms and look mushy).
+  const wrapperFade = spring({
     frame,
     fps,
-    config: { damping: 14, stiffness: 110, mass: 0.85 },
+    durationInFrames: 12,
+    config: { damping: 16, stiffness: 200, mass: 0.6 },
+  });
+  // Center logo enters AFTER the QR's stagger crosses the middle ~36
+  // frames in. Same spring shape so it feels consistent with the cells.
+  const logoEnter = spring({
+    frame: frame - 36,
+    fps,
+    durationInFrames: 18,
+    config: { damping: 13, stiffness: 160, mass: 0.7 },
   });
 
   // Slight white plate behind the logo so it doesn't compete with the QR
@@ -217,8 +272,7 @@ export const QrCode: React.FC<QrCodeProps> = ({
           flexDirection: "column",
           alignItems: "center",
           gap: 36,
-          opacity: enter,
-          transform: `translate3d(0, ${snap((1 - enter) * 24)}px, 0) scale(${0.92 + enter * 0.08})`,
+          opacity: wrapperFade,
         }}
       >
         <div style={{ position: "relative" }}>
@@ -228,6 +282,8 @@ export const QrCode: React.FC<QrCodeProps> = ({
             bg={s.background}
             style={moduleStyle}
             pixelSize={pixelSize}
+            frame={frame}
+            fps={fps}
           />
           {logoSrc ? (
             <div
@@ -235,7 +291,6 @@ export const QrCode: React.FC<QrCodeProps> = ({
                 position: "absolute",
                 top: "50%",
                 left: "50%",
-                transform: "translate(-50%, -50%)",
                 width: logoPlate,
                 height: logoPlate,
                 background: s.background,
@@ -244,6 +299,8 @@ export const QrCode: React.FC<QrCodeProps> = ({
                 alignItems: "center",
                 justifyContent: "center",
                 boxShadow: `0 0 0 ${Math.max(2, pixelSize)}px ${s.background}`,
+                opacity: logoEnter,
+                transform: `translate(-50%, -50%) scale(${0.6 + logoEnter * 0.4})`,
               }}
             >
               <Img
