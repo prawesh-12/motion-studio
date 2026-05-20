@@ -1,11 +1,12 @@
 "use client";
-import { TransitionSeries } from "@remotion/transitions";
 // Classic `<Audio>` from `remotion` rather than `@remotion/media` —
 // the latter lazy-loads & decodes asynchronously which leaves the
 // first ~2–3s of any large remote MP3 silent until decoding finishes.
 // The classic Audio fetches & schedules synchronously, so playback
 // starts exactly at the sequence start.
-import { AbsoluteFill, Audio, Sequence, useVideoConfig } from "remotion";
+import { Audio } from "@remotion/media";
+import { TransitionSeries } from "@remotion/transitions";
+import { AbsoluteFill, Sequence, useVideoConfig } from "remotion";
 import { componentsById } from "../../components";
 import { EffectsWrap } from "../../effects/EffectsWrap";
 import {
@@ -164,7 +165,7 @@ function ProjectAudioTrack({
       <Audio
         src={resolvedSrc}
         // Skip `trimBefore` worth of frames into the source audio.
-        startFrom={trimBefore}
+        trimBefore={trimBefore}
         loop={audio.loop ?? false}
         // Per-frame volume envelope. The sequence-local frame starts at 0
         // when `startFrame` hits, so fades remain anchored to the audio's

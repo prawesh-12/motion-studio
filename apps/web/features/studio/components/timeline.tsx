@@ -521,9 +521,18 @@ function AudioTrackRow({
     const startX = e.clientX;
     const originStart = startFrame;
     const maxStart = Math.max(0, projectDurationFrames - audioDuration);
+    // 4px deadzone: a casual click selects without shifting the audio's
+    // start. Tiny pointer drift on mousedown/up would otherwise rewrite
+    // startFrame by a frame or two — visually invisible but jarring when
+    // playback drifts off cue.
+    let dragging = false;
 
     function onMove(ev: PointerEvent) {
       const deltaPx = ev.clientX - startX;
+      if (!dragging) {
+        if (Math.abs(deltaPx) < 4) return;
+        dragging = true;
+      }
       const deltaFrames = Math.round((deltaPx / pxPerSecond) * fps);
       const next = Math.max(0, Math.min(maxStart, originStart + deltaFrames));
       if (next !== originStart) {
