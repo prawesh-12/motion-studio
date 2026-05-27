@@ -12,6 +12,7 @@ export function Preview({ id }: { id: string }) {
   // Lazy-load only the requested composition. Each composition becomes its
   // own chunk, so a docs route no longer ships the JS for every other
   // composition (the bundle was ~MBs before this).
+  // the preview component for the
   const Component = useMemo(() => {
     if (!info) return null;
     return dynamic<Record<string, unknown>>(

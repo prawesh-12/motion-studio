@@ -15,6 +15,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { parseProjectJson } from "../lib/project-io";
 import type { StudioAction } from "../state/reducer";
 
 type Props = {
@@ -216,6 +217,25 @@ function runClientTool(
   const project = projectRef.current;
 
   switch (name) {
+    case "buildProject": {
+      const projectInput = input.project as unknown;
+      if (!projectInput || typeof projectInput !== "object") {
+        return { error: "Missing `project` payload." };
+      }
+      // Reuse the studio's import validator so the agent's JSON has to clear
+      // the same bar as a file the user would drag in. Any warnings flow
+      // back to the model so it can correct on the next turn if needed.
+      const parsed = parseProjectJson(JSON.stringify(projectInput));
+      if (!parsed.ok) {
+        return { error: parsed.error };
+      }
+      dispatch({ type: "LOAD_PROJECT", project: parsed.project });
+      return {
+        ok: true,
+        clipsLoaded: parsed.project.clips.length,
+        warnings: parsed.warnings,
+      };
+    }
     case "listClips": {
       return {
         clips: project.clips.map((c) => ({
