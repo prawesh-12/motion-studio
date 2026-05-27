@@ -96,7 +96,7 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   }
 
   return (
-    <aside className="flex w-80 shrink-0 flex-col border-r border-border bg-background">
+    <aside className="flex h-full w-full flex-col border-r border-border bg-background">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <span className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">

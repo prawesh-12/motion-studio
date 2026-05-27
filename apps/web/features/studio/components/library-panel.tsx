@@ -51,7 +51,7 @@ export function LibraryPanel({
 
   return (
     <TooltipProvider delayDuration={300}>
-      <aside className="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-border bg-background">
+      <aside className="flex h-full w-full flex-col overflow-y-auto border-r border-border bg-background">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur">
           <div>
             <p className="text-sm font-medium text-foreground">Library</p>
