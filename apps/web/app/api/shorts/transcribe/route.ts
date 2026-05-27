@@ -1,6 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -9,8 +6,6 @@ export const maxDuration = 60;
 // Whisper rejects files over 25 MB.
 const WHISPER_MAX_BYTES = 25 * 1024 * 1024;
 
-const PUBLIC_AUDIO_DIR = path.join(process.cwd(), "public", "audio", "shorts");
-
 export type CaptionWord = {
   start: number;
   end: number;
@@ -18,7 +13,6 @@ export type CaptionWord = {
 };
 
 export type TranscribeResponse = {
-  audioUrl: string;
   duration: number;
   words: CaptionWord[];
 };
@@ -69,21 +63,8 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const ext = inferExtension(file.name, file.type);
-  const id = randomUUID();
-  const fileName = `${id}.${ext}`;
-  await mkdir(PUBLIC_AUDIO_DIR, { recursive: true });
-  await writeFile(path.join(PUBLIC_AUDIO_DIR, fileName), buffer);
-  const audioUrl = `/audio/shorts/${fileName}`;
-
   const whisperForm = new FormData();
-  whisperForm.append(
-    "file",
-    new Blob([new Uint8Array(buffer)], { type: file.type || "audio/mpeg" }),
-    file.name || `${id}.${ext}`,
-  );
+  whisperForm.append("file", file, file.name || "audio");
   whisperForm.append("model", "whisper-1");
   whisperForm.append("response_format", "verbose_json");
   whisperForm.append("timestamp_granularities[]", "word");
@@ -126,19 +107,6 @@ export async function POST(req: NextRequest) {
   const lastEnd = words[words.length - 1]?.end ?? 0;
   const duration = whisper.duration ?? lastEnd;
 
-  const payload: TranscribeResponse = { audioUrl, duration, words };
+  const payload: TranscribeResponse = { duration, words };
   return NextResponse.json(payload);
-}
-
-function inferExtension(name: string, type: string): string {
-  const fromName = name.includes(".")
-    ? name.split(".").pop()?.toLowerCase()
-    : undefined;
-  if (fromName && /^[a-z0-9]{2,5}$/.test(fromName)) return fromName;
-  if (type.includes("mpeg")) return "mp3";
-  if (type.includes("wav")) return "wav";
-  if (type.includes("mp4")) return "m4a";
-  if (type.includes("ogg")) return "ogg";
-  if (type.includes("webm")) return "webm";
-  return "mp3";
 }

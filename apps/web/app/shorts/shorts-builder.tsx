@@ -46,11 +46,12 @@ const PLACEHOLDER_WORDS: CaptionWord[] = [
 export function ShortsBuilder() {
   const [file, setFile] = useState<File | null>(null);
   const [result, setResult] = useState<TranscribeResponse | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("9:16");
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>("16:9");
   const [bgMode, setBgMode] = useState<BgMode>("solid");
   const [bgColor, setBgColor] = useState<string>("#0a0a0f");
   const [textColor, setTextColor] = useState<string>("#ffffff");
@@ -67,6 +68,8 @@ export function ShortsBuilder() {
     setStage("uploading");
     setError(null);
     setResult(null);
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
 
     const body = new FormData();
     body.append("file", f);
@@ -85,6 +88,8 @@ export function ShortsBuilder() {
         return;
       }
       const data = (await res.json()) as TranscribeResponse;
+      // Audio stays in browser memory — never written to disk.
+      setAudioUrl(URL.createObjectURL(f));
       setResult(data);
       setStage("ready");
       toast.success(`Transcribed ${data.words.length} words`);
@@ -318,7 +323,7 @@ export function ShortsBuilder() {
                   component={TikTokCaption}
                   inputProps={{
                     words: result?.words ?? PLACEHOLDER_WORDS,
-                    audioUrl: result?.audioUrl,
+                    audioUrl: audioUrl ?? undefined,
                     captionVAlign: vAlign,
                     captionHAlign: hAlign,
                     fontScale,
