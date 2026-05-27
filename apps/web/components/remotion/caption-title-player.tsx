@@ -28,7 +28,7 @@ const PLACEHOLDER_WORDS: CaptionWord[] = [
 ];
 
 const PLACEHOLDER_DURATION = TIKTOK_CAPTION_DEFAULT_DURATION;
-const { width: WIDTH, height: HEIGHT } = ASPECT_DIMENSIONS["9:16"];
+const { width: WIDTH, height: HEIGHT } = ASPECT_DIMENSIONS["16:9"];
 
 type Stage = "idle" | "uploading" | "ready" | "error";
 
@@ -38,6 +38,7 @@ export function CaptionTitlePlayer() {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [result, setResult] = useState<TranscribeResponse | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
 
   async function handleFile(file: File) {
@@ -45,6 +46,8 @@ export function CaptionTitlePlayer() {
     setStage("uploading");
     setError(null);
     setResult(null);
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
 
     const body = new FormData();
     body.append("file", file);
@@ -62,6 +65,8 @@ export function CaptionTitlePlayer() {
           ("error" in data && data.error) || `HTTP ${res.status}`,
         );
       }
+      // Audio stays in browser memory — never written to disk.
+      setAudioUrl(URL.createObjectURL(file));
       setResult(data as TranscribeResponse);
       setStage("ready");
     } catch (e) {
@@ -75,11 +80,13 @@ export function CaptionTitlePlayer() {
     setResult(null);
     setError(null);
     setFileName(null);
+    if (audioUrl) URL.revokeObjectURL(audioUrl);
+    setAudioUrl(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
   const previewWords = result?.words ?? PLACEHOLDER_WORDS;
-  const previewAudio = result?.audioUrl;
+  const previewAudio = audioUrl ?? undefined;
   const durationInFrames = result
     ? Math.max(60, Math.ceil((result.duration + 0.5) * TIKTOK_CAPTION_FPS))
     : PLACEHOLDER_DURATION;

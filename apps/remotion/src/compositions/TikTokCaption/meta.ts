@@ -3,8 +3,8 @@ import { ASPECT_DIMENSIONS } from "./config";
 import type { TikTokCaptionProps } from "./TikTokCaption";
 
 export const TIKTOK_CAPTION_FPS = 30;
-export const TIKTOK_CAPTION_WIDTH = ASPECT_DIMENSIONS["9:16"].width;
-export const TIKTOK_CAPTION_HEIGHT = ASPECT_DIMENSIONS["9:16"].height;
+export const TIKTOK_CAPTION_WIDTH = ASPECT_DIMENSIONS["16:9"].width;
+export const TIKTOK_CAPTION_HEIGHT = ASPECT_DIMENSIONS["16:9"].height;
 export const TIKTOK_CAPTION_DEFAULT_DURATION = 150;
 
 export const tikTokCaptionDefaultProps: TikTokCaptionProps = {
@@ -25,7 +25,7 @@ export const tikTokCaptionInfo: CompositionInfo<TikTokCaptionProps> = {
   id: "TikTokCaption",
   title: "TikTok Caption",
   description:
-    "Vertical 9:16 caption track driven by word-level timestamps (e.g. from Whisper). Highlights the current word, ghosts the surrounding context — built for short-form voiceover content.",
+    "Caption track driven by word-level timestamps (e.g. from Whisper). Highlights the current word, ghosts the surrounding context — built for voiceover content.",
   durationInFrames: TIKTOK_CAPTION_DEFAULT_DURATION,
   fps: TIKTOK_CAPTION_FPS,
   width: TIKTOK_CAPTION_WIDTH,

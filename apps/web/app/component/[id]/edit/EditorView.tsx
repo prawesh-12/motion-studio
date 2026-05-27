@@ -2,11 +2,13 @@
 
 import { Player } from "@remotion/player";
 import { renderMediaOnWeb } from "@remotion/web-renderer";
+import type { ClipStyle } from "@workspace/compositions/clip-style";
 import { componentsById } from "@workspace/compositions/components";
 import { FieldsRenderer } from "@workspace/compositions/editors";
 import type { AnyCompositionInfo } from "@workspace/compositions/schema";
 import { Button } from "@workspace/ui/components/button";
 import { useMemo, useState } from "react";
+import { ClipStyleSection } from "@/features/studio/components/clip-style-section";
 import { downloadMp4Blob } from "@/features/studio/lib/local-export";
 
 export function EditorView({
@@ -18,18 +20,26 @@ export function EditorView({
   const [props, setProps] = useState<Record<string, unknown>>(
     () => structuredClone(info.defaultProps) as Record<string, unknown>,
   );
+  const [clipStyle, setClipStyle] = useState<ClipStyle>({});
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  const playerProps = useMemo(() => props, [props]);
+  // Brand-locked compositions hardcode their authentic look — don't pass
+  // clipStyle through (matches Project.tsx behavior in the Studio).
+  const isLocked = info.brandMode === "locked";
+  const playerProps = useMemo(
+    () => (isLocked ? props : { ...props, clipStyle }),
+    [props, clipStyle, isLocked],
+  );
 
-  async function handleDownload() {
+  async function handleDownload(format: "mp4" | "webm") {
     if (!Component) return;
     setLoading(true);
     setProgress(0);
     setError(null);
     try {
+      const isWebm = format === "webm";
       const result = await renderMediaOnWeb({
         composition: {
           id: info.id,
@@ -39,20 +49,24 @@ export function EditorView({
           fps: info.fps,
           durationInFrames: info.durationInFrames,
         },
-        inputProps: props,
-        container: "mp4",
-        videoCodec: "h264",
+        inputProps: playerProps,
+        // WebM + VP9 carries an alpha channel — pair it with a transparent
+        // clip background (Style → Background = transparent) to drop the
+        // result straight into another video editor.
+        container: isWebm ? "webm" : "mp4",
+        videoCodec: isWebm ? "vp9" : "h264",
         hardwareAcceleration: "prefer-hardware",
-        // Eliminate h264's at-rest "ever so slight" shimmer on text by
-        // forcing every frame to be a keyframe (no inter-frame prediction
-        // drift) and giving the encoder enough bitrate that text edges
-        // stay deterministic frame-to-frame.
+        // MP4/h264 path: tight keyframe interval + heavy bitrate eliminate
+        // at-rest text shimmer. VP9 doesn't have the same drift behavior,
+        // so we let the encoder pick a sensible interval.
         videoBitrate: 50_000_000,
-        keyframeIntervalInSeconds: 1 / Math.max(1, info.fps),
+        ...(isWebm
+          ? {}
+          : { keyframeIntervalInSeconds: 1 / Math.max(1, info.fps) }),
         onProgress: ({ progress: p }) => setProgress(p),
       });
       const blob = await result.getBlob();
-      downloadMp4Blob(blob, `${info.id}.mp4`);
+      downloadMp4Blob(blob, `${info.id}.${format}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Unknown error");
     } finally {
@@ -77,17 +91,42 @@ export function EditorView({
             value={props}
             onChange={setProps}
           />
+          {!isLocked && (
+            <div className="border-t border-border">
+              <div className="px-5 pt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Style
+              </div>
+              <ClipStyleSection
+                style={clipStyle}
+                onPatch={(patch) =>
+                  setClipStyle((prev) => ({ ...prev, ...patch }))
+                }
+                onReset={() => setClipStyle({})}
+              />
+            </div>
+          )}
         </div>
-        <div className="shrink-0 border-t border-border p-4">
+        <div className="shrink-0 space-y-2 border-t border-border p-4">
           <Button
             className="w-full"
-            onClick={handleDownload}
+            onClick={() => handleDownload("mp4")}
             disabled={loading}
           >
             {loading
               ? `Rendering… ${Math.round(progress * 100)}%`
               : "Download MP4"}
           </Button>
+          {!isLocked && (
+            <Button
+              className="w-full"
+              variant="outline"
+              onClick={() => handleDownload("webm")}
+              disabled={loading}
+              title="Exports WebM/VP9 with alpha — set Background to transparent in the Style section first."
+            >
+              Download WebM (transparent)
+            </Button>
+          )}
           {error && <p className="mt-2 text-[12px] text-red-500">{error}</p>}
         </div>
       </aside>
