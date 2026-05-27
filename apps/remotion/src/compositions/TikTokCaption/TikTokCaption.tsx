@@ -1,7 +1,8 @@
 "use client";
 import { AbsoluteFill, Audio, useCurrentFrame, useVideoConfig } from "remotion";
 import { type ClipStyle, resolveClipStyle } from "../../clip-style";
-import { FONTS, fontKeyFromFamily, type HAlign, type VAlign } from "./config";
+import { useFontReady } from "../../use-font-ready";
+import type { HAlign, VAlign } from "./config";
 
 export type CaptionWord = {
   start: number;
@@ -20,12 +21,10 @@ export type TikTokCaptionProps = {
 };
 
 const BASE_FONT_SIZE = 132;
-// Group consecutive words into a phrase until either a noticeable speech
-// gap (the speaker pauses) or the phrase grows too long to read in one
-// glance. Tuned for short-form voiceover pacing.
-const PHRASE_MAX_GAP_SECONDS = 0.5;
-const PHRASE_MAX_WORDS = 6;
-const INACTIVE_COLOR = "#a1a1aa";
+// TikTok-style captions show 2–3 words at a time. We split sooner on
+// pauses to keep phrases readable in short-form clips.
+const PHRASE_MAX_GAP_SECONDS = 0.3;
+const PHRASE_MAX_WORDS = 3;
 
 const VERT_TO_JUSTIFY: Record<VAlign, string> = {
   top: "flex-start",
@@ -76,15 +75,16 @@ export const TikTokCaption: React.FC<TikTokCaptionProps> = ({
   const frame = useCurrentFrame();
   const { fps, width, height } = useVideoConfig();
 
+  // Inactive words use `color`, active word uses `accent`, font is
+  // `fontFamily` — all editable from the universal Style section.
   const s = resolveClipStyle(clipStyle, {
     background: "transparent",
     color: "#ffffff",
     fontFamily: "'Anton', Impact, sans-serif",
-    accent: "#ffffff",
+    accent: "#facc15",
   });
 
-  const fontKey = fontKeyFromFamily(s.fontFamily);
-  const font = FONTS[fontKey];
+  useFontReady(s.fontFamily);
 
   const timeSeconds = frame / fps;
 
@@ -122,8 +122,8 @@ export const TikTokCaption: React.FC<TikTokCaptionProps> = ({
     <AbsoluteFill
       style={{
         background: isTransparent ? "transparent" : s.background,
-        fontFamily: font.cssFamily,
-        fontWeight: font.weight,
+        fontFamily: s.fontFamily,
+        fontWeight: 800,
         display: "flex",
         flexDirection: "column",
         alignItems: HORIZ_TO_ALIGN[captionHAlign],
@@ -153,9 +153,9 @@ export const TikTokCaption: React.FC<TikTokCaptionProps> = ({
                 style={{
                   display: "inline-block",
                   fontSize,
-                  fontWeight: font.weight,
+                  fontWeight: 800,
                   letterSpacing: "-0.01em",
-                  color: isActive ? s.accent : INACTIVE_COLOR,
+                  color: isActive ? s.accent : s.color,
                   WebkitTextStroke: `${strokeWidth}px #000`,
                   paintOrder: "stroke fill",
                   textShadow: isTransparent
