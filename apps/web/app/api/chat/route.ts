@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     system: systemPrompt,
     messages: await convertToModelMessages(messages, { tools }),
     tools,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(30),
   });
 
   return result.toUIMessageStreamResponse();

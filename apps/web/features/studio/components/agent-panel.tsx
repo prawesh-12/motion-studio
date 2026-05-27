@@ -1,22 +1,25 @@
 "use client";
 
+import { useChat } from "@ai-sdk/react";
 import {
   ArrowUp01Icon,
   Cancel01Icon,
+  RefreshIcon,
   SparklesIcon,
+  StopCircleIcon,
+  ToolsIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
+import type { Project } from "@workspace/compositions/project";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useEffect, useRef, useState } from "react";
-
-type Message = {
-  id: string;
-  role: "user" | "agent";
-  text: string;
-};
+import type { StudioAction } from "../state/reducer";
 
 type Props = {
+  project: Project;
+  dispatch: React.Dispatch<StudioAction>;
   onClose: () => void;
 };
 
@@ -26,28 +29,61 @@ const SUGGESTIONS = [
   "Intro title → browser walkthrough → outro",
 ];
 
-export function AgentPanel({ onClose }: Props) {
-  const [messages, setMessages] = useState<Message[]>([]);
+export function AgentPanel({ project, dispatch, onClose }: Props) {
+  // Keep the latest project in a ref so onToolCall (closed over at mount)
+  // always sees current clips/ids instead of a stale snapshot.
+  const projectRef = useRef(project);
+  useEffect(() => {
+    projectRef.current = project;
+  }, [project]);
+
+  const {
+    messages,
+    sendMessage,
+    status,
+    stop,
+    error,
+    regenerate,
+    addToolResult,
+  } = useChat({
+    sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithToolCalls,
+    onToolCall: async ({ toolCall }) => {
+      const name = toolCall.toolName;
+      const input = toolCall.input as Record<string, unknown>;
+      try {
+        const output = runClientTool(name, input, projectRef, dispatch);
+        if (output === undefined) return; // server-executed tool, ignore
+        await addToolResult({
+          tool: name as never,
+          toolCallId: toolCall.toolCallId,
+          output: output as never,
+        });
+      } catch (err) {
+        await addToolResult({
+          tool: name as never,
+          toolCallId: toolCall.toolCallId,
+          output: {
+            error: err instanceof Error ? err.message : String(err),
+          } as never,
+        });
+      }
+    },
+  });
+
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  const isBusy = status === "submitted" || status === "streaming";
 
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [messages.length]);
+  }, [messages, status]);
 
   function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: crypto.randomUUID(), role: "user", text: trimmed },
-      {
-        id: crypto.randomUUID(),
-        role: "agent",
-        text: "Agent isn't wired up yet — your message is queued. Once the LLM endpoint lands, this is where scene suggestions will appear.",
-      },
-    ]);
+    if (!trimmed || isBusy) return;
+    sendMessage({ text: trimmed });
     setInput("");
   }
 
@@ -90,6 +126,30 @@ export function AgentPanel({ onClose }: Props) {
             {messages.map((m) => (
               <MessageBubble key={m.id} message={m} />
             ))}
+            {status === "submitted" ? (
+              <li className="flex justify-start">
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12px] text-muted-foreground">
+                  Thinking…
+                </div>
+              </li>
+            ) : null}
+            {error ? (
+              <li className="flex flex-col gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-3 text-[12px] text-destructive">
+                <span>
+                  {error.message ??
+                    "Something went wrong talking to the agent."}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => regenerate()}
+                  className="h-7 self-start"
+                >
+                  <HugeiconsIcon icon={RefreshIcon} className="size-3" />
+                  Retry
+                </Button>
+              </li>
+            ) : null}
           </ul>
         )}
       </div>
@@ -108,17 +168,31 @@ export function AgentPanel({ onClose }: Props) {
             onKeyDown={handleKeyDown}
             placeholder="Describe the video you want…"
             rows={1}
-            className="min-h-0 flex-1 resize-none border-0 bg-transparent p-1 text-[13px] focus-visible:ring-0 focus-visible:outline-none"
+            disabled={isBusy}
+            className="min-h-0 flex-1 resize-none border-0 bg-transparent p-1 text-[13px] focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed"
           />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={input.trim().length === 0}
-            className="size-7 shrink-0 rounded-md"
-            title="Send"
-          >
-            <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
-          </Button>
+          {isBusy ? (
+            <Button
+              type="button"
+              size="icon"
+              variant="secondary"
+              onClick={() => stop()}
+              className="size-7 shrink-0 rounded-md"
+              title="Stop"
+            >
+              <HugeiconsIcon icon={StopCircleIcon} className="size-3.5" />
+            </Button>
+          ) : (
+            <Button
+              type="submit"
+              size="icon"
+              disabled={input.trim().length === 0}
+              className="size-7 shrink-0 rounded-md"
+              title="Send"
+            >
+              <HugeiconsIcon icon={ArrowUp01Icon} className="size-3.5" />
+            </Button>
+          )}
         </div>
         <p className="mt-2 text-[10px] text-muted-foreground/70">
           Enter to send · Shift+Enter for newline
@@ -126,6 +200,116 @@ export function AgentPanel({ onClose }: Props) {
       </form>
     </aside>
   );
+}
+
+/**
+ * Executes the client-side studio tools the agent calls. Returns the result
+ * to send back to the model, or `undefined` for tools whose execute lives
+ * server-side (those return a result automatically through the stream).
+ */
+function runClientTool(
+  name: string,
+  input: Record<string, unknown>,
+  projectRef: React.MutableRefObject<Project>,
+  dispatch: React.Dispatch<StudioAction>,
+): unknown {
+  const project = projectRef.current;
+
+  switch (name) {
+    case "listClips": {
+      return {
+        clips: project.clips.map((c) => ({
+          id: c.id,
+          compositionId: c.compositionId,
+          durationInFrames: c.durationInFrames,
+          props: c.props,
+          style: c.style,
+        })),
+        defaultTransition: project.defaultTransition,
+        audio: project.audio,
+      };
+    }
+    case "clearProject": {
+      // Delete every clip one by one — reducer doesn't expose a bulk clear,
+      // but a chain of DELETE_CLIPs on the captured snapshot is equivalent.
+      for (const clip of project.clips) {
+        dispatch({ type: "DELETE_CLIP", clipId: clip.id });
+      }
+      return { ok: true, deletedClips: project.clips.length };
+    }
+    case "addClip": {
+      const compositionId = String(input.compositionId ?? "");
+      if (!compositionId) {
+        return { error: "compositionId is required" };
+      }
+      // The reducer mints a UUID for the new clip; we read it back from
+      // the next snapshot. dispatch is synchronous in React useReducer, so
+      // by the time the next microtask runs the ref will have the new clip
+      // at the tail of the array — but we can't await that here. Instead
+      // we trust the reducer's appending behavior and return the id by
+      // observing the projectRef post-dispatch via a microtask flush.
+      const before = project.clips.length;
+      dispatch({ type: "ADD_CLIP", compositionId });
+      // Wait one microtask so React commits before we read the ref.
+      return new Promise<{ clipId?: string; error?: string }>((resolve) => {
+        queueMicrotask(() => {
+          const next = projectRef.current.clips;
+          if (next.length > before) {
+            const added = next[next.length - 1];
+            resolve({
+              clipId: added?.id,
+              compositionId: added?.compositionId,
+              durationInFrames: added?.durationInFrames,
+            } as { clipId?: string });
+          } else {
+            resolve({ error: `Composition not found: ${compositionId}` });
+          }
+        });
+      });
+    }
+    case "updateClipProps": {
+      const clipId = String(input.clipId ?? "");
+      const props = (input.props ?? {}) as Record<string, unknown>;
+      if (!clipId) return { error: "clipId is required" };
+      dispatch({ type: "UPDATE_CLIP_PROPS", clipId, props });
+      return { ok: true };
+    }
+    case "updateClipStyle": {
+      const clipId = String(input.clipId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      const patch: Record<string, string> = {};
+      for (const k of ["background", "color", "fontFamily", "accent"]) {
+        if (typeof input[k] === "string") patch[k] = input[k] as string;
+      }
+      dispatch({ type: "UPDATE_CLIP_STYLE", clipId, patch });
+      return { ok: true };
+    }
+    case "updateClipDuration": {
+      const clipId = String(input.clipId ?? "");
+      const durationInFrames = Number(input.durationInFrames ?? 0);
+      if (!clipId) return { error: "clipId is required" };
+      if (!Number.isFinite(durationInFrames) || durationInFrames < 15) {
+        return { error: "durationInFrames must be a number >= 15" };
+      }
+      dispatch({
+        type: "UPDATE_CLIP_DURATION",
+        clipId,
+        durationInFrames: Math.round(durationInFrames),
+      });
+      return { ok: true };
+    }
+    case "deleteClip": {
+      const clipId = String(input.clipId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      dispatch({ type: "DELETE_CLIP", clipId });
+      return { ok: true };
+    }
+    // Server-executed tools (listScenes, getSceneDetails) come through
+    // onToolCall as well, but their result is already produced upstream —
+    // returning undefined tells the caller to skip addToolResult.
+    default:
+      return undefined;
+  }
 }
 
 function EmptyState({ onPick }: { onPick: (text: string) => void }) {
@@ -158,18 +342,36 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   );
 }
 
-function MessageBubble({ message }: { message: Message }) {
+type ChatMessage = ReturnType<typeof useChat>["messages"][number];
+
+function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
+  const text = message.parts
+    .filter((p): p is { type: "text"; text: string } => p.type === "text")
+    .map((p) => p.text)
+    .join("");
+  const toolParts = message.parts.filter((p) => p.type.startsWith("tool-"));
+
   return (
     <li className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[88%] rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
+        className={`max-w-[88%] space-y-1.5 rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
           isUser
             ? "bg-primary text-primary-foreground"
             : "border border-border bg-muted/40 text-foreground"
         }`}
       >
-        {message.text}
+        {toolParts.map((p, i) => (
+          <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: tool parts are append-only and stable within a message
+            key={i}
+            className="flex items-center gap-1.5 rounded-md border border-border/60 bg-background/40 px-2 py-1 text-[11px] text-muted-foreground"
+          >
+            <HugeiconsIcon icon={ToolsIcon} className="size-3" />
+            <span className="font-mono">{p.type.replace(/^tool-/, "")}</span>
+          </div>
+        ))}
+        {text ? <div className="whitespace-pre-wrap">{text}</div> : null}
       </div>
     </li>
   );

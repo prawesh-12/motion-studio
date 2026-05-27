@@ -218,6 +218,8 @@ export function Builder() {
 
           {openPanel === "agent" && (
             <AgentPanel
+              project={project}
+              dispatch={dispatch}
               onClose={() => dispatch({ type: "TOGGLE_PANEL", panel: "agent" })}
             />
           )}
