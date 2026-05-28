@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 
 import "@workspace/ui/globals.css";
 import "streamdown/styles.css";
@@ -44,6 +45,11 @@ export default function RootLayout({
           {children}
           <Toaster position="bottom-right" richColors />
         </ThemeProvider>
+        <Script
+          src="https://as.heygaia.io/api/script.js"
+          data-site-id="a9885789f7dd"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
