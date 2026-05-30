@@ -159,15 +159,12 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   }, [messages, status]);
 
   // SDK's `status` sometimes lingers at "streaming" after the model
-  // has effectively finished. We treat the last assistant message as
-  // "settled" if EITHER:
-  //   - it contains non-empty text, OR
-  //   - it contains a successful terminal-tool result (build / edit /
-  //     clear). The model often doesn't bother emitting a follow-up
-  //     text turn after a build, and that's fine — the build is the
-  //     real outcome.
-  // In either case, every tool call inside the message must have a
-  // result; we never claim "settled" while a call is still pending.
+  // has effectively finished. The ONLY reliable "the agent is done"
+  // signal is a successful terminal-tool result (buildProject /
+  // addClip / etc.) — text alone doesn't mean done because the agent
+  // emits an opener BEFORE running tools and is clearly still working.
+  // Stream-end (status → "ready") and the 4-second forceIdle handle
+  // the other "done" cases.
   const lastMessage = messages[messages.length - 1];
   const TERMINAL_TOOL_TYPES = new Set([
     "tool-buildProject",
@@ -178,12 +175,6 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
     "tool-updateClipStyle",
     "tool-updateClipDuration",
   ]);
-  const hasNonEmptyText =
-    lastMessage?.role === "assistant" &&
-    lastMessage.parts.some(
-      (p): p is { type: "text"; text: string } =>
-        p.type === "text" && p.text.trim().length > 0,
-    );
   const hasSuccessfulTerminal =
     lastMessage?.role === "assistant" &&
     lastMessage.parts.some((p) => {
@@ -202,8 +193,7 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
         p.type.startsWith("tool-") &&
         (p as { output?: unknown }).output === undefined,
     );
-  const lastAssistantSettled =
-    !hasPendingTool && (hasNonEmptyText || hasSuccessfulTerminal);
+  const lastAssistantSettled = !hasPendingTool && hasSuccessfulTerminal;
   const isBusy =
     (status === "submitted" || status === "streaming") &&
     !lastAssistantSettled &&
@@ -749,17 +739,22 @@ function MessageBubble({
     );
   }
 
-  // Assistant: no card. Working indicator on top, then tool calls,
-  // then text — the indicator hides as soon as the parent says the
-  // chat isn't busy anymore (covers raw streaming AND lastAssistantSettled
-  // AND forceIdle) OR as soon as displayText fills in.
-  const showWorkingShimmer = isThinking && !displayText;
+  // Assistant: no card. The activity indicator stays visible across
+  // the entire response cycle:
+  //   - Wave spinner: shown for the whole `isThinking` window
+  //     (planning → tools → text streaming). Hides only when the
+  //     response is fully settled.
+  //   - Phrase ("Designing on the fly…"): shown only while there's no
+  //     text yet — switches off the moment text starts streaming so
+  //     it doesn't clash with the actual reply.
+  const showActivity = isThinking;
+  const showPhrase = isThinking && !displayText;
   return (
     <li className="flex flex-col gap-2 py-1 text-[13px] leading-relaxed text-foreground">
-      {showWorkingShimmer ? (
+      {showActivity ? (
         <div className="flex items-center gap-2">
           <WaveSpinner size="sm" pattern="square3x3" color="primary" />
-          <ThinkingPhrase pool="working" />
+          {showPhrase ? <ThinkingPhrase pool="working" /> : null}
         </div>
       ) : null}
       {toolCalls.length > 0 ? <ToolCallsSection toolCalls={toolCalls} /> : null}
