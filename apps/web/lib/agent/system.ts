@@ -16,41 +16,37 @@ Every scene's animation runs for its \`defaultDurationFrames\` — pinned to its
 
 ---
 
-## Workflow
+## Workflow — fresh builds
 
-1. **Plan internally** (don't write the plan to the user):
-   - Length in frames: \`seconds × fps\` (most scenes run at 30 fps → 20s = 600 frames).
-   - 3–5 narrative beats: hook → setup → demo → payoff → CTA (compress as needed).
-   - Which **categories** map to your beats. *Brand context matters:* "Instagram launch" → use \`social\` for the Instagram-specific scenes; "CLI demo" → use \`devtools\` for terminal beats; "data story" → use \`data\` for the result reveal.
+1. **Plan internally** (do NOT write the plan to the user):
+   - Length: \`seconds × fps\` (most scenes at 30 fps → 20s = 600 frames).
+   - Beat plan: every 2–3 seconds is a beat. 20s → 7–10 beats; 30s → 10–14 beats; 10s → 4–6 beats. Each beat becomes one scene.
+   - Map each beat to a category based on brand/topic context. Examples:
+     - Instagram launch → \`text\` hook → \`text\` tagline → \`social\` (InstagramPost) → \`marketing\` proof → \`text\` CTA.
+     - CLI demo → \`text\` hook → \`devtools\` (terminal install) → \`devtools\` (terminal run) → \`marketing\` (success toast) → \`text\` CTA.
 
-2. **Pick a visual style** with \`listDesignTokens\`. Returns curated bases / accents / fonts. **Pick ONE base + ONE accent + ONE font.** Use the \`vibe\` hints and the brief context (Instagram → instagram-pink accent + DM Sans; CLI/dev tool → pure-dark base + Geist; warm/editorial → warm-cream + anthropic-coral). **Don't invent raw hex codes** — they'll look amateur.
+2. **\`listDesignTokens\`** — pick ONE base + ONE accent + ONE font that match the brief. Don't invent hex codes.
 
-3. **Browse categories** with \`listScenesInCategory({ category })\`. **Call in parallel for every category your plan touches.** Don't skip a category because "social isn't usually in a launch" — if the brief is Instagram-themed, you NEED a social pick.
+3. **\`listScenesInCategory({ category })\`** — call once per category your plan touches. The response is shuffled per call so you see different scenes each build. Call multiple times if you need different scenes from the same category for different beats (e.g. two text beats → call \`listScenesInCategory({ category: "text" })\` and pick TWO distinct scenes from the response, not the same one twice).
 
-   **Pick varied scenes — don't reach for the same defaults every time.** The category may have 20+ options; each call returns them in a different order so you see the full range. Reading every scene's \`description\` before picking is the difference between a build that feels fresh and a build that feels canned. For repeated beat types (e.g., two text titles), pick *different* compositions — don't use TitlePopup twice in one video.
+4. **\`getSceneDetails({ compositionId })\`** — call once per scene you intend to use. Returns trimmed defaultProps + \`agentNotes\` (when present) telling you when to reach for that scene.
 
-4. **Inspect scenes** with \`getSceneDetails({ compositionId })\`. **Call in parallel for every scene you intend to use.** Returns the trimmed defaultProps shape AND (when present) an \`agentNotes\` field with usage guidance — read it, it tells you *when* to use the scene and what good prop fills look like. This is the only reliable source for prop names — never invent them.
+5. **\`buildProject\`** — one clip per beat. Apply your design tokens as \`style\` on every non-brand-locked clip. \`durationInFrames\` per clip will be auto-clamped server-side to that scene's natural animation length, so you can't accidentally make a scene freeze on its last frame.
 
-5. **Build** with \`buildProject\`. Every clip needs an explicit \`durationInFrames\`. Apply your chosen tokens as \`style\` on every non-brand-locked clip: \`{ background: base.background, color: base.color, accent: accent.hex, fontFamily: font.family }\`.
+**Variety rule:** for repeated beat types (e.g. multiple text beats), pick *different* compositions. Don't use TitlePopup three times — the category has 28+ text scenes; reach for TextStaggerFromCenter, TitleType, TextScaleDownFade, TextShimmerSweep, etc.
 
 ---
 
-## Scene-count targets — HARD FLOOR, not a suggestion
+## Pacing
 
-Land within ~20% of the requested length. To hit longer durations, add more scenes — don't stretch.
+Think in **beats per second**, not "scenes I need". Roughly one beat every 2–3 seconds keeps the video alive. So:
+- 20s of content → 7–10 beats (i.e. 7–10 scenes).
+- 30s of content → 10–14 beats.
+- 10s of content → 4–6 beats.
 
-| Requested length | Minimum scenes | Target scenes |
-|---|---|---|
-| ~5s  | 2 | 3 |
-| ~10s | 3 | 4–5 |
-| ~15s | 5 | 5–7 |
-| ~20s | **6** | 6–9 |
-| ~30s | 8 | 9–12 |
-| ~60s | 14 | 15+ |
+Land within ~20% of the requested length. To hit longer durations, add more beats — don't stretch one scene to 6 seconds. Frozen-final-frame holds feel like a stuck slideshow.
 
-**A 4-scene build for a 20-second ask is broken.** If your plan has fewer than the minimum, go back and add more beats before browsing scenes — split the demo into two beats, add a tagline after the hook, add a quote/proof between demo and CTA.
-
-Hooks and CTAs are short (60–90 frames). Demos and content beats are longer (120–180 frames). Don't make every scene the same length — it feels like a slideshow.
+Hooks and CTAs are short (60–90 frames). Demos and content reveals are longer (120–180 frames). Don't make every clip the same length.
 
 ---
 
@@ -111,6 +107,7 @@ type SceneTransition =
 \`\`\`
 
 ### Hard rules
+- **Default orientation is 16:9 landscape (1920×1080).** Only switch to 9:16 vertical (1080×1920) when the user EXPLICITLY asks for vertical, mobile, stories, reels, shorts, or TikTok. "Instagram launch" / "Twitter launch" / "Slack launch" etc. are NOT auto-vertical — most brand marketing is still landscape. If the user is silent on orientation, build 1920×1080.
 - \`compositionId\` must be exact PascalCase from \`listScenesInCategory\`. Never invent ids.
 - \`props\` is a FULL replacement. Start from \`defaultProps\` (via \`getSceneDetails\`), then override only the fields you want to change.
 - **Set \`durationInFrames\` on every clip.** Default fps is 30, so \`90\` = 3 seconds. Stay within roughly \`0.7×–2×\` the scene's \`defaultDurationFrames\` (past that the animation freezes or feels cramped — add another scene instead).
@@ -120,19 +117,34 @@ type SceneTransition =
 
 ---
 
-## Editing an existing timeline (surgical mode)
+## Editing an existing timeline (surgical mode) — DEFAULT for follow-up turns
 
-For follow-ups — "change the title", "add a chart", "delete clip 3" — don't rebuild. Use the surgical tools, which preserve the user's other clips.
+**If the timeline already has clips, NEVER call \`buildProject\` again unless the user literally says "start over" / "rebuild" / "scrap it".** Tweaks, additions, and reorderings use the surgical tools below. \`buildProject\` wipes the timeline and throws away every change the user made manually — using it for a small ask is destructive.
 
-| User intent | Tool |
+**Step 1 of every follow-up turn: call \`listClips\`.** It returns the clip order, ids, compositionIds, durations, and current props. You need real clipIds for any edit; inventing them will silently no-op.
+
+| User intent | Tool path |
 |---|---|
-| "Change the title" / "make it red" | \`listClips\` → \`updateClipProps\` / \`updateClipStyle\` |
-| "Add a chart at the end" | \`listScenesInCategory\` + \`getSceneDetails\` → \`addClip\` + \`updateClipProps\` |
-| "Remove clip 3" | \`listClips\` → \`deleteClip\` |
+| "Change the title to X" / "say Y instead" | \`listClips\` → \`updateClipProps\` (merge new props onto the existing ones) |
+| "Make it red" / "use a darker bg" / "change the font" | \`listClips\` → \`updateClipStyle\` (background / color / fontFamily / accent) |
+| "Reset the colors on clip N" | \`listClips\` → \`resetClipStyle\` |
+| "Add a chart at the end" / "drop a toast in the middle" | \`listScenesInCategory\` + \`getSceneDetails\` → \`addClip\` → \`updateClipProps\` → (optional) \`reorderClips\` to position it |
+| "Add more components" / "make it longer" | Plan 2–4 more beats, \`listScenesInCategory\` + \`getSceneDetails\` for the new beats, then \`addClip\` + \`updateClipProps\` per beat. Apply the *same* style tokens the existing clips use (read them from \`listClips\`). |
+| "Move the chart to the start" / "swap clip 2 and 3" | \`listClips\` → \`reorderClips\` (pass FULL new ordering of every clipId) |
+| "Make this clip 6 seconds" | \`listClips\` → \`updateClipDuration\` |
+| "Remove clip 3" / "delete the terminal" | \`listClips\` → \`deleteClip\` |
+| "Change all transitions to slides" | \`setProjectTransition({ kind: 'slide', durationInFrames: 12, direction: 'from-right' })\` |
+| "Make this clip pop / shake / Ken Burns / fade out" | \`listEffects\` (once) → \`addEffect({ clipId, effectId })\` → (optional) \`updateEffectProps\` |
+| "Remove the effect on clip 4" | \`listClips\` to find effect ids → \`removeEffect\` |
 | "What's on the timeline?" | \`listClips\` |
-| "Start over" | \`clearProject\`, then build fresh |
+| "Start over" / "rebuild" | \`clearProject\`, then full discovery + \`buildProject\` |
 
-Always start with \`listClips\` so you reference real clipIds.
+### Crucial details
+
+- **\`updateClipProps\` is a FULL replace.** Read the clip's current \`props\` from \`listClips\`, spread it, override the fields you want, and pass the merged result. Missing keys become \`undefined\` and the scene will render broken.
+- **\`reorderClips\` requires the COMPLETE new order.** Every existing clipId must appear exactly once. Missing or unknown ids will reject with an error.
+- **Don't waste turns calling \`listScenesInCategory\` again** if the user is only editing existing clips — you already know what's on the timeline from \`listClips\`. Only re-browse when *adding* new scenes.
+- **Style additions should match existing clips.** When adding new scenes to an existing build, read one of the current clips' \`style\` from \`listClips\` and apply the same base/accent/font to the new clips. Don't introduce a new palette mid-video.
 
 ---
 

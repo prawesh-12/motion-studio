@@ -10,8 +10,11 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Project } from "@workspace/compositions/project";
+import { compositionsById } from "@workspace/compositions/registry";
+import type { SceneTransition } from "@workspace/compositions/transitions";
 import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
+import { WaveSpinner } from "@workspace/ui/components/wave-spinner";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useEffect, useRef, useState } from "react";
 import { Streamdown } from "streamdown";
@@ -36,13 +39,12 @@ const SUGGESTIONS = [
 ];
 
 // Cap on how many times the SDK will auto-continue per user message.
-// Server-side stepCountIs(60) already lets a build complete in ONE turn
-// — listScenesInCategory + getSceneDetails ×N + buildProject + final
-// text all fit. Auto-continuation only kicks in when the assistant
-// message ended on tool calls with no final text (model forgot to emit
-// the summary). We give it 2 nudges max, then bail so the user isn't
-// stuck on a spinner.
-const MAX_AUTO_CONTINUATIONS_PER_USER_MESSAGE = 2;
+// Surgical edits ("add a tweet card") need: listClips → listScenesInCategory
+// → getSceneDetails → addClip → updateClipProps — that's 5 tool turns
+// before the terminal-tool short-circuit fires on addClip/updateClipProps.
+// Set generously so multi-step edits aren't truncated mid-flow; the
+// terminal-tool short-circuit ends the loop early on successful builds.
+const MAX_AUTO_CONTINUATIONS_PER_USER_MESSAGE = 12;
 
 export function AgentPanel({ project, dispatch, onClose }: Props) {
   // Keep the latest project in a ref so onToolCall (closed over at mount)
@@ -69,6 +71,36 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
     sendAutomaticallyWhen: (args) => {
       const ready = lastAssistantMessageIsCompleteWithToolCalls(args);
       if (!ready) return false;
+
+      // Terminal-tool short-circuit: if the last assistant message
+      // includes a successful build (or clear/edit) tool result, that
+      // IS the final action. Don't auto-continue waiting for the model
+      // to emit a follow-up text turn — gpt-4.1-mini frequently doesn't,
+      // and burning more turns on it just gets the UI stuck.
+      const lastMsg = args.messages[args.messages.length - 1];
+      if (lastMsg?.role === "assistant") {
+        const hasTerminalResult = lastMsg.parts.some((p) => {
+          if (
+            p.type !== "tool-buildProject" &&
+            p.type !== "tool-clearProject" &&
+            p.type !== "tool-addClip" &&
+            p.type !== "tool-deleteClip" &&
+            p.type !== "tool-updateClipProps" &&
+            p.type !== "tool-updateClipStyle" &&
+            p.type !== "tool-updateClipDuration"
+          ) {
+            return false;
+          }
+          const out = (p as { output?: unknown }).output;
+          return (
+            typeof out === "object" &&
+            out !== null &&
+            (out as { ok?: unknown }).ok === true
+          );
+        });
+        if (hasTerminalResult) return false;
+      }
+
       if (
         autoContinuationCount.current >= MAX_AUTO_CONTINUATIONS_PER_USER_MESSAGE
       ) {
@@ -105,25 +137,77 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // SDK's `status` sometimes lingers at "streaming" after the model has
-  // already emitted its final text turn (the auto-continuation cleanup
-  // doesn't always transition cleanly). Override: if the last assistant
-  // message already has non-empty text AND no tool call inside it is
-  // still missing a result, the conversation is done — hide Stop.
+  // Hard safety net for status getting stuck at "streaming" with no
+  // activity — re-evaluated whenever a message changes. If 4 seconds
+  // pass with no new message activity, we declare the chat idle even
+  // if the SDK hasn't transitioned status.
+  const [forceIdle, setForceIdle] = useState(false);
+  const lastActivitySig = useRef<string>("");
+  useEffect(() => {
+    // Build a cheap signature of "message state" that changes whenever
+    // any message gains/loses parts or text grows.
+    const sig = messages
+      .map((m) => `${m.id}:${m.parts.length}:${JSON.stringify(m.parts).length}`)
+      .join("|");
+    if (sig !== lastActivitySig.current) {
+      lastActivitySig.current = sig;
+      setForceIdle(false);
+    }
+    if (status !== "streaming" && status !== "submitted") return;
+    const t = setTimeout(() => setForceIdle(true), 4000);
+    return () => clearTimeout(t);
+  }, [messages, status]);
+
+  // SDK's `status` sometimes lingers at "streaming" after the model
+  // has effectively finished. We treat the last assistant message as
+  // "settled" if EITHER:
+  //   - it contains non-empty text, OR
+  //   - it contains a successful terminal-tool result (build / edit /
+  //     clear). The model often doesn't bother emitting a follow-up
+  //     text turn after a build, and that's fine — the build is the
+  //     real outcome.
+  // In either case, every tool call inside the message must have a
+  // result; we never claim "settled" while a call is still pending.
   const lastMessage = messages[messages.length - 1];
-  const lastAssistantSettled =
+  const TERMINAL_TOOL_TYPES = new Set([
+    "tool-buildProject",
+    "tool-clearProject",
+    "tool-addClip",
+    "tool-deleteClip",
+    "tool-updateClipProps",
+    "tool-updateClipStyle",
+    "tool-updateClipDuration",
+  ]);
+  const hasNonEmptyText =
     lastMessage?.role === "assistant" &&
     lastMessage.parts.some(
       (p): p is { type: "text"; text: string } =>
         p.type === "text" && p.text.trim().length > 0,
-    ) &&
-    !lastMessage.parts.some(
+    );
+  const hasSuccessfulTerminal =
+    lastMessage?.role === "assistant" &&
+    lastMessage.parts.some((p) => {
+      if (!TERMINAL_TOOL_TYPES.has(p.type)) return false;
+      const out = (p as { output?: unknown }).output;
+      return (
+        typeof out === "object" &&
+        out !== null &&
+        (out as { ok?: unknown }).ok === true
+      );
+    });
+  const hasPendingTool =
+    lastMessage?.role === "assistant" &&
+    lastMessage.parts.some(
       (p) =>
         p.type.startsWith("tool-") &&
         (p as { output?: unknown }).output === undefined,
     );
+  const lastAssistantSettled =
+    !hasPendingTool && (hasNonEmptyText || hasSuccessfulTerminal);
   const isBusy =
-    (status === "submitted" || status === "streaming") && !lastAssistantSettled;
+    (status === "submitted" || status === "streaming") &&
+    !lastAssistantSettled &&
+    !forceIdle;
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -193,10 +277,9 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
               />
             ))}
             {status === "submitted" ? (
-              <li className="flex justify-start">
-                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-[12px] text-muted-foreground">
-                  Thinking…
-                </div>
+              <li className="flex items-center gap-2 py-1">
+                <WaveSpinner size="sm" pattern="square3x3" color="primary" />
+                <ThinkingPhrase pool="planning" />
               </li>
             ) : null}
             {error ? (
@@ -297,11 +380,17 @@ function runClientTool(
       if (!parsed.ok) {
         return { error: parsed.error };
       }
-      dispatch({ type: "LOAD_PROJECT", project: parsed.project });
+      // Clamp every clip's durationInFrames to its scene's natural
+      // animation length. The model often picks longer durations to
+      // hit a total runtime, which makes scenes freeze on their last
+      // frame for seconds — looks awful. Better to land slightly
+      // short than to ship frozen holds.
+      const clamped = clampClipDurations(parsed.project);
+      dispatch({ type: "LOAD_PROJECT", project: clamped.project });
       return {
         ok: true,
-        clipsLoaded: parsed.project.clips.length,
-        warnings: parsed.warnings,
+        clipsLoaded: clamped.project.clips.length,
+        warnings: [...parsed.warnings, ...clamped.adjustments],
       };
     }
     case "listClips": {
@@ -392,9 +481,134 @@ function runClientTool(
       dispatch({ type: "DELETE_CLIP", clipId });
       return { ok: true };
     }
-    // Server-executed tools (listScenesInCategory, getSceneDetails) come
-    // through onToolCall too, but their result is already produced
-    // upstream — returning undefined tells the caller to skip addToolResult.
+    case "reorderClips": {
+      const ids = Array.isArray(input.clipIds)
+        ? (input.clipIds as unknown[]).filter(
+            (v): v is string => typeof v === "string",
+          )
+        : [];
+      if (ids.length === 0) {
+        return { error: "clipIds must be a non-empty array of strings" };
+      }
+      const known = new Set(project.clips.map((c) => c.id));
+      const unknownIds = ids.filter((id) => !known.has(id));
+      if (unknownIds.length > 0) {
+        return {
+          error: `Unknown clipIds in reorder: ${unknownIds.join(", ")}. Call listClips first to get current ids.`,
+        };
+      }
+      const missing = project.clips
+        .map((c) => c.id)
+        .filter((id) => !ids.includes(id));
+      if (missing.length > 0) {
+        return {
+          error: `clipIds is incomplete — missing existing clips: ${missing.join(", ")}. Pass the full ordering.`,
+        };
+      }
+      dispatch({ type: "REORDER_CLIPS", clipIds: ids });
+      return { ok: true, order: ids };
+    }
+    case "resetClipStyle": {
+      const clipId = String(input.clipId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      dispatch({ type: "RESET_CLIP_STYLE", clipId });
+      return { ok: true };
+    }
+    case "setProjectTransition": {
+      const t = input.transition;
+      if (t === null || t === undefined) {
+        dispatch({ type: "UPDATE_PROJECT_TRANSITION", transition: undefined });
+        return { ok: true, cleared: true };
+      }
+      if (typeof t !== "object") {
+        return { error: "transition must be an object or null" };
+      }
+      dispatch({
+        type: "UPDATE_PROJECT_TRANSITION",
+        transition: t as SceneTransition,
+      });
+      return { ok: true };
+    }
+    case "setClipTransition": {
+      const clipId = String(input.clipId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      const t = input.transition;
+      if (t === null || t === undefined) {
+        dispatch({
+          type: "UPDATE_CLIP_TRANSITION",
+          clipId,
+          transition: undefined,
+        });
+        return { ok: true, cleared: true };
+      }
+      if (typeof t !== "object") {
+        return { error: "transition must be an object or null" };
+      }
+      dispatch({
+        type: "UPDATE_CLIP_TRANSITION",
+        clipId,
+        transition: t as SceneTransition,
+      });
+      return { ok: true };
+    }
+    case "addEffect": {
+      const clipId = String(input.clipId ?? "");
+      const effectId = String(input.effectId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      if (!effectId) return { error: "effectId is required" };
+      const beforeClip = project.clips.find((c) => c.id === clipId);
+      if (!beforeClip) return { error: `Unknown clipId: ${clipId}` };
+      const beforeCount = beforeClip.effects?.length ?? 0;
+      dispatch({ type: "ADD_EFFECT", clipId, effectId });
+      // Same pattern as addClip — the reducer mints the instance id; we
+      // observe it via microtask flush from the post-dispatch snapshot.
+      return new Promise<{ effectInstanceId?: string; error?: string }>(
+        (resolve) => {
+          queueMicrotask(() => {
+            const next = projectRef.current.clips.find((c) => c.id === clipId);
+            const added = next?.effects?.[(next.effects?.length ?? 0) - 1];
+            if (next && (next.effects?.length ?? 0) > beforeCount && added) {
+              resolve({
+                effectInstanceId: added.id,
+                effectId: added.effectId,
+              } as { effectInstanceId?: string });
+            } else {
+              resolve({ error: `Effect not registered: ${effectId}` });
+            }
+          });
+        },
+      );
+    }
+    case "updateEffectProps": {
+      const clipId = String(input.clipId ?? "");
+      const effectInstanceId = String(input.effectInstanceId ?? "");
+      const props = (input.props ?? {}) as Record<string, unknown>;
+      if (!clipId) return { error: "clipId is required" };
+      if (!effectInstanceId) return { error: "effectInstanceId is required" };
+      dispatch({
+        type: "UPDATE_EFFECT_PROPS",
+        clipId,
+        effectInstanceId,
+        props,
+      });
+      return { ok: true };
+    }
+    case "removeEffect": {
+      const clipId = String(input.clipId ?? "");
+      const effectInstanceId = String(input.effectInstanceId ?? "");
+      if (!clipId) return { error: "clipId is required" };
+      if (!effectInstanceId) return { error: "effectInstanceId is required" };
+      dispatch({
+        type: "REMOVE_EFFECT",
+        clipId,
+        effectInstanceId,
+      });
+      return { ok: true };
+    }
+    // Server-executed tools (listScenesInCategory, getSceneDetails,
+    // listEffects, listDesignTokens) come through onToolCall too, but
+    // their result is already produced upstream — returning undefined
+    // tells the caller to skip addToolResult.
     default:
       return undefined;
   }
@@ -491,34 +705,117 @@ function MessageBubble({
   }
   const displayText = text || fallbackText;
 
+  if (isUser) {
+    // Users keep the bubble — visual anchor for "this is what I said".
+    return (
+      <li className="flex justify-end">
+        <div className="max-w-[88%] rounded-lg bg-primary px-3 py-2 text-[13px] leading-relaxed text-primary-foreground">
+          <div className="whitespace-pre-wrap">{displayText}</div>
+        </div>
+      </li>
+    );
+  }
+
+  // Assistant: no card. Tool calls + flowing text directly in the
+  // column so the conversation feels like ChatGPT/Claude, not like a
+  // forum thread.
+  const showWorkingShimmer =
+    isStreaming && !displayText && toolCalls.length > 0;
   return (
-    <li className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
-      <div
-        className={`max-w-[88%] space-y-2 rounded-lg px-3 py-2 text-[13px] leading-relaxed ${
-          isUser
-            ? "bg-primary text-primary-foreground"
-            : "border border-border bg-muted/40 text-foreground"
-        }`}
-      >
-        {toolCalls.length > 0 ? (
-          <ToolCallsSection toolCalls={toolCalls} />
-        ) : null}
-        {displayText ? (
-          isUser ? (
-            <div className="whitespace-pre-wrap">{displayText}</div>
-          ) : (
-            <div className="prose prose-sm prose-invert max-w-none [&_pre]:my-2 [&_pre]:rounded-md [&_pre]:text-[12px] [&_code]:text-[12px] [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
-              <Streamdown
-                isAnimating={isStreaming}
-                animated={{ animation: "blurIn", duration: 150 }}
-              >
-                {displayText}
-              </Streamdown>
-            </div>
-          )
-        ) : null}
-      </div>
+    <li className="flex flex-col gap-2 py-1 text-[13px] leading-relaxed text-foreground">
+      {toolCalls.length > 0 ? <ToolCallsSection toolCalls={toolCalls} /> : null}
+      {showWorkingShimmer ? <ThinkingPhrase pool="working" /> : null}
+      {displayText ? (
+        <div className="prose prose-sm prose-invert max-w-none [&_pre]:my-2 [&_pre]:rounded-md [&_pre]:text-[12px] [&_code]:text-[12px] [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+          <Streamdown
+            isAnimating={isStreaming}
+            animated={{ animation: "blurIn", duration: 150 }}
+          >
+            {displayText}
+          </Streamdown>
+        </div>
+      ) : null}
     </li>
+  );
+}
+
+/**
+ * Rotating shimmer text shown while the agent is working. Two phrase
+ * pools:
+ *   - "planning" — before the first tool call streams in (status === "submitted").
+ *   - "working"  — after tools have started but no final text yet.
+ * Cycles every ~3s with a fresh random pick so the same phrase doesn't
+ * keep showing back-to-back. Pure CSS shimmer; no JS animation cost.
+ */
+const PLANNING_PHRASES = [
+  "Cooking up something good…",
+  "Wiring synapses…",
+  "Doing the math on duration…",
+  "Hyping myself up…",
+  "Pretending to be creative…",
+  "Reading the brief out loud…",
+  "Lighting candles for inspiration…",
+  "Choosing a vibe…",
+  "Brewing pixels…",
+  "Channeling my inner designer…",
+];
+
+const WORKING_PHRASES = [
+  "Auditioning scenes…",
+  "Mixing colors that don't clash…",
+  "Refusing to pick TitlePopup again…",
+  "Negotiating with composition #47…",
+  "Picking fonts that don't suck…",
+  "Trying not to use Toast…",
+  "Composing your masterpiece…",
+  "Pacing the beats…",
+  "Avoiding the boring option…",
+  "Designing on the fly…",
+  "Adding more drama…",
+  "Re-thinking that last choice…",
+  "Almost there (probably)…",
+  "Wrangling the timeline…",
+  "Putting on the finishing touches…",
+];
+
+function ThinkingPhrase({ pool }: { pool: "planning" | "working" }) {
+  const phrases = pool === "planning" ? PLANNING_PHRASES : WORKING_PHRASES;
+  const [phrase, setPhrase] = useState(
+    () => phrases[Math.floor(Math.random() * phrases.length)]!,
+  );
+  useEffect(() => {
+    const id = setInterval(() => {
+      setPhrase((prev) => {
+        // Avoid showing the same phrase twice in a row.
+        if (phrases.length <= 1) return prev;
+        let next = prev;
+        while (next === prev) {
+          next = phrases[Math.floor(Math.random() * phrases.length)]!;
+        }
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(id);
+  }, [phrases]);
+
+  return (
+    <span
+      className="bg-clip-text text-[12px] font-medium text-transparent"
+      style={{
+        backgroundImage:
+          "linear-gradient(90deg, hsl(var(--muted-foreground) / 0.45) 0%, hsl(var(--foreground)) 50%, hsl(var(--muted-foreground) / 0.45) 100%)",
+        backgroundSize: "200% 100%",
+        animation: "agent-shimmer 2.2s linear infinite",
+      }}
+    >
+      {phrase}
+      <style>{`
+        @keyframes agent-shimmer {
+          0%   { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+      `}</style>
+    </span>
   );
 }
 
@@ -550,4 +847,36 @@ function extractToolCalls(message: ChatMessage): ToolCallEntry[] {
     });
   }
   return out;
+}
+
+/**
+ * Clamp every clip's durationInFrames to its scene's natural animation
+ * length (its registry `durationInFrames` default). Stretching past
+ * that point just freezes the animation's final frame — the agent does
+ * this when it's trying to hit a runtime target, and it looks broken.
+ *
+ * A small upward tolerance (1.2×) is allowed for scenes that loop or
+ * hold gracefully (Terminal, marquees, charts). Anything above that
+ * gets pulled back down.
+ */
+function clampClipDurations(project: Project): {
+  project: Project;
+  adjustments: string[];
+} {
+  const TOLERANCE = 1.2;
+  const adjustments: string[] = [];
+  const next: Project = {
+    ...project,
+    clips: project.clips.map((clip) => {
+      const info = compositionsById[clip.compositionId];
+      if (!info) return clip;
+      const max = Math.round(info.durationInFrames * TOLERANCE);
+      if (clip.durationInFrames <= max) return clip;
+      adjustments.push(
+        `Clamped ${clip.compositionId} from ${clip.durationInFrames}f to ${max}f (animation would have frozen otherwise).`,
+      );
+      return { ...clip, durationInFrames: max };
+    }),
+  };
+  return { project: next, adjustments };
 }

@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4.1-mini"),
+    model: openai("gpt-5-mini"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages, { tools }),
     tools,
@@ -22,7 +22,22 @@ export async function POST(req: Request) {
     // default would risk invalid tool args; lower would make the agent
     // pick the same scenes every build (which it was doing).
     temperature: 0.9,
+    // Log stream-internal errors so we can see rate limits / malformed
+    // tool-result state issues server-side instead of staring at a
+    // silent client.
+    onError: ({ error }) => {
+      console.error("[agent] streamText error:", error);
+    },
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    // Surface the actual error text to the client UI instead of a
+    // generic "An error occurred" — otherwise the AgentPanel just
+    // shows a vague chip and the user can't tell rate-limit from bug.
+    onError: (error) => {
+      console.error("[agent] response error:", error);
+      if (error instanceof Error) return error.message;
+      return typeof error === "string" ? error : "Agent request failed.";
+    },
+  });
 }

@@ -1,3 +1,4 @@
+import { effects as effectsRegistry } from "@workspace/compositions/effects/registry";
 import { compositionsById } from "@workspace/compositions/registry";
 import type { CompositionCategory } from "@workspace/compositions/schema";
 import { tool } from "ai";
@@ -86,6 +87,27 @@ const SceneTransitionSchema = z
   })
   .passthrough();
 
+// Schema reused by setProjectTransition / setClipTransition. More
+// constrained than the loose passthrough we accept inside Clip.transition
+// — surgical edits should go through the canonical kind list.
+const TransitionInputSchema = z.object({
+  kind: z.enum([
+    "none",
+    "fade",
+    "slide",
+    "wipe",
+    "flip",
+    "clock-wipe",
+    "iris",
+    "zoom",
+  ]),
+  durationInFrames: z.number().int().min(0).optional(),
+  direction: z
+    .enum(["from-left", "from-right", "from-top", "from-bottom"])
+    .optional(),
+  zoomMode: z.enum(["in", "out"]).optional(),
+});
+
 const ClipSchema = z.object({
   id: z
     .string()
@@ -163,10 +185,6 @@ export const tools = {
   }),
 
   // ───── DISCOVERY (category → scenes → details funnel) ────────────────
-  // The system prompt lists categories. The agent calls
-  // `listScenesInCategory` to drill in, then `getSceneDetails` for the
-  // few scenes it wants to use. This keeps the prompt constant-size as
-  // the registry grows.
   listScenesInCategory: tool({
     description:
       "Returns every scene in a category as `{ id, title, description, durationInFrames, fps, width, height, brandLocked }`. Call this for each category that fits the user's brief; then call getSceneDetails for the scenes you actually want to build with.",
@@ -272,6 +290,93 @@ export const tools = {
     description: "Remove one clip from the timeline by id.",
     inputSchema: z.object({
       clipId: z.string(),
+    }),
+  }),
+
+  reorderClips: tool({
+    description:
+      "Reorder the timeline. Pass the complete array of clipIds in the new order. Every existing clipId from listClips must appear exactly once — unknown or missing ids are silently dropped, leaving you with a partial timeline.",
+    inputSchema: z.object({
+      clipIds: z
+        .array(z.string())
+        .min(1)
+        .describe(
+          "Complete new ordering of every clip on the timeline. Get the current ids from listClips first.",
+        ),
+    }),
+  }),
+
+  resetClipStyle: tool({
+    description:
+      "Clear every style override on a clip — background, color, fontFamily, accent all revert to the composition's natural defaults. Use this when the user says 'remove the custom colors' or 'use the default look'.",
+    inputSchema: z.object({
+      clipId: z.string(),
+    }),
+  }),
+
+  setProjectTransition: tool({
+    description:
+      "Set the project-wide default transition. Applied to every clip that doesn't have its own override. Pass `null` to clear and fall back to a hard cut.",
+    inputSchema: z.object({
+      transition: TransitionInputSchema.nullable().describe(
+        "Transition kind + duration in frames (and optional direction for slide/wipe/flip). Null to clear.",
+      ),
+    }),
+  }),
+
+  setClipTransition: tool({
+    description:
+      "Set a per-clip transition that overrides the project default. Pass `null` to clear the override and fall back to the project default.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      transition: TransitionInputSchema.nullable(),
+    }),
+  }),
+
+  listEffects: tool({
+    description:
+      "Returns the catalog of stackable clip effects (e.g. FadeOut, KenBurns, SlideOut, ZoomOut, Pop, Shake). Each entry includes id, title, description, trigger (enter/exit/loop/range), defaultProps, and the field schema for tuning.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      effects: effectsRegistry.map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        trigger: e.trigger,
+        defaultProps: e.defaultProps,
+        fields: e.fields,
+      })),
+    }),
+  }),
+
+  addEffect: tool({
+    description:
+      "Stack an effect on top of an existing clip. Returns the new effectInstanceId you'll need to tune or remove it later. Effects compose — multiple FadeOut/KenBurns/etc. on one clip is fine.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectId: z
+        .string()
+        .describe(
+          "Effect id from listEffects (e.g. 'FadeOut', 'KenBurns', 'SlideOut').",
+        ),
+    }),
+  }),
+
+  updateEffectProps: tool({
+    description:
+      "Replace an effect instance's props. Full replace (not a patch) — start from the defaultProps the effect ships with and override what you want.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectInstanceId: z.string(),
+      props: z.record(z.string(), z.unknown()),
+    }),
+  }),
+
+  removeEffect: tool({
+    description: "Remove one effect instance from a clip.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectInstanceId: z.string(),
     }),
   }),
 };
