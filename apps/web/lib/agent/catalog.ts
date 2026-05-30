@@ -68,6 +68,10 @@ export function buildCatalogText(): string {
  * Structured payload for the `listScenesInCategory` tool. The agent uses
  * the returned id + description to shortlist scenes, then calls
  * `getSceneDetails` for the few it actually wants to build with.
+ *
+ * Results are **shuffled** per call so the agent doesn't anchor on
+ * whichever scene happens to be first in registry order — that was
+ * causing every build to pick the same handful of scenes.
  */
 export function listScenesInCategory(category: CompositionCategory): Array<{
   id: string;
@@ -79,7 +83,15 @@ export function listScenesInCategory(category: CompositionCategory): Array<{
   height: number;
   brandLocked: boolean;
 }> {
-  return AGENT_COMPOSITIONS.filter((c) => c.category === category).map((c) => ({
+  const matches = AGENT_COMPOSITIONS.filter((c) => c.category === category);
+  // Fisher-Yates shuffle so the agent sees scenes in a different order
+  // each call. With deterministic models like gpt-4.1-mini this is the
+  // cheapest way to get variety in scene picks across builds.
+  for (let i = matches.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [matches[i], matches[j]] = [matches[j]!, matches[i]!];
+  }
+  return matches.map((c) => ({
     id: c.id,
     title: c.title,
     description: c.description,

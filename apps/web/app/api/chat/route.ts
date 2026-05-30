@@ -18,6 +18,10 @@ export async function POST(req: Request) {
     messages: await convertToModelMessages(messages, { tools }),
     tools,
     stopWhen: stepCountIs(60),
+    // Default is ~1.0 but explicit so we remember to tune. Higher than
+    // default would risk invalid tool args; lower would make the agent
+    // pick the same scenes every build (which it was doing).
+    temperature: 0.9,
   });
 
   return result.toUIMessageStreamResponse();

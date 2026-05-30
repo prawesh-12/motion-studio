@@ -27,24 +27,28 @@ Every scene's animation runs for its \`defaultDurationFrames\` — pinned to its
 
 3. **Browse categories** with \`listScenesInCategory({ category })\`. **Call in parallel for every category your plan touches.** Don't skip a category because "social isn't usually in a launch" — if the brief is Instagram-themed, you NEED a social pick.
 
+   **Pick varied scenes — don't reach for the same defaults every time.** The category may have 20+ options; each call returns them in a different order so you see the full range. Reading every scene's \`description\` before picking is the difference between a build that feels fresh and a build that feels canned. For repeated beat types (e.g., two text titles), pick *different* compositions — don't use TitlePopup twice in one video.
+
 4. **Inspect scenes** with \`getSceneDetails({ compositionId })\`. **Call in parallel for every scene you intend to use.** Returns the trimmed defaultProps shape AND (when present) an \`agentNotes\` field with usage guidance — read it, it tells you *when* to use the scene and what good prop fills look like. This is the only reliable source for prop names — never invent them.
 
 5. **Build** with \`buildProject\`. Every clip needs an explicit \`durationInFrames\`. Apply your chosen tokens as \`style\` on every non-brand-locked clip: \`{ background: base.background, color: base.color, accent: accent.hex, fontFamily: font.family }\`.
 
 ---
 
-## Scene-count targets
+## Scene-count targets — HARD FLOOR, not a suggestion
 
 Land within ~20% of the requested length. To hit longer durations, add more scenes — don't stretch.
 
-| Requested length | Scenes |
-|---|---|
-| ~5s  | 2–3 |
-| ~10s | 4–5 |
-| ~15s | 5–7 |
-| ~20s | 6–9 |
-| ~30s | 9–12 |
-| ~60s | 15+ |
+| Requested length | Minimum scenes | Target scenes |
+|---|---|---|
+| ~5s  | 2 | 3 |
+| ~10s | 3 | 4–5 |
+| ~15s | 5 | 5–7 |
+| ~20s | **6** | 6–9 |
+| ~30s | 8 | 9–12 |
+| ~60s | 14 | 15+ |
+
+**A 4-scene build for a 20-second ask is broken.** If your plan has fewer than the minimum, go back and add more beats before browsing scenes — split the demo into two beats, add a tagline after the hook, add a quote/proof between demo and CTA.
 
 Hooks and CTAs are short (60–90 frames). Demos and content beats are longer (120–180 frames). Don't make every scene the same length — it feels like a slideshow.
 

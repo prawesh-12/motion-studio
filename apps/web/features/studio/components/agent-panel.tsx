@@ -105,7 +105,25 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const isBusy = status === "submitted" || status === "streaming";
+  // SDK's `status` sometimes lingers at "streaming" after the model has
+  // already emitted its final text turn (the auto-continuation cleanup
+  // doesn't always transition cleanly). Override: if the last assistant
+  // message already has non-empty text AND no tool call inside it is
+  // still missing a result, the conversation is done — hide Stop.
+  const lastMessage = messages[messages.length - 1];
+  const lastAssistantSettled =
+    lastMessage?.role === "assistant" &&
+    lastMessage.parts.some(
+      (p): p is { type: "text"; text: string } =>
+        p.type === "text" && p.text.trim().length > 0,
+    ) &&
+    !lastMessage.parts.some(
+      (p) =>
+        p.type.startsWith("tool-") &&
+        (p as { output?: unknown }).output === undefined,
+    );
+  const isBusy =
+    (status === "submitted" || status === "streaming") && !lastAssistantSettled;
 
   useEffect(() => {
     const el = scrollRef.current;
