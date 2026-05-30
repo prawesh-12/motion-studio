@@ -15,6 +15,7 @@ import { Button } from "@workspace/ui/components/button";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import { useEffect, useRef, useState } from "react";
+import { Streamdown } from "streamdown";
 import { parseProjectJson } from "../lib/project-io";
 import type { StudioAction } from "../state/reducer";
 
@@ -124,8 +125,16 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
           <EmptyState onPick={send} />
         ) : (
           <ul className="space-y-3">
-            {messages.map((m) => (
-              <MessageBubble key={m.id} message={m} />
+            {messages.map((m, i) => (
+              <MessageBubble
+                key={m.id}
+                message={m}
+                isStreaming={
+                  status === "streaming" &&
+                  i === messages.length - 1 &&
+                  m.role === "assistant"
+                }
+              />
             ))}
             {status === "submitted" ? (
               <li className="flex justify-start">
@@ -364,7 +373,13 @@ function EmptyState({ onPick }: { onPick: (text: string) => void }) {
 
 type ChatMessage = ReturnType<typeof useChat>["messages"][number];
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function MessageBubble({
+  message,
+  isStreaming,
+}: {
+  message: ChatMessage;
+  isStreaming: boolean;
+}) {
   const isUser = message.role === "user";
   const text = message.parts
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
@@ -391,7 +406,20 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             <span className="font-mono">{p.type.replace(/^tool-/, "")}</span>
           </div>
         ))}
-        {text ? <div className="whitespace-pre-wrap">{text}</div> : null}
+        {text ? (
+          isUser ? (
+            <div className="whitespace-pre-wrap">{text}</div>
+          ) : (
+            <div className="prose prose-sm prose-invert max-w-none [&_pre]:my-2 [&_pre]:rounded-md [&_pre]:text-[12px] [&_code]:text-[12px] [&_p]:my-1 [&_ul]:my-1 [&_ol]:my-1 [&_h1]:text-base [&_h2]:text-sm [&_h3]:text-sm">
+              <Streamdown
+                isAnimating={isStreaming}
+                animated={{ animation: "blurIn", duration: 150 }}
+              >
+                {text}
+              </Streamdown>
+            </div>
+          )
+        ) : null}
       </div>
     </li>
   );
