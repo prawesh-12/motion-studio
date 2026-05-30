@@ -172,6 +172,26 @@ export type CompositionInfo<P extends Record<string, unknown>> = {
    * stays comprehensive as new compositions land.
    */
   category: CompositionCategory;
+  /**
+   * When true, the studio agent never sees this composition — it's
+   * filtered out of the category counts, listScenesInCategory results,
+   * and getSceneDetails. Use for internal/branded scenes that exist for
+   * the team but shouldn't be picked by the LLM when generating user
+   * videos. The composition still appears in the studio library and
+   * docs surfaces.
+   */
+  hideFromAgent?: boolean;
+  /**
+   * Free-form, 1–3 sentence usage guidance for the studio agent —
+   * surfaced via `getSceneDetails`. Tell the model when to reach for
+   * this scene, what role it plays in a video, and what makes a good
+   * prop fill. Examples:
+   *   "Best for CLI install/build/deploy with 2–4 lines. Use for the
+   *    'how it works' beat in a launch video. Avoid for long-form."
+   *   "Use for Instagram-themed launches or social mockups. Pair the
+   *    InstagramPost reveal with a TextScaleDownFade hook."
+   */
+  agentNotes?: string;
   // Optional callback Remotion runs at studio load + every prop edit.
   // Use this to recompute durationInFrames (or any metadata) from
   // current props — e.g. GaiaScenario derives its length from the

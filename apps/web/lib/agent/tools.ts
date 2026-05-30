@@ -1,8 +1,52 @@
+import { effects as effectsRegistry } from "@workspace/compositions/effects/registry";
 import { compositionsById } from "@workspace/compositions/registry";
 import type { CompositionCategory } from "@workspace/compositions/schema";
 import { tool } from "ai";
 import { z } from "zod";
-import { KNOWN_CATEGORIES, listScenesInCategory } from "./catalog";
+import {
+  isAgentVisible,
+  KNOWN_CATEGORIES,
+  listScenesInCategory,
+} from "./catalog";
+import { ACCENT_COLORS, COLOR_BASES, PREMIUM_FONTS } from "./design-tokens";
+
+// Templates are intentionally NOT exposed to the agent right now —
+// the per-slot category constraint blocked good brand-aware picks
+// (e.g. couldn't pick InstagramPost for an Instagram launch because
+// no slot accepted `social`). Files kept under ./templates/ so we
+// can re-enable with multi-category slots later.
+// import { TEMPLATES, templateDurationInFrames } from "./templates";
+
+/**
+ * Trim a defaultProps payload so the agent sees the SHAPE without the
+ * bulk. Long strings get truncated with a remaining-char hint; long
+ * arrays get the first 3 items plus a remaining-count hint. The agent
+ * can still infer the schema from the keys + sample values, but a
+ * single getSceneDetails response that was 3,000+ tokens (e.g.
+ * GaiaScenario) collapses to a few hundred.
+ */
+function trimForAgent(value: unknown, depth = 0): unknown {
+  if (depth > 6) return "[deep]";
+  if (typeof value === "string") {
+    if (value.length <= 200) return value;
+    return `${value.slice(0, 180)}…[+${value.length - 180} chars truncated]`;
+  }
+  if (Array.isArray(value)) {
+    if (value.length <= 3) return value.map((v) => trimForAgent(v, depth + 1));
+    return [
+      ...value.slice(0, 3).map((v) => trimForAgent(v, depth + 1)),
+      `…[+${value.length - 3} more items, same shape]`,
+    ];
+  }
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = trimForAgent(v, depth + 1);
+    }
+    return out;
+  }
+  return value;
+}
 
 /**
  * Two-track tool surface for the studio agent:
@@ -43,6 +87,27 @@ const SceneTransitionSchema = z
   })
   .passthrough();
 
+// Schema reused by setProjectTransition / setClipTransition. More
+// constrained than the loose passthrough we accept inside Clip.transition
+// — surgical edits should go through the canonical kind list.
+const TransitionInputSchema = z.object({
+  kind: z.enum([
+    "none",
+    "fade",
+    "slide",
+    "wipe",
+    "flip",
+    "clock-wipe",
+    "iris",
+    "zoom",
+  ]),
+  durationInFrames: z.number().int().min(0).optional(),
+  direction: z
+    .enum(["from-left", "from-right", "from-top", "from-bottom"])
+    .optional(),
+  zoomMode: z.enum(["in", "out"]).optional(),
+});
+
 const ClipSchema = z.object({
   id: z
     .string()
@@ -73,23 +138,53 @@ const ProjectSchema = z.object({
 });
 
 export const tools = {
-  // ───── PRIMARY one-shot generation ────────────────────────────────────
+  // ───── PRIMARY: free-form generation from category discovery ──────────
   buildProject: tool({
     description:
-      "Replace the entire timeline with a new video. Pass a complete Project JSON matching the studio's import schema. Use this when the user asks for a fresh video. Atomic: either the whole project loads or nothing does.",
+      "Replace the entire timeline with a new project. Discovery flow: listDesignTokens (once) → listScenesInCategory for each relevant category → getSceneDetails for each scene you want to use → buildProject. Pass a complete Project JSON. Atomic: either the whole project loads or nothing does.",
     inputSchema: z.object({
       project: ProjectSchema.describe(
-        "The complete Project JSON. Must include fps, width, height, and a non-empty clips array. Each clip needs id, compositionId, and props.",
+        "The complete Project JSON. Must include fps, width, height, and a non-empty clips array. Each clip needs id, compositionId, props, and durationInFrames.",
       ),
     }),
     // No execute — runs client-side in AgentPanel.onToolCall.
   }),
 
+  // ───── DESIGN TOKENS — curated palettes/fonts ────────────────────────
+  // Lock the agent to pre-vetted color and font atoms. Inventing raw hex
+  // codes produced amateur output; picking 1 base + 1 accent + 1 font
+  // from this list guarantees a premium look.
+  listDesignTokens: tool({
+    description:
+      "Returns curated design tokens: base palettes (background+text pairs), accent colors, and premium fonts. **Call this before buildProject** to pick a coherent visual style. Compose your clip.style by picking ONE base + ONE accent + ONE font — do NOT invent raw hex codes; the output will look amateur. Use the `vibe` and `bestOn` hints to match the brief.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      bases: COLOR_BASES.map((b) => ({
+        id: b.id,
+        name: b.name,
+        background: b.background,
+        color: b.color,
+        vibe: b.vibe,
+      })),
+      accents: ACCENT_COLORS.map((a) => ({
+        id: a.id,
+        name: a.name,
+        hex: a.hex,
+        bestOn: a.bestOn,
+      })),
+      fonts: PREMIUM_FONTS.map((f) => ({
+        id: f.id,
+        name: f.name,
+        family: f.family,
+        category: f.category,
+        vibe: f.vibe,
+      })),
+      howToUse:
+        "Pick ONE base, ONE accent, ONE font. Apply on every non-brand-locked clip: style.background = base.background, style.color = base.color, style.accent = accent.hex, style.fontFamily = font.family.",
+    }),
+  }),
+
   // ───── DISCOVERY (category → scenes → details funnel) ────────────────
-  // The system prompt lists categories. The agent calls
-  // `listScenesInCategory` to drill in, then `getSceneDetails` for the
-  // few scenes it wants to use. This keeps the prompt constant-size as
-  // the registry grows.
   listScenesInCategory: tool({
     description:
       "Returns every scene in a category as `{ id, title, description, durationInFrames, fps, width, height, brandLocked }`. Call this for each category that fits the user's brief; then call getSceneDetails for the scenes you actually want to build with.",
@@ -110,11 +205,16 @@ export const tools = {
 
   getSceneDetails: tool({
     description:
-      "Returns the full defaultProps and field schema for one composition. Call this for every scene you plan to use in buildProject so your props match the actual schema instead of being invented.",
+      "Returns the trimmed defaultProps for one composition (long strings shortened, long arrays clipped to first 3 items — the SHAPE is preserved). Call this for every scene you plan to use in buildProject so your props match the schema. Drop this into clip.props as your starting point and override only what changes.",
     inputSchema: z.object({
       compositionId: z.string(),
     }),
     execute: async ({ compositionId }) => {
+      if (!isAgentVisible(compositionId)) {
+        return {
+          error: `Unknown composition id: ${compositionId}. Use listScenesInCategory to discover available scenes.`,
+        };
+      }
       const info = compositionsById[compositionId];
       if (!info) return { error: `Unknown composition id: ${compositionId}` };
       return {
@@ -123,8 +223,15 @@ export const tools = {
         description: info.description,
         category: info.category,
         brandLocked: info.brandMode === "locked",
-        defaultProps: info.defaultProps,
-        fields: info.fields,
+        defaultDurationFrames: info.durationInFrames,
+        // Optional agent-facing guidance — written by hand in meta.ts
+        // for high-impact scenes. When present, it tells the agent
+        // WHEN to use the scene, not just what props it takes.
+        agentNotes: info.agentNotes,
+        // Trimmed payload — full defaultProps can be 3–4k tokens for
+        // heavy scenes (chat scripts, terminal lines). The agent gets
+        // the schema shape + sample values, not the bulk.
+        defaultProps: trimForAgent(info.defaultProps),
       };
     },
   }),
@@ -183,6 +290,93 @@ export const tools = {
     description: "Remove one clip from the timeline by id.",
     inputSchema: z.object({
       clipId: z.string(),
+    }),
+  }),
+
+  reorderClips: tool({
+    description:
+      "Reorder the timeline. Pass the complete array of clipIds in the new order. Every existing clipId from listClips must appear exactly once — unknown or missing ids are silently dropped, leaving you with a partial timeline.",
+    inputSchema: z.object({
+      clipIds: z
+        .array(z.string())
+        .min(1)
+        .describe(
+          "Complete new ordering of every clip on the timeline. Get the current ids from listClips first.",
+        ),
+    }),
+  }),
+
+  resetClipStyle: tool({
+    description:
+      "Clear every style override on a clip — background, color, fontFamily, accent all revert to the composition's natural defaults. Use this when the user says 'remove the custom colors' or 'use the default look'.",
+    inputSchema: z.object({
+      clipId: z.string(),
+    }),
+  }),
+
+  setProjectTransition: tool({
+    description:
+      "Set the project-wide default transition. Applied to every clip that doesn't have its own override. Pass `null` to clear and fall back to a hard cut.",
+    inputSchema: z.object({
+      transition: TransitionInputSchema.nullable().describe(
+        "Transition kind + duration in frames (and optional direction for slide/wipe/flip). Null to clear.",
+      ),
+    }),
+  }),
+
+  setClipTransition: tool({
+    description:
+      "Set a per-clip transition that overrides the project default. Pass `null` to clear the override and fall back to the project default.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      transition: TransitionInputSchema.nullable(),
+    }),
+  }),
+
+  listEffects: tool({
+    description:
+      "Returns the catalog of stackable clip effects (e.g. FadeOut, KenBurns, SlideOut, ZoomOut, Pop, Shake). Each entry includes id, title, description, trigger (enter/exit/loop/range), defaultProps, and the field schema for tuning.",
+    inputSchema: z.object({}),
+    execute: async () => ({
+      effects: effectsRegistry.map((e) => ({
+        id: e.id,
+        title: e.title,
+        description: e.description,
+        trigger: e.trigger,
+        defaultProps: e.defaultProps,
+        fields: e.fields,
+      })),
+    }),
+  }),
+
+  addEffect: tool({
+    description:
+      "Stack an effect on top of an existing clip. Returns the new effectInstanceId you'll need to tune or remove it later. Effects compose — multiple FadeOut/KenBurns/etc. on one clip is fine.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectId: z
+        .string()
+        .describe(
+          "Effect id from listEffects (e.g. 'FadeOut', 'KenBurns', 'SlideOut').",
+        ),
+    }),
+  }),
+
+  updateEffectProps: tool({
+    description:
+      "Replace an effect instance's props. Full replace (not a patch) — start from the defaultProps the effect ships with and override what you want.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectInstanceId: z.string(),
+      props: z.record(z.string(), z.unknown()),
+    }),
+  }),
+
+  removeEffect: tool({
+    description: "Remove one effect instance from a clip.",
+    inputSchema: z.object({
+      clipId: z.string(),
+      effectInstanceId: z.string(),
     }),
   }),
 };
