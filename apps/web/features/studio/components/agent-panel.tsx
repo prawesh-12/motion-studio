@@ -1,17 +1,14 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
-import {
-  Cancel01Icon,
-  RefreshIcon,
-  SparklesIcon,
-} from "@hugeicons/core-free-icons";
+import { Cancel01Icon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Project } from "@workspace/compositions/project";
 import { Button } from "@workspace/ui/components/button";
 import { Composer } from "@workspace/ui/components/composer";
 import { WaveSpinner } from "@workspace/ui/components/wave-spinner";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { StudioAction } from "../state/reducer";
 import { runClientTool } from "./agent-panel/client-tools";
@@ -203,12 +200,43 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   }
 
   return (
-    <aside className="flex h-full w-full flex-col border-r border-border bg-background">
-      <div className="flex items-center justify-between border-b border-border px-4 py-3">
+    <aside className="relative flex h-full w-full flex-col overflow-hidden border-r border-border bg-background">
+      {/*
+        Ambient hero — the wildflower-sunset artwork washes in at the top and
+        melts into the dark panel. Only present on the empty state; the moment
+        the user sends a brief and the conversation begins, it unmounts so the
+        chat reads clean.
+      */}
+      {messages.length === 0 ? (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-0 top-0 z-0 h-72 bg-cover bg-center opacity-[0.55]"
+          style={{
+            backgroundImage: "url(/background.png)",
+            maskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 45%, transparent 100%)",
+            WebkitMaskImage:
+              "linear-gradient(to bottom, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 45%, transparent 100%)",
+          }}
+        />
+      ) : null}
+
+      <div
+        className={`relative z-10 flex items-center justify-between border-b px-4 py-3 ${
+          messages.length === 0
+            ? "border-white/10 bg-background/30 backdrop-blur-md"
+            : "border-border"
+        }`}
+      >
         <div className="flex items-center gap-2">
-          <span className="flex size-6 items-center justify-center rounded-md bg-primary/10 text-primary">
-            <HugeiconsIcon icon={SparklesIcon} className="size-3.5" />
-          </span>
+          <Image
+            src="/logo.png"
+            alt=""
+            aria-hidden
+            width={24}
+            height={24}
+            className="size-6 shrink-0 object-contain"
+          />
           <div>
             <p className="text-sm font-medium text-foreground">Agent</p>
             <p className="text-[11px] text-muted-foreground">
@@ -226,7 +254,10 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
         </Button>
       </div>
 
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
+      <div
+        ref={scrollRef}
+        className="relative z-10 min-h-0 flex-1 overflow-y-auto px-4 py-4"
+      >
         {messages.length === 0 ? (
           <EmptyState onPick={send} />
         ) : (

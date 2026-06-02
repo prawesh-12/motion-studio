@@ -5,10 +5,10 @@ import {
   BubbleChatIcon,
   FilmRoll01Icon,
   Rocket01Icon,
-  SparklesIcon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button } from "@workspace/ui/components/button";
+import Image from "next/image";
 
 const SUGGESTIONS = [
   { icon: Rocket01Icon, label: "Make a 20s product launch video" },
@@ -20,9 +20,13 @@ export function EmptyState({ onPick }: { onPick: (text: string) => void }) {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-6 px-1 text-center">
       <div className="flex flex-col items-center gap-3">
-        <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-inset ring-primary/20">
-          <HugeiconsIcon icon={SparklesIcon} className="size-5" />
-        </div>
+        <Image
+          src="/logo.png"
+          alt="Motion Studio"
+          width={56}
+          height={56}
+          className="size-14 object-contain drop-shadow-[0_6px_16px_rgba(0,0,0,0.45)]"
+        />
         <div className="space-y-1.5">
           <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
             What are we making?
