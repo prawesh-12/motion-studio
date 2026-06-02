@@ -282,8 +282,14 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
               forming yet.
             */}
             {isBusy ? (
-              <li className="flex items-center gap-2 py-1">
-                <WaveSpinner size="sm" pattern="square3x3" color="primary" />
+              <li className="flex items-center gap-2.5 py-1">
+                <WaveSpinner
+                  size="md"
+                  pattern="line"
+                  dotShape="circle"
+                  animation="horizontal"
+                  color="primary"
+                />
                 <ThinkingPhrase
                   pool={
                     lastMessage?.role === "assistant" ? "working" : "planning"
