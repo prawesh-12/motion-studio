@@ -132,6 +132,7 @@ export const compositions: AnyCompositionInfo[] = [
   perspectiveMarqueeInfo,
   barChartInfo,
   lineChartInfo,
+  fontHookInfo,
   areaChartInfo,
   pieChartInfo,
   radarChartInfo,
