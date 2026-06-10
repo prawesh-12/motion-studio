@@ -47,6 +47,30 @@ const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 type Layout = { boxes: { text: string; cx: number }[] };
 
+/**
+ * Word width. `measureText()` throws outside a browser (no canvas), which
+ * happens during Next's SSR/prerender of the docs preview. Fall back to a
+ * cheap glyph-count estimate there; the real measurement runs once the
+ * component renders in a real DOM (Player, export, and post-hydration), and
+ * `useFontSettled` triggers a re-measure so the layout self-corrects.
+ */
+function measureWordWidth(
+  text: string,
+  fontFamily: string,
+  fontSize: number,
+): number {
+  if (typeof document === "undefined") {
+    return text.length * fontSize * 0.55;
+  }
+  return measureText({
+    text,
+    fontFamily,
+    fontSize,
+    fontWeight: FONT_WEIGHT,
+    letterSpacing: LETTER_SPACING,
+  }).width;
+}
+
 /** Lay a phrase out as one centered line; cx is each word's center x. */
 function layoutPhrase(
   words: string[],
@@ -55,13 +79,7 @@ function layoutPhrase(
 ): Layout {
   const measured = words.map((text) => ({
     text,
-    width: measureText({
-      text,
-      fontFamily,
-      fontSize,
-      fontWeight: FONT_WEIGHT,
-      letterSpacing: LETTER_SPACING,
-    }).width,
+    width: measureWordWidth(text, fontFamily, fontSize),
   }));
   const space = fontSize * SPACE_EM;
   const total =

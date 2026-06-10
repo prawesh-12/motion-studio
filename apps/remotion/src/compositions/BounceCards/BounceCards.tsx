@@ -10,10 +10,22 @@ import {
 } from "remotion";
 import { type ClipStyle, resolveClipStyle } from "../../clip-style";
 
+/**
+ * Shape the `imageList` field editor reads/writes: an array of `{ name, url }`
+ * (NOT plain strings). `url` is either a static path under public/ or an
+ * uploaded/pasted data:/http URL.
+ */
+export type BounceCardImage = { name: string; url: string };
+
 export type BounceCardsProps = {
-  images: string[];
+  images: BounceCardImage[];
   clipStyle?: ClipStyle;
 };
+
+/** Resolve a card URL: static paths go through staticFile, URLs pass through. */
+function resolveSrc(url: string): string {
+  return /^(https?:|data:|blob:)/.test(url) ? url : staticFile(url);
+}
 
 // Fan layout for up to five cards — same idea as the original CSS
 // `transformStyles`, expressed as discrete rotate + x-offset values so we can
@@ -46,7 +58,12 @@ export const BounceCards: React.FC<BounceCardsProps> = ({
     accent: "#6366f1",
   });
 
-  const count = images.length || 1;
+  // The imageList editor can hand us empty/blank slots; drop anything without
+  // a usable url so staticFile() never sees undefined.
+  const validImages = (Array.isArray(images) ? images : []).filter(
+    (item): item is BounceCardImage => Boolean(item?.url),
+  );
+  const count = validImages.length || 1;
 
   // Which card is currently "spotlit" (mimics the original hover-push). -1
   // until the spotlight phase starts, then cycles through the cards.
@@ -64,7 +81,7 @@ export const BounceCards: React.FC<BounceCardsProps> = ({
       }}
     >
       <div style={{ position: "relative", width: 0, height: 0 }}>
-        {images.map((src, i) => {
+        {validImages.map((item, i) => {
           const layout = LAYOUT[i % LAYOUT.length] ?? { rotate: 0, x: 0 };
 
           // Elastic bounce-in: each card springs scale 0 → 1, staggered.
@@ -92,7 +109,7 @@ export const BounceCards: React.FC<BounceCardsProps> = ({
 
           return (
             <div
-              key={`${src}-${i}`}
+              key={`${item.url}-${i}`}
               style={{
                 position: "absolute",
                 left: -CARD_SIZE / 2,
@@ -111,8 +128,8 @@ export const BounceCards: React.FC<BounceCardsProps> = ({
               }}
             >
               <Img
-                src={staticFile(src)}
-                alt=""
+                src={resolveSrc(item.url)}
+                alt={item.name}
                 style={{
                   width: "100%",
                   height: "100%",

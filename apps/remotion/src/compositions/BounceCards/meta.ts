@@ -8,11 +8,11 @@ export const BOUNCE_CARDS_HEIGHT = 720;
 
 export const bounceCardsDefaultProps: BounceCardsProps = {
   images: [
-    "images/stickers/sticker_03.webp",
-    "images/stickers/sticker_07.webp",
-    "images/stickers/sticker_11.webp",
-    "images/stickers/sticker_14.webp",
-    "images/stickers/sticker_19.webp",
+    { name: "Card 1", url: "images/stickers/sticker_03.webp" },
+    { name: "Card 2", url: "images/stickers/sticker_07.webp" },
+    { name: "Card 3", url: "images/stickers/sticker_11.webp" },
+    { name: "Card 4", url: "images/stickers/sticker_14.webp" },
+    { name: "Card 5", url: "images/stickers/sticker_19.webp" },
   ],
 };
 

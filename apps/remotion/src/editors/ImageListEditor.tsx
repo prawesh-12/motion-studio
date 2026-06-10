@@ -133,12 +133,12 @@ export function ImageListEditor({
                 />
               </label>
               <Input
-                value={item.url.startsWith("data:") ? "" : item.url}
+                value={item.url?.startsWith("data:") ? "" : (item.url ?? "")}
                 placeholder="Or paste image URL"
                 className="h-8 text-[11px]"
                 onChange={(e) => update(i, { url: e.target.value })}
               />
-              {item.url.startsWith("data:") && (
+              {item.url?.startsWith("data:") && (
                 <Button
                   type="button"
                   variant="outline"
