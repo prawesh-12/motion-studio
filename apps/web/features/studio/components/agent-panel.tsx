@@ -43,19 +43,17 @@ const TERMINAL_TOOL_TYPES = new Set([
 
 export function AgentPanel({ project, dispatch, onClose }: Props) {
   // Keep the latest project in a ref so onToolCall (closed over at mount)
-  // always sees current clips/ids instead of a stale snapshot.
+  // always sees current clips/ids instead of a stale snapshot. Assigned during
+  // render rather than in an effect — the value is only ever read later, in
+  // async callbacks, so there's no need to wait for a commit.
   const projectRef = useRef(project);
-  useEffect(() => {
-    projectRef.current = project;
-  }, [project]);
+  projectRef.current = project;
 
   // Same trick for brand kit — the chat transport (memoized once) reads
   // the latest brand kit from this ref so updates flow into the next
   // chat request without recreating useChat (which would wipe history).
   const brandKitRef = useRef(project.brandKit);
-  useEffect(() => {
-    brandKitRef.current = project.brandKit;
-  }, [project.brandKit]);
+  brandKitRef.current = project.brandKit;
 
   // Tracks how many times the SDK has auto-continued since the user
   // last sent a message. We compare to the cap inside

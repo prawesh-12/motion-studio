@@ -85,7 +85,7 @@ export const BlueGrid: React.FC<BlueGridProps> = ({ cellSize, clipStyle }) => {
           fill="url(#bluegrid-field)"
         />
 
-        <g stroke="#ffffff" strokeOpacity={0.1} strokeWidth={1}>
+        <g stroke="#ffffff" strokeOpacity={0.45} strokeWidth={2}>
           {verticals.map((x, i) => (
             <line key={`v-${i}`} x1={x} y1={0} x2={x} y2={height} />
           ))}

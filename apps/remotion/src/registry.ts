@@ -1,6 +1,7 @@
 import { areaChartInfo } from "./compositions/AreaChart/meta";
 import { barChartInfo } from "./compositions/BarChart/meta";
 import { browserWindowInfo } from "./compositions/BrowserWindow/meta";
+import { auroraGradientInfo } from "./compositions/backgrounds/AuroraGradient/meta";
 import { blueGridInfo } from "./compositions/backgrounds/BlueGrid/meta";
 import { futuristicArchInfo } from "./compositions/backgrounds/FuturisticArch/meta";
 import { liquidChromeInfo } from "./compositions/backgrounds/LiquidChrome/meta";
@@ -44,6 +45,7 @@ import { textKineticCenterBuildInfo } from "./compositions/TextKineticCenterBuil
 import { textLineByLineSlideInfo } from "./compositions/TextLineByLineSlide/meta";
 import { textMaskRevealUpInfo } from "./compositions/TextMaskRevealUp/meta";
 import { textMicroScaleFadeInfo } from "./compositions/TextMicroScaleFade/meta";
+import { textMorphInfo } from "./compositions/TextMorph/meta";
 import { textPerCharacterRiseInfo } from "./compositions/TextPerCharacterRise/meta";
 import { textPerWordCrossfadeInfo } from "./compositions/TextPerWordCrossfade/meta";
 import { textScaleDownFadeInfo } from "./compositions/TextScaleDownFade/meta";
@@ -141,6 +143,7 @@ export const compositions: AnyCompositionInfo[] = [
   radarChartInfo,
   radialChartInfo,
   blueGridInfo,
+  auroraGradientInfo,
   whiteRadialBurstInfo,
   liquidChromeInfo,
   futuristicArchInfo,
@@ -149,3 +152,18 @@ export const compositions: AnyCompositionInfo[] = [
 
 export const compositionsById: Record<string, AnyCompositionInfo> =
   Object.fromEntries(compositions.map((c) => [c.id, c]));
+
+/**
+ * Module path (relative to `compositions/`) for a composition's React
+ * component file, used by the docs/creators previews to lazy-load the
+ * component into its own chunk. Most compositions live flat at
+ * `<Id>/<Id>`, but background scenes are grouped under `backgrounds/`.
+ * Keep this in sync with the on-disk folder layout.
+ */
+export function compositionModulePath(
+  info: Pick<AnyCompositionInfo, "id" | "category">,
+): string {
+  const dir =
+    info.category === "background" ? `backgrounds/${info.id}` : info.id;
+  return `${dir}/${info.id}`;
+}

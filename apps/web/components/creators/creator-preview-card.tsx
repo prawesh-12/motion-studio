@@ -3,6 +3,7 @@
 import { ArrowRight01Icon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Player } from "@remotion/player";
+import { compositionModulePath } from "@workspace/compositions/registry";
 import type { AnyCompositionInfo } from "@workspace/compositions/schema";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import dynamic from "next/dynamic";
@@ -22,7 +23,7 @@ export function CreatorPreviewCard({ info }: Props) {
     return dynamic<Record<string, unknown>>(
       () =>
         import(
-          `@workspace/compositions/compositions/${info.id}/${info.id}`
+          `@workspace/compositions/compositions/${compositionModulePath(info)}`
         ).then((mod) => ({
           default: (
             mod as Record<string, ComponentType<Record<string, unknown>>>

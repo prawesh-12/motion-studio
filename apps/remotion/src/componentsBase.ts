@@ -3,6 +3,7 @@ import type { ComponentType } from "react";
 import { AreaChart } from "./compositions/AreaChart/AreaChart";
 import { BarChart } from "./compositions/BarChart/BarChart";
 import { BrowserWindow } from "./compositions/BrowserWindow/BrowserWindow";
+import { AuroraGradient } from "./compositions/backgrounds/AuroraGradient/AuroraGradient";
 import { BlueGrid } from "./compositions/backgrounds/BlueGrid/BlueGrid";
 import { FuturisticArch } from "./compositions/backgrounds/FuturisticArch/FuturisticArch";
 import { LiquidChrome } from "./compositions/backgrounds/LiquidChrome/LiquidChrome";
@@ -139,6 +140,7 @@ export const componentsByIdBase: Record<string, ComponentType<any>> = {
   RadarChart,
   RadialChart,
   BlueGrid,
+  AuroraGradient,
   WhiteRadialBurst,
   LiquidChrome,
   FuturisticArch,

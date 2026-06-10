@@ -1,7 +1,10 @@
 "use client";
 
 import { Player } from "@remotion/player";
-import { compositionsById } from "@workspace/compositions/registry";
+import {
+  compositionModulePath,
+  compositionsById,
+} from "@workspace/compositions/registry";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import dynamic from "next/dynamic";
 import { type ComponentType, useMemo } from "react";
@@ -18,7 +21,7 @@ export function Preview({ id }: { id: string }) {
     return dynamic<Record<string, unknown>>(
       () =>
         import(
-          `@workspace/compositions/compositions/${info.id}/${info.id}`
+          `@workspace/compositions/compositions/${compositionModulePath(info)}`
         ).then((mod) => ({
           default: (
             mod as Record<string, ComponentType<Record<string, unknown>>>

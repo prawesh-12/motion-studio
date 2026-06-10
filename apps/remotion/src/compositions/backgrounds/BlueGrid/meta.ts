@@ -7,7 +7,7 @@ export const BLUE_GRID_WIDTH = 1920;
 export const BLUE_GRID_HEIGHT = 1080;
 
 export const blueGridDefaultProps: BlueGridProps = {
-  cellSize: 72,
+  cellSize: 130,
 };
 
 export const blueGridInfo: CompositionInfo<BlueGridProps> = {
