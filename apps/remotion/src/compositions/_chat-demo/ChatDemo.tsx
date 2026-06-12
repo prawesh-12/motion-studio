@@ -174,7 +174,7 @@ function ReadReceipt({
 }) {
   const appear = interpolate(
     enterFrames,
-    [RECEIPT_FADE_AT, RECEIPT_FADE_AT + 10],
+    [RECEIPT_FADE_AT, RECEIPT_FADE_AT + 7],
     [0, 1],
     {
       extrapolateLeft: "clamp",
@@ -183,6 +183,9 @@ function ReadReceipt({
     },
   );
   if (appear <= 0.001) return null;
+  // iMessage doesn't fade the receipt in — it pushes up into place from behind
+  // the bubble's bottom edge. Slide it up as it appears for that shoved-out feel.
+  const appearY = (1 - appear) * 9;
   // 0 → 1 as the message goes Delivered → Read, eased for a soft handoff.
   const readP = interpolate(
     enterFrames,
@@ -216,6 +219,7 @@ function ReadReceipt({
         marginTop: 3,
         marginRight: 2,
         opacity: appear,
+        transform: `translateY(${appearY}px)`,
       }}
     >
       <div
