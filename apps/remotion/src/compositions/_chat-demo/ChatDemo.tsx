@@ -172,20 +172,21 @@ function ReadReceipt({
   color: string;
   time?: string;
 }) {
-  const { fps } = useVideoConfig();
-  // iMessage pops the receipt into place — a quick spring scale (with a hair of
-  // overshoot) anchored at the top-right, rising slightly as it lands. Not a
-  // fade, not a slow slide.
-  const pop = spring({
-    frame: enterFrames - RECEIPT_FADE_AT,
-    fps,
-    config: { damping: 11, mass: 0.6, stiffness: 220 },
-    durationInFrames: 14,
-  });
-  if (pop <= 0.001) return null;
-  const appear = Math.min(1, pop * 1.8);
-  const appearScale = 0.55 + 0.45 * pop;
-  const appearY = (1 - Math.min(1, pop)) * 4;
+  // Smooth, clean settle — an eased fade with a whisper of scale and rise. No
+  // spring/overshoot: iMessage's receipt eases into place, it doesn't bounce.
+  const appear = interpolate(
+    enterFrames,
+    [RECEIPT_FADE_AT, RECEIPT_FADE_AT + 11],
+    [0, 1],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: Easing.out(Easing.cubic),
+    },
+  );
+  if (appear <= 0.001) return null;
+  const appearScale = 0.94 + 0.06 * appear;
+  const appearY = (1 - appear) * 3;
   // 0 → 1 as the message goes Delivered → Read, eased for a soft handoff.
   const readP = interpolate(
     enterFrames,
@@ -219,15 +220,20 @@ function ReadReceipt({
         marginTop: 3,
         marginRight: 2,
         opacity: appear,
-        transform: `translateY(${appearY}px) scale(${appearScale})`,
+        // translate3d + willChange forces a GPU layer so the spring SCALE is
+        // composited smoothly. Scaling text without this re-rasterizes the
+        // glyphs every frame → the shimmer/jitter.
+        transform: `translate3d(0, ${appearY}px, 0) scale(${appearScale})`,
         transformOrigin: "top right",
+        willChange: "transform",
       }}
     >
       <div
         style={{
           ...layer,
           opacity: 1 - readP,
-          transform: `translateY(${readP * -2}px)`,
+          transform: `translate3d(0, ${readP * -2}px, 0)`,
+          willChange: "transform, opacity",
         }}
       >
         <span style={{ fontWeight: 600 }}>Delivered</span>
@@ -236,7 +242,8 @@ function ReadReceipt({
         style={{
           ...layer,
           opacity: readP,
-          transform: `translateY(${(1 - readP) * 2}px)`,
+          transform: `translate3d(0, ${(1 - readP) * 2}px, 0)`,
+          willChange: "transform, opacity",
         }}
       >
         <span style={{ fontWeight: 600 }}>Read</span>
