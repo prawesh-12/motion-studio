@@ -277,7 +277,7 @@ export interface ChatDemoProps {
 const DEFAULT_AVATAR = "/gaia-glow.png";
 
 const SF_STACK =
-  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, sans-serif';
+  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
 const SLACK_STACK =
   '"Slack-Lato", "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
 const DISCORD_STACK =
@@ -374,10 +374,14 @@ export function ChatDemo({
  * Shared curved bubble (the iMessage shape, reused by WhatsApp & Telegram)
  * ========================================================================= */
 
+// iMessage tail: the outer edge sweeps from the bubble's bottom corner out to a
+// SHARP point at the outer-bottom, then a concave hook curves back up to the
+// bubble's side. The outer arc runs straight into the tip (no rounding) so the
+// point stays crisp like the real thing.
 const TAIL_THEM =
-  "M 20 0 L 20 2 A 16 16 0 0 1 4 18 L 0 18 L 0 17.54 A 10 10 0 0 0 7 8 L 7 0 Z";
+  "M 20 0 L 20 2 A 16 16 0 0 1 3.8 18 L 0.5 16.2 A 10 10 0 0 0 7 8 L 7 0 Z";
 const TAIL_ME =
-  "M 0 0 L 0 2 A 16 16 0 0 0 16 18 L 20 18 L 20 17.54 A 10 10 0 0 1 13 8 L 13 0 Z";
+  "M 0 0 L 0 2 A 16 16 0 0 0 16.2 18 L 19.5 16.2 A 10 10 0 0 1 13 8 L 13 0 Z";
 
 interface CurvedBubbleProps {
   from: "me" | "them";
