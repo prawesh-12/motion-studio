@@ -1,6 +1,11 @@
 import type { ChatMessage } from "../../editors/types";
 import { useDesignFrame } from "../../use-design-frame";
-import { ChatDemo, type ChatMessageItem } from "../_chat-demo/ChatDemo";
+import {
+  ChatDemo,
+  type ChatMessageItem,
+  GLASS_CHAT_BACKDROP,
+  GlassChatDemo,
+} from "../_chat-demo/ChatDemo";
 import { ChatFill } from "../_chat-demo/ChatFill";
 
 export type MessageBubblesProps = {
@@ -9,6 +14,8 @@ export type MessageBubblesProps = {
   messages: ChatMessage[];
   orientation?: "landscape" | "portrait";
   scale?: number;
+  /** Theme id selected in the Inspector (see meta.themes). */
+  clipTheme?: string;
 };
 
 function buildItems(messages: ChatMessage[], frame: number): ChatMessageItem[] {
@@ -35,9 +42,29 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
   messages,
   orientation = "landscape",
   scale = 2,
+  clipTheme,
 }) => {
   const frame = useDesignFrame();
   const items = buildItems(messages, frame);
+
+  if (clipTheme === "glass") {
+    return (
+      <ChatFill
+        backdrop={GLASS_CHAT_BACKDROP}
+        // Transparent pad bars so the gradient runs edge-to-edge in
+        // portrait / PhoneFrame instead of reading as solid chrome.
+        chromeColor="transparent"
+        scale={scale}
+        orientation={orientation}
+      >
+        <GlassChatDemo
+          title={contactName}
+          headerAvatar={contactAvatar}
+          messages={items}
+        />
+      </ChatFill>
+    );
+  }
 
   return (
     <ChatFill

@@ -106,6 +106,25 @@ export type CalculatedMetadata = {
 };
 
 /**
+ * A curated, named skin a composition can declare. Unlike the free-form
+ * ClipStyle colors, a theme can restyle anything — materials, blur, bubble
+ * shapes, chrome — so brand-locked compositions may declare themes too
+ * (each theme is a hand-built look, not arbitrary recoloring).
+ *
+ * Convention: the FIRST entry is the composition's default look. Selecting
+ * it clears the override (`clip.style.theme = undefined`), so components
+ * only need to branch on their non-default theme ids.
+ *
+ * The selected id is forwarded to the component as a `clipTheme?: string`
+ * prop by `Project.tsx` — for locked and non-locked compositions alike.
+ */
+export type CompositionTheme = {
+  id: string;
+  label: string;
+  description?: string;
+};
+
+/**
  * brandMode controls whether a composition inherits the project Brand Kit:
  *   - "branded" (default): accent / background / font fall back to the brand
  *     when the per-clip prop is omitted or empty.
@@ -169,6 +188,13 @@ export type CompositionInfo<P extends Record<string, unknown>> = {
   fields: Field[];
   brandMode?: BrandMode;
   phoneFitMode?: PhoneFitMode;
+  /**
+   * Curated skins for this composition, surfaced as a Theme picker at the
+   * top of the Inspector's Style section. Works for locked compositions
+   * too (the picker is the only Style control they show). First entry =
+   * default look. See `CompositionTheme`.
+   */
+  themes?: CompositionTheme[];
   /**
    * Coarse category for agent discovery. Required so the agent's catalog
    * stays comprehensive as new compositions land.

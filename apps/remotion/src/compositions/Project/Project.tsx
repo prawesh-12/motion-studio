@@ -71,12 +71,22 @@ export const ProjectComposition: React.FC<Project> = ({
             : undefined;
           const hasBackdrop = Boolean(BackdropComponent && backdropInfo);
 
+          // Curated theme — unlike free-form clipStyle, themes also apply
+          // to locked compositions (each theme is a hand-built skin). Only
+          // forward ids the composition actually declares.
+          const themeId = clip.style?.theme;
+          const themeProps =
+            themeId && info?.themes?.some((t) => t.id === themeId)
+              ? { clipTheme: themeId }
+              : {};
+
           const contentStyle = isLocked
-            ? {}
+            ? themeProps
             : {
                 clipStyle: hasBackdrop
                   ? { ...clip.style, backgroundColor: "transparent" }
                   : clip.style,
+                ...themeProps,
               };
 
           const content = Component ? (

@@ -38,6 +38,16 @@ export const messageBubblesInfo: CompositionInfo<MessageBubblesProps> = {
   defaultProps: messageBubblesDefaultProps,
   brandMode: "locked",
   phoneFitMode: "cover",
+  // Curated skins — first entry is the default look. Locked compositions
+  // still get the Theme picker (themes are hand-built, not free recoloring).
+  themes: [
+    { id: "imessage", label: "iMessage" },
+    {
+      id: "glass",
+      label: "Liquid Glass",
+      description: "Frosted translucent bubbles over a vivid gradient",
+    },
+  ],
   fields: [
     { kind: "text", key: "contactName", label: "Contact name" },
     { kind: "text", key: "contactAvatar", label: "Avatar URL" },

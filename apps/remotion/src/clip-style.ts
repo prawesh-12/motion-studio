@@ -23,6 +23,15 @@ export type ClipStyle = {
    * `resolveClipStyle`).
    */
   backgroundScene?: string;
+  /**
+   * Selected theme id from the composition's `meta.themes` declaration.
+   * Unlike the four color fields, this also applies to brand-locked
+   * compositions — themes are curated skins, not free-form recoloring.
+   * `Project.tsx` validates the id against `info.themes` and forwards it
+   * as a separate `clipTheme?: string` prop. Undefined / unknown ids mean
+   * the composition's default look. Ignored by `resolveClipStyle`.
+   */
+  theme?: string;
 };
 
 export type ClipStyleDefaults = {

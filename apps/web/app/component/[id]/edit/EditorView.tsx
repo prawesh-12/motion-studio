@@ -64,11 +64,18 @@ export function EditorView({
 
   // Brand-locked compositions hardcode their authentic look — don't pass
   // clipStyle through (matches Project.tsx behavior in the Studio).
+  // Curated themes apply regardless of lock; forwarded as `clipTheme`.
   const isLocked = info.brandMode === "locked";
-  const playerProps = useMemo(
-    () => (isLocked ? props : { ...props, clipStyle }),
-    [props, clipStyle, isLocked],
-  );
+  const playerProps = useMemo(() => {
+    const themeId = clipStyle.theme;
+    const themeProps =
+      themeId && info.themes?.some((t) => t.id === themeId)
+        ? { clipTheme: themeId }
+        : {};
+    return isLocked
+      ? { ...props, ...themeProps }
+      : { ...props, clipStyle, ...themeProps };
+  }, [props, clipStyle, isLocked, info.themes]);
 
   async function handleDownload(format: "mp4" | "webm") {
     if (!Component) return;
@@ -130,7 +137,7 @@ export function EditorView({
             value={props}
             onChange={setProps}
           />
-          {!isLocked && (
+          {(!isLocked || Boolean(info.themes?.length)) && (
             <div className="border-t border-border">
               <div className="px-5 pt-4 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                 Style
@@ -141,6 +148,8 @@ export function EditorView({
                   setClipStyle((prev) => ({ ...prev, ...patch }))
                 }
                 onReset={() => setClipStyle({})}
+                themes={info.themes}
+                locked={isLocked}
               />
             </div>
           )}

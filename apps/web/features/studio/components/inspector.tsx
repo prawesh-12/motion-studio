@@ -78,7 +78,8 @@ export function Inspector({
       clip.style?.textColor ||
       clip.style?.fontFamily ||
       clip.style?.accentColor ||
-      clip.style?.backgroundScene,
+      clip.style?.backgroundScene ||
+      clip.style?.theme,
   );
   const hasTransitionOverride = clip.transition !== undefined;
   const motionBadgeCount = (hasTransitionOverride ? 1 : 0) + clipEffects.length;
@@ -142,8 +143,9 @@ export function Inspector({
                 className="mt-0.5 size-3.5 shrink-0 text-muted-foreground"
               />
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                This composition uses authentic brand styling. Color and font
-                changes won&rsquo;t affect the preview.
+                {info.themes?.length
+                  ? "This composition uses authentic brand styling. Pick a curated theme to restyle it."
+                  : "This composition uses authentic brand styling. Color and font changes won’t affect the preview."}
               </p>
             </div>
           )}
@@ -152,6 +154,8 @@ export function Inspector({
             style={clip.style}
             onPatch={onUpdateStyle}
             onReset={onResetStyle}
+            themes={info.themes}
+            locked={isLocked}
           />
         </TabsContent>
 
