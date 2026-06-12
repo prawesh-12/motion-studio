@@ -165,15 +165,20 @@ function BubbleEnter({
 const TYPING_BUBBLE_H = 32;
 
 /**
- * iMessage dots → message morph. When the typing indicator swaps to the real
- * message, the new bubble inflates from the tail corner with the same spring
- * personality as BubbleEnter, AND the row's layout height animates from the
- * dots bubble's height to the message's natural height — so a taller message
- * pushes the conversation up smoothly instead of the thread jumping.
+ * iMessage dots → message morph.
  *
- * The natural height is measured from the live DOM (same pattern as the
- * keyboard/glass measurement); until it's known the row renders at natural
- * size, which only lasts a frame and is imperceptible.
+ * Real iMessage doesn't pop the message in — the typing bubble's surface
+ * simply *becomes* the message:
+ *   • single-line message (same height as the dots pill): no transform at all,
+ *     the content just settles in (we fade the text in over a few frames).
+ *   • taller (multi-line) message: the row's height glides from the one-line
+ *     pill to the message's measured natural height, bottom-anchored, so the
+ *     conversation is pushed up smoothly — the "one line grows into many"
+ *     effect. No scale transform; growth only.
+ *
+ * Natural height is measured from the live DOM (same pattern as the
+ * keyboard/glass measurement); until known the row renders at natural size,
+ * which lasts a frame and is imperceptible.
  */
 function BubbleReveal({
   revealFrames,
@@ -198,17 +203,20 @@ function BubbleReveal({
 
   if (revealFrames === undefined) return <>{children}</>;
 
+  // Only messages meaningfully taller than the dots pill get the growth —
+  // single-line bubbles match the pill's height, so animating them would add
+  // a pointless wobble.
+  const isTaller = fullH !== null && fullH > TYPING_BUBBLE_H + 6;
+
   const s = spring({
     frame: Math.max(0, revealFrames),
     fps,
-    config: { damping: 15, mass: 0.7, stiffness: 210 },
-    durationInFrames: 18,
+    config: { damping: 16, mass: 0.75, stiffness: 200 },
+    durationInFrames: 16,
   });
-  const scale = 0.6 + 0.4 * s;
-  const height =
-    fullH !== null
-      ? TYPING_BUBBLE_H + (fullH - TYPING_BUBBLE_H) * Math.min(1, s)
-      : undefined;
+  const height = isTaller
+    ? TYPING_BUBBLE_H + ((fullH as number) - TYPING_BUBBLE_H) * Math.min(1, s)
+    : undefined;
 
   return (
     <div
@@ -218,19 +226,16 @@ function BubbleReveal({
         flexDirection: "column",
         justifyContent: "flex-end",
         alignItems: from === "me" ? "flex-end" : "flex-start",
-        overflow: "visible",
+        // While growing, clip the bubble's top so it reveals upward instead of
+        // overlapping the row above. The 8px tail-side padding (cancelled by
+        // the negative margin) keeps the tail inside the clip box.
+        overflow: height === undefined ? "visible" : "hidden",
+        ...(from === "me"
+          ? { paddingRight: 8, marginRight: -8 }
+          : { paddingLeft: 8, marginLeft: -8 }),
       }}
     >
-      <div
-        ref={innerRef}
-        style={{
-          transform: `scale(${scale})`,
-          transformOrigin: from === "me" ? "bottom right" : "bottom left",
-          willChange: "transform",
-        }}
-      >
-        {children}
-      </div>
+      <div ref={innerRef}>{children}</div>
     </div>
   );
 }
@@ -1035,6 +1040,25 @@ function IMessageDemo({
                                     isMe ? "rgba(255,255,255,0.9)" : "#8e8e93"
                                   }
                                 />
+                              ) : m.revealFrames !== undefined ? (
+                                // The bubble surface persists from the dots —
+                                // only the text eases in, so the swap reads as
+                                // the indicator becoming the message.
+                                <span
+                                  style={{
+                                    opacity: interpolate(
+                                      m.revealFrames,
+                                      [2, 10],
+                                      [0, 1],
+                                      {
+                                        extrapolateLeft: "clamp",
+                                        extrapolateRight: "clamp",
+                                      },
+                                    ),
+                                  }}
+                                >
+                                  {m.text}
+                                </span>
                               ) : (
                                 m.text
                               )}
