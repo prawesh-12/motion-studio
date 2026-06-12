@@ -16,10 +16,12 @@ import { useLayoutEffect, useRef, useState } from "react";
 import { useDesignFrame } from "../../use-design-frame";
 
 const KB_W = 402;
-// Keys end at y=226 (row 4 bottom). The Figma export padded to 306 for the
-// home indicator, but the phone frame draws its own — trim most dead space but
-// keep a little breathing room below the bottom row.
-const KB_H = 244;
+// Keys end at y=226 (row 4 bottom). Below that iOS shows a utility bar with the
+// globe (switch keyboard) on the left and the dictation mic on the right, so we
+// keep room for it; the phone frame still draws its own home indicator below.
+const KB_H = 296;
+// Vertical centre of the globe/mic bar that sits under the key rows.
+const UTILITY_Y = 250;
 // A touch of side breathing room beyond the native 4px key margin.
 const KB_PAD_X = 4;
 
@@ -106,11 +108,12 @@ const KEYS = buildKeys();
 
 /** Keyboard surface color per appearance — also used to tint the phone's
  *  home-indicator strip so the keyboard reads as one continuous surface.
- *  Dark matches the black chat sheet so the keyboard blends in with no panel
- *  edge on its sides/bottom; the translucent keys self-define the layout. */
+ *  Dark is a slightly elevated grey (iOS keyboard panel) rather than pure
+ *  black, so the keyboard reads as its own surface instead of melting into a
+ *  black chat sheet. The translucent keys still self-define the layout. */
 export const KEYBOARD_BG: Record<KeyboardTheme, string> = {
   light: "#D1D4DB",
-  dark: "#000000",
+  dark: "#1C1C1E",
 };
 
 type Palette = {
@@ -209,6 +212,49 @@ function SmileyIcon({ color }: { color: string }) {
         d="M8 14.2a4.2 4.2 0 0 0 8 0"
         stroke={color}
         strokeWidth="1.7"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function GlobeIcon({ color }: { color: string }) {
+  return (
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.5" />
+      <path d="M3 12h18" stroke={color} strokeWidth="1.5" />
+      <path
+        d="M12 3c2.5 2.4 3.9 5.6 3.9 9s-1.4 6.6-3.9 9c-2.5-2.4-3.9-5.6-3.9-9S9.5 5.4 12 3Z"
+        stroke={color}
+        strokeWidth="1.5"
+      />
+      <path d="M4.4 8.2h15.2M4.4 15.8h15.2" stroke={color} strokeWidth="1.3" />
+    </svg>
+  );
+}
+
+function MicIcon({ color }: { color: string }) {
+  return (
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
+      <rect
+        x="9"
+        y="2.6"
+        width="6"
+        height="11.4"
+        rx="3"
+        stroke={color}
+        strokeWidth="1.6"
+      />
+      <path
+        d="M5.5 11.4a6.5 6.5 0 0 0 13 0"
+        stroke={color}
+        strokeWidth="1.6"
+        strokeLinecap="round"
+      />
+      <path
+        d="M12 17.9V21"
+        stroke={color}
+        strokeWidth="1.6"
         strokeLinecap="round"
       />
     </svg>
@@ -347,6 +393,37 @@ export function Keyboard({
             </div>
           );
         })}
+
+        {/* Utility bar below the keys: globe (switch keyboard) on the left,
+            dictation mic on the right — both plain icons on the surface. */}
+        <div
+          style={{
+            position: "absolute",
+            left: 18,
+            top: UTILITY_Y - 15,
+            width: 30,
+            height: 30,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <GlobeIcon color={p.smiley} />
+        </div>
+        <div
+          style={{
+            position: "absolute",
+            left: 358,
+            top: UTILITY_Y - 13,
+            width: 26,
+            height: 26,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <MicIcon color={p.smiley} />
+        </div>
 
         {/* Press "pop" balloon — neck first (behind), then the balloon head. */}
         {balloon && (

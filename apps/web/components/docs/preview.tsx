@@ -9,7 +9,21 @@ import { Skeleton } from "@workspace/ui/components/skeleton";
 import dynamic from "next/dynamic";
 import { type ComponentType, useMemo } from "react";
 
-export function Preview({ id }: { id: string }) {
+export function Preview({
+  id,
+  width,
+  height,
+  props,
+}: {
+  id: string;
+  /** Override the preview canvas size (e.g. render a landscape composition
+   *  portrait for a phone-style docs preview). Falls back to the registered
+   *  dimensions. */
+  width?: number;
+  height?: number;
+  /** Extra props merged on top of the composition's defaultProps. */
+  props?: Record<string, unknown>;
+}) {
   const info = compositionsById[id];
 
   // Lazy-load only the requested composition. Each composition becomes its
@@ -41,7 +55,12 @@ export function Preview({ id }: { id: string }) {
       </div>
     );
   }
-  const isPortrait = info.height > info.width;
+  const previewWidth = width ?? info.width;
+  const previewHeight = height ?? info.height;
+  const inputProps = props
+    ? { ...info.defaultProps, ...props }
+    : info.defaultProps;
+  const isPortrait = previewHeight > previewWidth;
 
   return (
     <div
@@ -50,17 +69,17 @@ export function Preview({ id }: { id: string }) {
       <div
         className="overflow-hidden rounded-lg border border-border bg-background"
         style={{
-          aspectRatio: `${info.width} / ${info.height}`,
+          aspectRatio: `${previewWidth} / ${previewHeight}`,
           ...(isPortrait ? { height: "480px" } : { width: "100%" }),
         }}
       >
         <Player
           component={Component}
-          inputProps={info.defaultProps}
+          inputProps={inputProps}
           durationInFrames={info.durationInFrames}
           fps={info.fps}
-          compositionWidth={info.width}
-          compositionHeight={info.height}
+          compositionWidth={previewWidth}
+          compositionHeight={previewHeight}
           style={{ width: "100%", height: "100%" }}
           loop
           controls

@@ -58,6 +58,7 @@ function describeType(field: Field): string {
     case "audio":
       return "string (url, with CaptionWord[] on sibling key)";
     case "number":
+    case "slider":
       return "number";
     case "select":
       return field.options.map((o) => `"${o.value}"`).join(" | ");

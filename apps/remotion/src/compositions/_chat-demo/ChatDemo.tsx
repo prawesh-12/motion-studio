@@ -6,15 +6,15 @@ import {
   continueRender,
   delayRender,
   Img,
+  interpolate,
   spring,
   staticFile,
   useVideoConfig,
 } from "remotion";
 import { proxyExternalImg } from "../../proxy-image";
-import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
 import { Keyboard } from "./Keyboard";
-import { GlassStage, LiquidGlass } from "./LiquidGlass";
+import { type GlassParams, GlassStage, LiquidGlass } from "./LiquidGlass";
 
 // Remotion's bundle server only serves public/ assets through `staticFile()`
 // — literal "/foo.png" strings fail with 404 inside `remotion render`. This
@@ -121,12 +121,15 @@ function BubbleEnter({
   const s = spring({
     frame,
     fps,
-    config: { damping: 12, mass: 0.5, stiffness: 180 },
-    durationInFrames: 16,
+    config: { damping: 15, mass: 0.7, stiffness: 210 },
+    durationInFrames: 18,
   });
-  const scale = 0.85 + 0.15 * s;
-  const translateY = snap((1 - s) * 10);
-  const opacity = Math.min(1, s * 1.6);
+  // iMessage bubbles inflate from their tail corner (bottom-right for sent,
+  // bottom-left for received) with a snappy spring and a quick fade — no
+  // vertical slide, which is what made the old entrance read as a generic
+  // bounce. The scale-from-corner is the recognizable iMessage send/receive.
+  const scale = 0.5 + 0.5 * s;
+  const opacity = Math.min(1, s * 2.2);
   return (
     <div
       style={{
@@ -138,13 +141,56 @@ function BubbleEnter({
       <div
         style={{
           maxWidth: "78%",
-          transform: `translate3d(0, ${snap(translateY)}px, 0) scale(${scale})`,
-          transformOrigin: "center",
+          transform: `scale(${scale})`,
+          transformOrigin: from === "me" ? "bottom right" : "bottom left",
           opacity,
         }}
       >
         {children}
       </div>
+    </div>
+  );
+}
+
+// iMessage read receipt — sits under the last outgoing bubble. It fades in
+// once that bubble has landed ("Delivered"), then flips to "Read" a beat later
+// (the recipient "seeing" it). `enterFrames` is frames-since-visible for that
+// message, so the receipt stays in lockstep with the bubble's own timeline.
+const RECEIPT_FADE_AT = 14;
+const RECEIPT_READ_AT = 40;
+
+function ReadReceipt({
+  enterFrames,
+  color,
+  time,
+}: {
+  enterFrames: number;
+  color: string;
+  time?: string;
+}) {
+  const appear = interpolate(
+    enterFrames,
+    [RECEIPT_FADE_AT, RECEIPT_FADE_AT + 8],
+    [0, 1],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" },
+  );
+  if (appear <= 0.001) return null;
+  const read = enterFrames >= RECEIPT_READ_AT;
+  return (
+    <div
+      style={{
+        fontSize: 11,
+        lineHeight: 1,
+        color,
+        opacity: appear,
+        marginTop: 3,
+        marginRight: 4,
+        letterSpacing: "-0.01em",
+        fontWeight: 400,
+      }}
+    >
+      <span style={{ fontWeight: 600 }}>{read ? "Read" : "Delivered"}</span>
+      {read && time ? ` ${time}` : ""}
     </div>
   );
 }
@@ -162,6 +208,8 @@ export interface ChatDemoProps {
   backgroundImage?: string;
   /** iMessage only: render composer / buttons / incoming bubbles as WebGL liquid glass. */
   liquidGlass?: boolean;
+  /** iMessage only: override the WebGL glass params (refraction strength etc). */
+  glassParams?: Partial<GlassParams>;
   /** iMessage only: show the on-screen keyboard typing out outgoing messages. */
   showKeyboard?: boolean;
   /** iMessage only: text currently shown in the composer (drives "typing"). */
@@ -194,6 +242,7 @@ export function ChatDemo({
   className,
   backgroundImage,
   liquidGlass,
+  glassParams,
   showKeyboard,
   composerText,
   pressedKey,
@@ -212,6 +261,7 @@ export function ChatDemo({
           className={className}
           backgroundImage={backgroundImage}
           liquidGlass={liquidGlass}
+          glassParams={glassParams}
           theme={theme}
           showKeyboard={showKeyboard}
           composerText={composerText}
@@ -531,6 +581,7 @@ function IMessageDemo({
   className,
   backgroundImage,
   liquidGlass,
+  glassParams,
   theme = "light",
   showKeyboard = false,
   composerText = "",
@@ -546,6 +597,7 @@ function IMessageDemo({
   className?: string;
   backgroundImage?: string;
   liquidGlass?: boolean;
+  glassParams?: Partial<GlassParams>;
   theme?: "light" | "dark";
   showKeyboard?: boolean;
   composerText?: string;
@@ -598,12 +650,16 @@ function IMessageDemo({
   const groupTimeColor = lightUI
     ? "rgba(255,255,255,0.85)"
     : "rgba(60,60,67,0.6)";
+  const receiptColor = lightUI
+    ? "rgba(235,235,245,0.6)"
+    : "rgba(60,60,67,0.55)";
 
   return (
     <GlassStage
       enabled={glassOn}
       bgImage={backgroundImage}
       bgColor={sheetBg}
+      params={glassParams}
       className={cn("h-full", className)}
       style={{ fontFamily: SF_STACK }}
     >
@@ -824,6 +880,19 @@ function IMessageDemo({
                       </BubbleEnter>
                     );
                   })}
+                  {gi === grouped.length - 1 &&
+                    group.from === "me" &&
+                    (() => {
+                      const last = group.items[group.items.length - 1];
+                      if (!last || last.typing) return null;
+                      return (
+                        <ReadReceipt
+                          enterFrames={last.enterFrames ?? 0}
+                          color={receiptColor}
+                          time={last.time}
+                        />
+                      );
+                    })()}
                 </div>
               </div>
             );
@@ -2678,7 +2747,7 @@ function TypingDots({ color }: { color: string }) {
   // spring-driven enter. snap()ing the translate to whole pixels also
   // eliminates the residual subpixel shimmer.
   const frame = useDesignFrame();
-  const periodFrames = 60 * 1.2; // 1.2s cycle at design fps
+  const periodFrames = 60 * 1.4; // ~1.4s breathe cycle at design fps
   return (
     <span
       role="status"
@@ -2691,14 +2760,15 @@ function TypingDots({ color }: { color: string }) {
       }}
     >
       {[0, 1, 2].map((i) => {
-        // Stagger each dot by ~0.15s, matching the original CSS timing.
-        const staggered = frame - i * 9;
+        // Stagger each dot so the three read as a gentle wave.
+        const staggered = frame - i * (periodFrames * 0.16);
         const t = ((staggered % periodFrames) + periodFrames) % periodFrames;
         const phase = t / periodFrames; // 0..1
-        // Single-hump bounce: opacity peaks and dot lifts ~3px around 30%.
+        // iMessage dots PULSE — they fade and scale in place; they do NOT
+        // bounce vertically (that's what made ours read as bouncy).
         const bump = Math.max(0, Math.sin(phase * Math.PI));
-        const translateY = -snap(bump * 3);
-        const opacity = 0.4 + bump * 0.5;
+        const opacity = 0.4 + bump * 0.6;
+        const scale = 0.72 + bump * 0.28;
         return (
           <span
             key={i}
@@ -2708,7 +2778,7 @@ function TypingDots({ color }: { color: string }) {
               borderRadius: 9999,
               background: color,
               opacity,
-              transform: `translate3d(0, ${translateY}px, 0)`,
+              transform: `scale(${scale})`,
               display: "inline-block",
             }}
           />

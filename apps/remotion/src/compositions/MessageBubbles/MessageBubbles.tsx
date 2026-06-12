@@ -15,6 +15,9 @@ export type MessageBubblesProps = {
   backgroundImage?: string;
   /** Render incoming bubbles, composer, and buttons as WebGL liquid glass. */
   liquidGlass?: boolean;
+  /** How much "liquid" the glass has (0–100): drives refraction strength,
+   *  bezel, and rim highlight. Higher = more pronounced lensing. */
+  liquidAmount?: number;
   /** Light or dark iMessage appearance (uses Apple's exact bubble grays). */
   theme?: "light" | "dark";
   /** Show the on-screen keyboard typing out outgoing messages in real time. */
@@ -92,7 +95,6 @@ function buildChatState(
         }
         continue;
       }
-      // Sent — pop into the thread from the send frame onward.
       items.push({
         id: i,
         from: "me",
@@ -104,7 +106,6 @@ function buildChatState(
       continue;
     }
 
-    // Classic path: incoming messages, or keyboard-off outgoing.
     items.push({
       id: i,
       from: isOutgoing ? "me" : "them",
@@ -126,7 +127,8 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
   scale = 2,
   backgroundImage,
   liquidGlass = true,
-  theme = "light",
+  liquidAmount = 0,
+  theme = "dark",
   showKeyboard = false,
 }) => {
   const frame = useDesignFrame();
@@ -149,6 +151,16 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
 
   const backdrop = backgroundImage || theme === "dark" ? "#000000" : "#ffffff";
 
+  // Map the 0–100 "liquid amount" slider to the glass refraction params.
+  // Low = subtle/flat & clean; high = pronounced lensing. Defaults (~55) land
+  // near the shader's natural look.
+  const a = Math.min(1, Math.max(0, liquidAmount / 100));
+  const glassParams = {
+    thickness: 10 + a * 42,
+    bezel: 12 + a * 16,
+    specular: 0.12 + a * 0.4,
+  };
+
   return (
     <ChatFill
       backdrop={backdrop}
@@ -164,6 +176,7 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
         messages={items}
         backgroundImage={backgroundImage}
         liquidGlass={liquidGlass}
+        glassParams={glassParams}
         theme={theme}
         showKeyboard={showKeyboard}
         composerText={composerText}

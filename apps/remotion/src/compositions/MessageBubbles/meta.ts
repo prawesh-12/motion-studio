@@ -16,7 +16,7 @@ export const messageBubblesDefaultProps: MessageBubblesProps = {
     { text: "always 🍕", side: "left", typingFrames: 50, delay: 400 },
     {
       text: "on my way ❤️",
-      side: "left",
+      side: "right",
       typingFrames: 55,
       delay: 530,
     },
@@ -25,7 +25,8 @@ export const messageBubblesDefaultProps: MessageBubblesProps = {
   scale: 2,
   backgroundImage: "",
   liquidGlass: true,
-  theme: "light",
+  liquidAmount: 0,
+  theme: "dark",
   showKeyboard: false,
 };
 
@@ -62,6 +63,14 @@ export const messageBubblesInfo: CompositionInfo<MessageBubblesProps> = {
       placeholder: "images/... or https://...",
     },
     { kind: "switch", key: "liquidGlass", label: "Liquid glass (WebGL)" },
+    {
+      kind: "slider",
+      key: "liquidAmount",
+      label: "Liquid amount",
+      min: 0,
+      max: 100,
+      step: 1,
+    },
     { kind: "switch", key: "showKeyboard", label: "Keyboard (typing)" },
     {
       kind: "select",

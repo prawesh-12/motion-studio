@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@workspace/ui/components/select";
+import { Slider } from "@workspace/ui/components/slider";
 import { Switch } from "@workspace/ui/components/switch";
 import { Textarea } from "@workspace/ui/components/textarea";
 import { cn } from "@workspace/ui/lib/utils";
@@ -89,6 +90,31 @@ export function PrimitiveControl({
           />
         </Wrapper>
       );
+
+    case "slider": {
+      const raw = typeof value === "number" ? value : field.min;
+      const v = Math.min(field.max, Math.max(field.min, raw));
+      return (
+        <Wrapper htmlFor={field.key} label={field.label}>
+          <div className="flex items-center gap-3">
+            <Slider
+              id={field.key}
+              min={field.min}
+              max={field.max}
+              step={field.step ?? 1}
+              value={[v]}
+              onValueChange={([nv]) => {
+                if (nv !== undefined) onChange(nv);
+              }}
+              className="flex-1"
+            />
+            <span className="w-9 text-right font-mono text-[11px] text-muted-foreground">
+              {v}
+            </span>
+          </div>
+        </Wrapper>
+      );
+    }
 
     case "color":
       return (

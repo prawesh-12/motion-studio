@@ -71,8 +71,8 @@ export const DEFAULT_GLASS: GlassParams = {
   thickness: 32,
   ior: 1.45,
   blur: 3,
-  specular: 0.6,
-  tint: 0.04,
+  specular: 0.4,
+  tint: 0.0,
   shadow: 0.2,
   frostBlur: 24,
   frostColor: [0.12, 0.12, 0.14],
@@ -247,12 +247,12 @@ void main() {
     float d = -fsd;
     vec3 bg = sampleBgBlurred(screenUV, max(uFrostBlur, 1.0));
     vec3 col = mix(bg, uFrostColor, uFrostStrength);
-    // bright inner hairline outline just inside the edge
+    // subtle inner hairline outline just inside the edge
     float outline = smoothstep(0.0, 1.2, d) * (1.0 - smoothstep(1.2, 4.0, d));
-    col += vec3(outline * 0.35);
+    col += vec3(outline * 0.18);
     // gentle overall sheen brightening toward the top edge
     float sheen = 1.0 - smoothstep(0.0, 10.0, d);
-    col += vec3(sheen * 0.06);
+    col += vec3(sheen * 0.035);
     float alpha = smoothstep(0.0, 1.2, d);
     gl_FragColor = vec4(col, alpha);
     return;
@@ -343,8 +343,8 @@ void main() {
     // Frosted body — only a whisper, so the glass reads as clear/transparent
     // rather than milky. Kept just strong enough (over dark regions) to keep
     // the shape from vanishing; the edge does most of the defining work.
-    vec3 mat = vec3(0.6) * envGrad;
-    color = mix(color, mat, (uSolid > 0.5 ? 0.1 : 0.07) * darkness);
+    vec3 mat = vec3(0.5) * envGrad;
+    color = mix(color, mat, (uSolid > 0.5 ? 0.08 : 0.055) * darkness);
 
     // Soft, diffuse edge — gentle wide rim + inner bevel, never a hard hairline.
     float rim = 1.0 - smoothstep(0.0, 4.5, distFromEdge);
@@ -353,10 +353,10 @@ void main() {
     // Over a wallpaper the edge only shows where the bg is flat/extreme; on a
     // solid sheet we force a small minimum so the pill is always defined.
     float edgeAmt = max(uSolid > 0.5 ? 0.4 : 0.0, definedness);
-    color += vec3(dir * (rim * 0.14 + bevel * 0.05) * edgeLight * edgeAmt);
+    color += vec3(dir * (rim * 0.09 + bevel * 0.035) * edgeLight * edgeAmt);
 
     // A whisper of the moving specular sparkle on top.
-    color += vec3(specHighlight * 0.22 * (0.5 + 0.5 * definedness));
+    color += vec3(specHighlight * 0.15 * (0.5 + 0.5 * definedness));
   }
 
   float alpha = smoothstep(0.0, 1.5, distFromEdge);
