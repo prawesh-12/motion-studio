@@ -12,11 +12,7 @@ import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
 
 const DEFAULT_ICON_SRC = staticFile("message_icon.png");
-
-// iOS-flavored default wallpaper — a deep abstract gradient so the
-// composition looks complete before the user uploads their own.
-const DEFAULT_WALLPAPER =
-  "radial-gradient(120% 90% at 25% 15%, #3b5bd1 0%, #2b2f7a 38%, #43205f 68%, #6a1f4d 100%)";
+const DEFAULT_WALLPAPER_SRC = "wallpaper.png";
 
 /**
  * Resolve an asset path to a renderable URL:
@@ -35,40 +31,80 @@ function resolveAsset(src: string | undefined): string | undefined {
 export type LockScreenMessageProps = {
   /** Big lock-screen clock, e.g. "9:41". */
   time: string;
-  /** Date line above the clock, e.g. "Monday, June 9". */
+  /** Date line above the clock, e.g. "Tue Apr 1". */
   date: string;
-  /** Notification sender / contact name. */
-  sender: string;
-  /** Notification body text. */
-  message: string;
-  /** Small relative time on the notification, e.g. "now". */
-  notifTime: string;
-  /** Custom wallpaper image — falls back to the default gradient. */
+  /** Wallpaper image — falls back to the bundled wallpaper.png. */
   wallpaper?: string;
-  /** Custom app icon — falls back to the Messages icon. */
-  appIcon?: string;
+
+  // Up to three stacked notifications (newest on top). Empty slots — no
+  // sender and no body — are skipped, so 1–3 cards render.
+  n1Sender: string;
+  n1Title?: string;
+  n1Body: string;
+  n1Time: string;
+  n1Avatar?: string;
+
+  n2Sender?: string;
+  n2Title?: string;
+  n2Body?: string;
+  n2Time?: string;
+  n2Avatar?: string;
+
+  n3Sender?: string;
+  n3Title?: string;
+  n3Body?: string;
+  n3Time?: string;
+  n3Avatar?: string;
+};
+
+type Notif = {
+  sender: string;
+  title?: string;
+  body: string;
+  time: string;
+  avatar?: string;
 };
 
 // Frame offsets (design fps = 60).
 const D_CLOCK = 0;
-const D_NOTIF = 16;
-const D_BODY_START = 30;
-const WORD_STAGGER = 3;
+const D_NOTIF_START = 14;
+const NOTIF_STAGGER = 7;
 
-export const LockScreenMessage: React.FC<LockScreenMessageProps> = ({
-  time,
-  date,
-  sender,
-  message,
-  notifTime,
-  wallpaper,
-  appIcon,
-}) => {
+function collectNotifs(p: LockScreenMessageProps): Notif[] {
+  const raw: Notif[] = [
+    {
+      sender: p.n1Sender,
+      title: p.n1Title,
+      body: p.n1Body,
+      time: p.n1Time,
+      avatar: p.n1Avatar,
+    },
+    {
+      sender: p.n2Sender ?? "",
+      title: p.n2Title,
+      body: p.n2Body ?? "",
+      time: p.n2Time ?? "",
+      avatar: p.n2Avatar,
+    },
+    {
+      sender: p.n3Sender ?? "",
+      title: p.n3Title,
+      body: p.n3Body ?? "",
+      time: p.n3Time ?? "",
+      avatar: p.n3Avatar,
+    },
+  ];
+  return raw.filter((n) => n.sender.trim() !== "" || n.body.trim() !== "");
+}
+
+export const LockScreenMessage: React.FC<LockScreenMessageProps> = (props) => {
+  const { time, date, wallpaper } = props;
   const frame = useDesignFrame();
   const { fps } = useVideoConfig();
 
-  const wallpaperSrc = resolveAsset(wallpaper);
-  const iconSrc = resolveAsset(appIcon) ?? DEFAULT_ICON_SRC;
+  const wallpaperSrc =
+    resolveAsset(wallpaper) ?? staticFile(DEFAULT_WALLPAPER_SRC);
+  const notifs = collectNotifs(props);
 
   // Clock easing — gentle fade + settle, no bounce.
   const clockIn = interpolate(frame - D_CLOCK, [0, 22], [0, 1], {
@@ -80,45 +116,43 @@ export const LockScreenMessage: React.FC<LockScreenMessageProps> = ({
   return (
     <AbsoluteFill
       style={{
-        background: DEFAULT_WALLPAPER,
+        background: "#0c1018",
         fontFamily:
           "-apple-system, BlinkMacSystemFont, 'SF Pro Display', Inter, sans-serif",
         overflow: "hidden",
       }}
     >
-      {wallpaperSrc && (
-        <Img
-          src={wallpaperSrc}
-          alt=""
-          crossOrigin="anonymous"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
-        />
-      )}
+      <Img
+        src={wallpaperSrc}
+        alt=""
+        crossOrigin="anonymous"
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+        }}
+      />
 
-      {/* Legibility scrims — darken top and bottom so white chrome reads
-          over any wallpaper. */}
+      {/* Legibility scrims — darken top and bottom so chrome reads over
+          any wallpaper. */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           background:
-            "linear-gradient(180deg, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0) 26%, rgba(0,0,0,0) 70%, rgba(0,0,0,0.34) 100%)",
+            "linear-gradient(180deg, rgba(0,0,0,0.30) 0%, rgba(0,0,0,0) 22%, rgba(0,0,0,0) 58%, rgba(0,0,0,0.40) 100%)",
         }}
       />
 
-      <StatusBar time={time} />
+      <StatusBar />
 
       {/* Clock cluster */}
       <div
         style={{
           position: "absolute",
-          top: 150,
+          top: 158,
           left: 0,
           right: 0,
           textAlign: "center",
@@ -129,45 +163,50 @@ export const LockScreenMessage: React.FC<LockScreenMessageProps> = ({
       >
         <div
           style={{
-            fontSize: 40,
+            fontSize: 42,
             fontWeight: 600,
             letterSpacing: "0.01em",
-            textShadow: "0 2px 12px rgba(0,0,0,0.25)",
+            textShadow: "0 2px 14px rgba(0,0,0,0.3)",
           }}
         >
           {date}
         </div>
         <div
           style={{
-            fontSize: 228,
+            fontSize: 250,
             fontWeight: 600,
             lineHeight: 1,
             letterSpacing: "-0.02em",
-            marginTop: 6,
-            textShadow: "0 4px 30px rgba(0,0,0,0.3)",
+            marginTop: 2,
+            color: "rgba(255,255,255,0.96)",
+            textShadow: "0 6px 40px rgba(0,0,0,0.32)",
           }}
         >
           {time}
         </div>
       </div>
 
-      {/* Notification */}
+      {/* Notification stack — anchored to the lower portion like iOS. */}
       <div
         style={{
           position: "absolute",
-          left: 40,
-          right: 40,
-          top: 640,
+          left: 36,
+          right: 36,
+          top: 1230,
+          display: "flex",
+          flexDirection: "column",
+          gap: 16,
         }}
       >
-        <NotificationCard
-          frame={frame}
-          fps={fps}
-          sender={sender}
-          message={message}
-          notifTime={notifTime}
-          iconSrc={iconSrc}
-        />
+        {notifs.map((n, i) => (
+          <NotificationCard
+            key={i}
+            frame={frame}
+            fps={fps}
+            delay={D_NOTIF_START + i * NOTIF_STAGGER}
+            notif={n}
+          />
+        ))}
       </div>
 
       <BottomChrome />
@@ -175,7 +214,7 @@ export const LockScreenMessage: React.FC<LockScreenMessageProps> = ({
   );
 };
 
-function StatusBar({ time }: { time: string }) {
+function StatusBar() {
   return (
     <div
       style={{
@@ -184,19 +223,16 @@ function StatusBar({ time }: { time: string }) {
         left: 0,
         right: 0,
         height: 96,
-        padding: "0 54px",
+        padding: "0 56px",
         display: "flex",
         alignItems: "center",
-        justifyContent: "space-between",
+        justifyContent: "flex-end",
         color: "#fff",
       }}
     >
-      <span style={{ fontSize: 34, fontWeight: 600, letterSpacing: "-0.01em" }}>
-        {time}
-      </span>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {/* Cellular */}
-        <svg width="36" height="24" viewBox="0 0 36 24" aria-hidden>
+        <svg width="38" height="26" viewBox="0 0 36 24" aria-hidden>
           {[0, 1, 2, 3].map((i) => (
             <rect
               key={i}
@@ -210,11 +246,11 @@ function StatusBar({ time }: { time: string }) {
           ))}
         </svg>
         {/* Wifi */}
-        <svg width="32" height="24" viewBox="0 0 32 24" aria-hidden fill="#fff">
+        <svg width="34" height="26" viewBox="0 0 32 24" aria-hidden fill="#fff">
           <path d="M16 19.5l3.2-4a4 4 0 0 0-6.4 0l3.2 4Zm0-9a10 10 0 0 1 7.6 3.5l2.4-3A14 14 0 0 0 16 6.5 14 14 0 0 0 6 14l2.4 3A10 10 0 0 1 16 10.5Z" />
         </svg>
         {/* Battery */}
-        <svg width="44" height="24" viewBox="0 0 44 24" aria-hidden>
+        <svg width="46" height="26" viewBox="0 0 44 24" aria-hidden>
           <rect
             x="1"
             y="5"
@@ -225,7 +261,7 @@ function StatusBar({ time }: { time: string }) {
             stroke="rgba(255,255,255,0.5)"
             strokeWidth="1.6"
           />
-          <rect x="3.5" y="7.5" width="26" height="9" rx="2" fill="#fff" />
+          <rect x="3.5" y="7.5" width="27" height="9" rx="2" fill="#fff" />
           <rect
             x="37"
             y="9.5"
@@ -240,44 +276,43 @@ function StatusBar({ time }: { time: string }) {
   );
 }
 
+const AVATAR = 82;
+const BADGE = 34;
+
 function NotificationCard({
   frame,
   fps,
-  sender,
-  message,
-  notifTime,
-  iconSrc,
+  delay,
+  notif,
 }: {
   frame: number;
   fps: number;
-  sender: string;
-  message: string;
-  notifTime: string;
-  iconSrc: string;
+  delay: number;
+  notif: Notif;
 }) {
-  const words = message.split(" ");
-
   const pop = spring({
-    frame: frame - D_NOTIF,
+    frame: frame - delay,
     fps,
-    config: { damping: 15, stiffness: 140, mass: 0.9 },
+    config: { damping: 16, stiffness: 150, mass: 0.9 },
   });
-  const scale = 0.92 + pop * 0.08;
-  const translateY = (1 - pop) * 70;
+  const scale = 0.94 + pop * 0.06;
+  const translateY = (1 - pop) * 60;
+
+  const avatarSrc = resolveAsset(notif.avatar);
 
   return (
     <div
       style={{
-        borderRadius: 36,
-        // Smoky translucent glass so white text stays legible over any
-        // wallpaper. rgba base survives web-renderer exports; the blur is
-        // progressive enhancement for the live preview.
-        background: "rgba(28,28,32,0.46)",
-        border: "1px solid rgba(255,255,255,0.14)",
-        boxShadow: "0 20px 50px rgba(0,0,0,0.28)",
-        backdropFilter: "blur(26px) saturate(160%)",
-        WebkitBackdropFilter: "blur(26px) saturate(160%)",
-        padding: 26,
+        borderRadius: 38,
+        // Neutral frosted glass — light enough to read as iOS material,
+        // dark enough to keep white text legible over any wallpaper.
+        // rgba base survives web-renderer exports; blur is enhancement.
+        background: "rgba(70,74,86,0.34)",
+        border: "1px solid rgba(255,255,255,0.16)",
+        boxShadow: "0 18px 44px rgba(0,0,0,0.22)",
+        backdropFilter: "blur(30px) saturate(150%)",
+        WebkitBackdropFilter: "blur(30px) saturate(150%)",
+        padding: "24px 26px",
         display: "flex",
         gap: 20,
         alignItems: "flex-start",
@@ -286,73 +321,106 @@ function NotificationCard({
         transformOrigin: "center bottom",
       }}
     >
-      <Img
-        src={iconSrc}
-        alt={sender}
-        width={84}
-        height={84}
-        style={{ width: 84, height: 84, borderRadius: 20, flexShrink: 0 }}
-      />
+      {/* Avatar (round, with Messages badge) or app icon (rounded square) */}
+      <div style={{ position: "relative", flexShrink: 0 }}>
+        {avatarSrc ? (
+          <>
+            <Img
+              src={avatarSrc}
+              alt={notif.sender}
+              width={AVATAR}
+              height={AVATAR}
+              style={{
+                width: AVATAR,
+                height: AVATAR,
+                borderRadius: 9999,
+                objectFit: "cover",
+              }}
+            />
+            <Img
+              src={DEFAULT_ICON_SRC}
+              alt=""
+              width={BADGE}
+              height={BADGE}
+              style={{
+                position: "absolute",
+                left: -4,
+                bottom: -4,
+                width: BADGE,
+                height: BADGE,
+                borderRadius: 9,
+                border: "2px solid rgba(255,255,255,0.25)",
+              }}
+            />
+          </>
+        ) : (
+          <Img
+            src={DEFAULT_ICON_SRC}
+            alt={notif.sender}
+            width={AVATAR}
+            height={AVATAR}
+            style={{ width: AVATAR, height: AVATAR, borderRadius: 19 }}
+          />
+        )}
+      </div>
+
       <div style={{ flex: 1, minWidth: 0 }}>
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
             alignItems: "baseline",
-            marginBottom: 4,
+            gap: 12,
+            marginBottom: 2,
           }}
         >
           <span
             style={{
-              fontSize: 37,
+              fontSize: 34,
               fontWeight: 600,
               color: "#fff",
               letterSpacing: "-0.01em",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
-            {sender}
+            {notif.sender}
           </span>
           <span
             style={{
-              fontSize: 26,
-              color: "rgba(255,255,255,0.55)",
+              fontSize: 25,
+              color: "rgba(255,255,255,0.6)",
               fontWeight: 500,
+              flexShrink: 0,
             }}
           >
-            {notifTime}
+            {notif.time}
           </span>
         </div>
+        {notif.title && notif.title.trim() !== "" && (
+          <div
+            style={{
+              fontSize: 32,
+              fontWeight: 600,
+              color: "#fff",
+              letterSpacing: "-0.01em",
+              marginBottom: 2,
+            }}
+          >
+            {notif.title}
+          </div>
+        )}
         <div
           style={{
-            fontSize: 34,
-            color: "rgba(255,255,255,0.92)",
+            fontSize: 31,
+            color: "rgba(255,255,255,0.9)",
             fontWeight: 400,
             lineHeight: 1.32,
             letterSpacing: "-0.005em",
-            display: "flex",
-            flexWrap: "wrap",
           }}
         >
-          {words.map((word, i) => {
-            const wp = spring({
-              frame: frame - (D_BODY_START + i * WORD_STAGGER),
-              fps,
-              config: { damping: 16, stiffness: 170, mass: 0.6 },
-            });
-            return (
-              <span
-                key={i}
-                style={{
-                  display: "inline-block",
-                  marginRight: "0.28em",
-                  opacity: wp,
-                  transform: `translate3d(0, ${snap((1 - wp) * 12)}px, 0)`,
-                }}
-              >
-                {word}
-              </span>
-            );
-          })}
+          {notif.body}
         </div>
       </div>
     </div>
@@ -366,22 +434,22 @@ function BottomChrome() {
       <div
         style={{
           position: "absolute",
-          bottom: 110,
+          bottom: 116,
           left: 0,
           right: 0,
           display: "flex",
           justifyContent: "space-between",
-          padding: "0 64px",
+          padding: "0 70px",
         }}
       >
         {[0, 1].map((i) => (
           <div
             key={i}
             style={{
-              width: 92,
-              height: 92,
+              width: 96,
+              height: 96,
               borderRadius: 9999,
-              background: "rgba(0,0,0,0.32)",
+              background: "rgba(0,0,0,0.30)",
               border: "1px solid rgba(255,255,255,0.12)",
               backdropFilter: "blur(18px)",
               WebkitBackdropFilter: "blur(18px)",
@@ -403,8 +471,8 @@ function BottomChrome() {
           bottom: 30,
           left: "50%",
           transform: "translateX(-50%)",
-          width: 280,
-          height: 9,
+          width: 300,
+          height: 10,
           borderRadius: 9999,
           background: "rgba(255,255,255,0.85)",
         }}
@@ -416,8 +484,8 @@ function BottomChrome() {
 function FlashlightIcon() {
   return (
     <svg
-      width="40"
-      height="40"
+      width="42"
+      height="42"
       viewBox="0 0 24 24"
       aria-hidden
       fill="none"
@@ -435,8 +503,8 @@ function FlashlightIcon() {
 function CameraIcon() {
   return (
     <svg
-      width="40"
-      height="40"
+      width="42"
+      height="42"
       viewBox="0 0 24 24"
       aria-hidden
       fill="none"
