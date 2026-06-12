@@ -20,6 +20,7 @@ import { ImageScene } from "./compositions/ImageScene/ImageScene";
 import { InstagramMessages } from "./compositions/InstagramMessages/InstagramMessages";
 import { InstagramPost } from "./compositions/InstagramPost/InstagramPost";
 import { LineChart } from "./compositions/LineChart/LineChart";
+import { LockScreenMessage } from "./compositions/LockScreenMessage/LockScreenMessage";
 import { LogoCloud } from "./compositions/LogoCloud/LogoCloud";
 import { MessageBubbles } from "./compositions/MessageBubbles/MessageBubbles";
 import { MessagePopup } from "./compositions/MessagePopup/MessagePopup";
@@ -81,6 +82,7 @@ export const componentsByIdBase: Record<string, ComponentType<any>> = {
   GaiaScenario,
   MessagePopup,
   MessageBubbles,
+  LockScreenMessage,
   TitleSlideUp,
   TitleType,
   TitlePopup,

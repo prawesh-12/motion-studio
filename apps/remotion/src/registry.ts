@@ -19,6 +19,7 @@ import { instagramMessagesInfo } from "./compositions/InstagramMessages/meta";
 import { instagramPostInfo } from "./compositions/InstagramPost/meta";
 import { laptopFrameInfo } from "./compositions/LaptopFrame/meta";
 import { lineChartInfo } from "./compositions/LineChart/meta";
+import { lockScreenMessageInfo } from "./compositions/LockScreenMessage/meta";
 import { logoCloudInfo } from "./compositions/LogoCloud/meta";
 import { messageBubblesInfo } from "./compositions/MessageBubbles/meta";
 import { messagePopupInfo } from "./compositions/MessagePopup/meta";
@@ -94,6 +95,7 @@ export const compositions: AnyCompositionInfo[] = [
   twitterFollowInfo,
   instagramPostInfo,
   messageBubblesInfo,
+  lockScreenMessageInfo,
   whatsappMessagesInfo,
   telegramMessagesInfo,
   slackMessagesInfo,
