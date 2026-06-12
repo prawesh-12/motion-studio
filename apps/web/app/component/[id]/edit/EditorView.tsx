@@ -4,9 +4,10 @@ import { Player } from "@remotion/player";
 import { renderMediaOnWeb } from "@remotion/web-renderer";
 import { componentsById } from "@workspace/compositions/components";
 import { FieldsRenderer } from "@workspace/compositions/editors";
+import { compositionsById } from "@workspace/compositions/registry";
 import type { AnyCompositionInfo } from "@workspace/compositions/schema";
 import { Button } from "@workspace/ui/components/button";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { downloadMp4Blob } from "@/features/studio/lib/local-export";
 
 export function EditorView({
@@ -24,6 +25,33 @@ export function EditorView({
 
   const playerProps = useMemo(() => props, [props]);
 
+  // The server strips `calculateMetadata` (it's a function), so recompute the
+  // duration here from the full client-side registry entry — otherwise a
+  // composition whose length depends on its props (e.g. a chat that grows with
+  // its messages) would be clipped to the static default and its last bubble
+  // would never render.
+  const calculateMetadata = compositionsById[info.id]?.calculateMetadata;
+  const [durationInFrames, setDurationInFrames] = useState(
+    info.durationInFrames,
+  );
+  useEffect(() => {
+    if (!calculateMetadata) {
+      setDurationInFrames(info.durationInFrames);
+      return;
+    }
+    let cancelled = false;
+    Promise.resolve(calculateMetadata({ props }))
+      .then((meta) => {
+        if (!cancelled && meta?.durationInFrames) {
+          setDurationInFrames(meta.durationInFrames);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [calculateMetadata, props, info.durationInFrames]);
+
   async function handleDownload() {
     if (!Component) return;
     setLoading(true);
@@ -37,7 +65,7 @@ export function EditorView({
           width: info.width,
           height: info.height,
           fps: info.fps,
-          durationInFrames: info.durationInFrames,
+          durationInFrames,
         },
         inputProps: props,
         container: "mp4",
@@ -92,15 +120,15 @@ export function EditorView({
         </div>
       </aside>
 
-      <div className="flex items-center justify-center bg-muted/20 p-6 lg:min-h-0">
+      <div className="flex items-center justify-center bg-muted/20 p-4 lg:min-h-0">
         <div
-          className="w-full max-w-5xl overflow-hidden rounded-lg border border-border bg-background shadow-sm"
+          className="max-h-full w-full max-w-[1600px] overflow-hidden rounded-lg border border-border bg-background shadow-sm"
           style={{ aspectRatio: `${info.width} / ${info.height}` }}
         >
           <Player
             component={Component}
             inputProps={playerProps}
-            durationInFrames={info.durationInFrames}
+            durationInFrames={durationInFrames}
             fps={info.fps}
             compositionWidth={info.width}
             compositionHeight={info.height}
