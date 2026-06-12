@@ -200,8 +200,8 @@ function ReadReceipt({
     right: 0,
     top: 0,
     whiteSpace: "nowrap",
-    fontSize: 9.5,
-    lineHeight: "11px",
+    fontSize: 10.5,
+    lineHeight: "12px",
     letterSpacing: "-0.01em",
     color,
     fontWeight: 400,
@@ -211,10 +211,10 @@ function ReadReceipt({
     <div
       style={{
         position: "relative",
-        height: 11,
-        minWidth: 48,
-        marginTop: 2,
-        marginRight: 3,
+        height: 12,
+        minWidth: 50,
+        marginTop: 3,
+        marginRight: 2,
         opacity: appear,
       }}
     >
@@ -225,7 +225,7 @@ function ReadReceipt({
           transform: `translateY(${readP * -2}px)`,
         }}
       >
-        <span style={{ fontWeight: 500 }}>Delivered</span>
+        <span style={{ fontWeight: 600 }}>Delivered</span>
       </div>
       <div
         style={{
@@ -234,8 +234,8 @@ function ReadReceipt({
           transform: `translateY(${(1 - readP) * 2}px)`,
         }}
       >
-        <span style={{ fontWeight: 500 }}>Read</span>
-        {time ? <span> {time}</span> : null}
+        <span style={{ fontWeight: 600 }}>Read</span>
+        {time ? <span style={{ fontWeight: 400 }}> {time}</span> : null}
       </div>
     </div>
   );
@@ -702,7 +702,9 @@ function IMessageDemo({
   const groupTimeColor = lightUI
     ? "rgba(255,255,255,0.85)"
     : "rgba(60,60,67,0.6)";
-  const receiptColor = lightUI ? "rgba(235,235,245,0.5)" : "rgba(60,60,67,0.5)";
+  const receiptColor = lightUI
+    ? "rgba(235,235,245,0.55)"
+    : "rgba(60,60,67,0.5)";
 
   return (
     <GlassStage
@@ -717,9 +719,9 @@ function IMessageDemo({
         {/* Header — back chevron + avatar/name chip + FaceTime, glass chrome */}
         <div
           className="relative flex shrink-0 flex-col items-center justify-center"
-          style={{ background: chromeBg, padding: "6px 16px 12px" }}
+          style={{ background: chromeBg, padding: "22px 16px 14px" }}
         >
-          <div style={{ position: "absolute", left: 12, top: 8 }}>
+          <div style={{ position: "absolute", left: 12, top: 24 }}>
             <LiquidGlass
               radius={20}
               style={{
@@ -750,7 +752,7 @@ function IMessageDemo({
             </LiquidGlass>
           </div>
 
-          <div style={{ position: "absolute", right: 12, top: 8 }}>
+          <div style={{ position: "absolute", right: 12, top: 24 }}>
             <LiquidGlass
               radius={20}
               style={{
@@ -857,7 +859,7 @@ function IMessageDemo({
           className="flex flex-1 flex-col overflow-y-auto px-3 pb-3"
           style={{
             scrollbarWidth: "none",
-            gap: 8,
+            gap: 12,
             // Always anchor the thread to the bottom, like real iMessage: the
             // newest message sits just above the composer and older ones scroll
             // up off the top as the conversation grows. This is what keeps a
@@ -889,7 +891,7 @@ function IMessageDemo({
                     "flex flex-col",
                     group.from === "me" ? "items-end" : "items-start",
                   )}
-                  style={{ gap: 2 }}
+                  style={{ gap: 4 }}
                 >
                   {group.items.map((m, i) => {
                     const isLast = i === group.items.length - 1;
@@ -1318,7 +1320,7 @@ export function GlassChatDemo({
           >
             <input
               type="text"
-              placeholder="iMessage"
+              placeholder="Messages"
               className="chat-demo-input min-w-0 flex-1 border-0 bg-transparent p-0 outline-none placeholder:text-[rgba(255,255,255,0.65)]"
               style={{
                 fontSize: 15,
