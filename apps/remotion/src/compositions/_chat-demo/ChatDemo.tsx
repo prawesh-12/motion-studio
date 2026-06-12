@@ -172,20 +172,20 @@ function ReadReceipt({
   color: string;
   time?: string;
 }) {
-  const appear = interpolate(
-    enterFrames,
-    [RECEIPT_FADE_AT, RECEIPT_FADE_AT + 7],
-    [0, 1],
-    {
-      extrapolateLeft: "clamp",
-      extrapolateRight: "clamp",
-      easing: Easing.out(Easing.cubic),
-    },
-  );
-  if (appear <= 0.001) return null;
-  // iMessage doesn't fade the receipt in — it pushes up into place from behind
-  // the bubble's bottom edge. Slide it up as it appears for that shoved-out feel.
-  const appearY = (1 - appear) * 9;
+  const { fps } = useVideoConfig();
+  // iMessage pops the receipt into place — a quick spring scale (with a hair of
+  // overshoot) anchored at the top-right, rising slightly as it lands. Not a
+  // fade, not a slow slide.
+  const pop = spring({
+    frame: enterFrames - RECEIPT_FADE_AT,
+    fps,
+    config: { damping: 11, mass: 0.6, stiffness: 220 },
+    durationInFrames: 14,
+  });
+  if (pop <= 0.001) return null;
+  const appear = Math.min(1, pop * 1.8);
+  const appearScale = 0.55 + 0.45 * pop;
+  const appearY = (1 - Math.min(1, pop)) * 4;
   // 0 → 1 as the message goes Delivered → Read, eased for a soft handoff.
   const readP = interpolate(
     enterFrames,
@@ -219,7 +219,8 @@ function ReadReceipt({
         marginTop: 3,
         marginRight: 2,
         opacity: appear,
-        transform: `translateY(${appearY}px)`,
+        transform: `translateY(${appearY}px) scale(${appearScale})`,
+        transformOrigin: "top right",
       }}
     >
       <div
