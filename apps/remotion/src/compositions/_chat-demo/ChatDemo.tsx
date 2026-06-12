@@ -419,7 +419,7 @@ function CurvedBubble({
   const isMe = from === "me";
   const innerStyle: React.CSSProperties = {
     color,
-    padding: "7px 13px 8px",
+    padding: "5px 13px 6px",
     borderRadius: 18,
     fontSize: 15.5,
     lineHeight: "20px",
@@ -875,7 +875,7 @@ function IMessageDemo({
           className="flex flex-1 flex-col overflow-y-auto px-3 pb-3"
           style={{
             scrollbarWidth: "none",
-            gap: 12,
+            gap: 10,
             // Always anchor the thread to the bottom, like real iMessage: the
             // newest message sits just above the composer and older ones scroll
             // up off the top as the conversation grows. This is what keeps a
@@ -907,7 +907,7 @@ function IMessageDemo({
                     "flex flex-col",
                     group.from === "me" ? "items-end" : "items-start",
                   )}
-                  style={{ gap: 4 }}
+                  style={{ gap: 3 }}
                 >
                   {group.items.map((m, i) => {
                     const isLast = i === group.items.length - 1;
