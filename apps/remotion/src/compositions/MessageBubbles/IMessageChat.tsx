@@ -41,8 +41,9 @@ import { GlassStage } from "../_chat-demo/LiquidGlass";
 import { PhotoPicker } from "./PhotoPicker";
 
 /** Shared horizontal inset for the thread AND the composer, so message bubbles
- *  and the input/mic row sit on exactly the same left/right edges. */
-const CHAT_PAD_X = 28;
+ *  and the input/mic row sit on exactly the same left/right edges. Bumped so the
+ *  input box isn't overly wide and the bubbles tuck in to match. */
+const CHAT_PAD_X = 36;
 
 type ThreadGroup = { from: "me" | "them"; items: ChatMessageItem[] };
 

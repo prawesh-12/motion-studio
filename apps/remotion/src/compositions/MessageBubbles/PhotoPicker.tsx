@@ -174,12 +174,12 @@ export function PhotoPicker({
           transform: `translateY(${closing * 100}%)`,
           padding: 7,
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(2, 1fr)",
           gridAutoRows: "1fr",
           gap: 4,
         }}
       >
-        {tiles.slice(0, 6).map((tile, i) => {
+        {tiles.slice(0, 4).map((tile, i) => {
           const isTarget = i === 0;
           const tapScale = isTarget ? 1 - photoTap * 0.05 : 1;
           return (
@@ -248,7 +248,7 @@ export function PhotoPicker({
             // Top-left tile position (grid padding 7).
             left: 7,
             top: 7,
-            width: "calc((100% - 22px) / 3)",
+            width: "calc((100% - 18px) / 2)",
             aspectRatio: "1 / 1",
             borderRadius: 6 + fly * 10,
             overflow: "hidden",
