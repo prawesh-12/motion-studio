@@ -353,7 +353,8 @@ export function PhotoPicker({
             // real bubble (landing as the flow finishes) takes over seamlessly.
             transform: `translate(${closing * 215}px, ${closing * -190}px) scale(${1 - closing * 0.25})`,
             transformOrigin: "center",
-            opacity: closing < 0.72 ? 1 : Math.max(0, 1 - (closing - 0.72) / 0.28),
+            opacity:
+              closing < 0.72 ? 1 : Math.max(0, 1 - (closing - 0.72) / 0.28),
             boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
             zIndex: 5,
           }}
