@@ -220,13 +220,16 @@ export function PhotoPicker({
       easing,
     });
 
-  // Phases. The menu card is deliberately held for a good while (it's the part
-  // worth lingering on) before Photos is tapped and it hands off to the grid.
-  const menuIn = ease(0, 0.08); // card rises after the + tap
-  const photosTapped = t >= 0.42 && t < 0.54; // Photos row pressed (after a beat)
-  const toGrid = ease(0.54, 0.66, Easing.inOut(Easing.cubic)); // 0 menu → 1 grid
-  const photoTap = ease(0.78, 0.88); // the chosen tile presses
-  const closing = ease(0.93, 1, Easing.in(Easing.cubic)); // panel slides away
+  // Phases — paced so viewers can actually read each step. The menu card is
+  // held, Photos is tapped, then the grid is held open long enough to see the
+  // photos before the chosen one is tapped and flies up into the thread.
+  const menuIn = ease(0, 0.05); // card rises after the + tap
+  const photosTapped = t >= 0.3 && t < 0.4; // Photos row pressed
+  const toGrid = ease(0.4, 0.5, Easing.inOut(Easing.cubic)); // 0 menu → 1 grid
+  const photoTap = ease(0.66, 0.74); // the chosen tile presses
+  // The chosen photo flies up to the thread — snappy (quick ease-out) so the
+  // send doesn't drag, but still over a real window so the motion reads.
+  const closing = ease(0.84, 1, Easing.out(Easing.cubic));
   const menuVisible = menuIn * (1 - toGrid);
 
   const tiles = [image, ...FILLER_GRADIENTS];
@@ -252,7 +255,9 @@ export function PhotoPicker({
         }}
       />
 
-      {/* Photo grid — covers the keyboard once Photos is tapped. */}
+      {/* Photo grid — covers the keyboard once Photos is tapped. Fewer, bigger
+          tiles (3×2) so the photos read clearly. Fades out as the chosen photo
+          flies up to the thread. */}
       <div
         style={{
           position: "absolute",
@@ -260,6 +265,8 @@ export function PhotoPicker({
           overflow: "hidden",
           background: panelBg,
           opacity: toGrid,
+          // Slide the grid cleanly down on close (instead of fading and exposing
+          // the keyboard mid-transition).
           transform: `translateY(${closing * 100}%)`,
           padding: 7,
           display: "grid",
@@ -268,23 +275,24 @@ export function PhotoPicker({
           gap: 4,
         }}
       >
-        {tiles.slice(0, 9).map((tile, i) => {
+        {tiles.slice(0, 6).map((tile, i) => {
           const isTarget = i === 0;
-          const tapScale = isTarget ? 1 - photoTap * 0.06 : 1;
+          const tapScale = isTarget ? 1 - photoTap * 0.05 : 1;
           return (
             <div
               key={i}
               style={{
                 position: "relative",
-                borderRadius: 5,
+                borderRadius: 6,
                 overflow: "hidden",
+                // The chosen tile empties out as its photo flies to the thread.
                 background: isTarget ? "#000" : tile,
                 transform: `scale(${tapScale})`,
                 boxShadow:
                   isTarget && photoTap > 0 ? "0 0 0 3px #0a84ff inset" : "none",
               }}
             >
-              {isTarget && (
+              {isTarget && closing < 0.2 && (
                 <Img
                   src={asset(tile) ?? ""}
                   crossOrigin="anonymous"
@@ -296,18 +304,19 @@ export function PhotoPicker({
                 <div
                   style={{
                     position: "absolute",
-                    top: 5,
-                    right: 5,
-                    width: 17,
-                    height: 17,
+                    top: 6,
+                    right: 6,
+                    width: 19,
+                    height: 19,
                     borderRadius: 9999,
                     background: "#0a84ff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
+                    opacity: 1 - closing,
                   }}
                 >
-                  <svg width="10" height="10" viewBox="0 0 12 12" aria-hidden>
+                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden>
                     <path
                       d="M2.5 6.5l2.2 2.2L9.5 3.8"
                       fill="none"
@@ -323,6 +332,40 @@ export function PhotoPicker({
           );
         })}
       </div>
+
+      {/* The chosen photo flying from its grid tile up toward the thread, so the
+          send reads as "grid → message" like iMessage. It starts on the tile and
+          lifts up-and-right, shrinking toward bubble size, then the real bubble
+          (which lands as the flow ends) takes over. */}
+      {closing > 0.001 && (
+        <div
+          style={{
+            position: "absolute",
+            // Top-left tile position (grid padding 7).
+            left: 7,
+            top: 7,
+            width: "calc((100% - 22px) / 3)",
+            aspectRatio: "1 / 1",
+            borderRadius: 6 + closing * 12,
+            overflow: "hidden",
+            // Lift up and to the right toward where the outgoing photo bubble
+            // lands, shrinking toward bubble size; fade out near the end so the
+            // real bubble (landing as the flow finishes) takes over seamlessly.
+            transform: `translate(${closing * 215}px, ${closing * -190}px) scale(${1 - closing * 0.25})`,
+            transformOrigin: "center",
+            opacity: closing < 0.72 ? 1 : Math.max(0, 1 - (closing - 0.72) / 0.28),
+            boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
+            zIndex: 5,
+          }}
+        >
+          <Img
+            src={asset(image) ?? ""}
+            crossOrigin="anonymous"
+            alt=""
+            style={{ width: "100%", height: "100%", objectFit: "cover" }}
+          />
+        </div>
+      )}
 
       {/* Attachment menu card — grows UP out of the + button (its bottom sits at
           the composer, above the keyboard slot) and floats over the messages
