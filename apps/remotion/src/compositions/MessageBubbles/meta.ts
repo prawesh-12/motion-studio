@@ -89,10 +89,9 @@ export const messageBubblesDefaultProps: MessageBubblesProps = {
       text: "",
       side: "right",
       image: "images/imessage-wallpaper.jpg",
-      // Window for the picker flow (+ → menu → Photos → grid → tap → fly): paced
-      // so the menu and grid are readable, but not dragging. The fly itself is
-      // quick (see PhotoPicker's closing phase).
-      typingFrames: 300,
+      // Window for the picker flow (+ → menu → Photos → grid → tap → fly). Kept
+      // tight (~1.3s) so the photo send feels about as quick as a normal send.
+      typingFrames: 80,
       delay: 940,
     },
   ],

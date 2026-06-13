@@ -220,16 +220,14 @@ export function PhotoPicker({
       easing,
     });
 
-  // Phases — paced so viewers can actually read each step. The menu card is
-  // held, Photos is tapped, then the grid is held open long enough to see the
-  // photos before the chosen one is tapped and flies up into the thread.
-  const menuIn = ease(0, 0.05); // card rises after the + tap
-  const photosTapped = t >= 0.3 && t < 0.4; // Photos row pressed
-  const toGrid = ease(0.4, 0.5, Easing.inOut(Easing.cubic)); // 0 menu → 1 grid
-  const photoTap = ease(0.66, 0.74); // the chosen tile presses
-  // The chosen photo flies up to the thread — snappy (quick ease-out) so the
-  // send doesn't drag, but still over a real window so the motion reads.
-  const closing = ease(0.84, 1, Easing.out(Easing.cubic));
+  // Phases — snappy, with minimal dead time between steps so it doesn't drag.
+  // Each action (card up, Photos tap, grid, photo tap, fly) follows quickly.
+  const menuIn = ease(0, 0.08); // card pops up after the + tap
+  const photosTapped = t >= 0.16 && t < 0.26; // Photos row pressed
+  const toGrid = ease(0.26, 0.38, Easing.out(Easing.cubic)); // 0 menu → 1 grid
+  const photoTap = ease(0.5, 0.6); // the chosen tile presses
+  // The chosen photo flies up to the thread — quick ease-out.
+  const closing = ease(0.72, 1, Easing.out(Easing.cubic));
   const menuVisible = menuIn * (1 - toGrid);
 
   const tiles = [image, ...FILLER_GRADIENTS];
