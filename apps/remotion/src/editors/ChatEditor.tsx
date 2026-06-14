@@ -556,13 +556,15 @@ function DayDivider({
 
 function Composer({
   draft,
-  nextSide,
+  side,
+  onSideChange,
   onDraftChange,
   onSend,
   onPickFiles,
 }: {
   draft: string;
-  nextSide: ChatMessage["side"];
+  side: ChatMessage["side"];
+  onSideChange: (side: ChatMessage["side"]) => void;
   onDraftChange: (v: string) => void;
   onSend: () => void;
   onPickFiles: (files: FileList | null) => void;
@@ -570,6 +572,34 @@ function Composer({
   const canSend = draft.trim().length > 0;
   return (
     <div className="shrink-0 border-t border-border bg-background px-5 py-4">
+      {/* Side selector — pick who the next message is from. Doesn't auto-flip,
+          so you can send several in a row from the same side. */}
+      <div className="mb-2.5 flex items-center gap-1 rounded-full bg-muted p-0.5">
+        <button
+          type="button"
+          onClick={() => onSideChange("left")}
+          className={cn(
+            "flex-1 rounded-full px-3 py-1 text-[12px] font-medium transition-colors",
+            side === "left"
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          Them
+        </button>
+        <button
+          type="button"
+          onClick={() => onSideChange("right")}
+          className={cn(
+            "flex-1 rounded-full px-3 py-1 text-[12px] font-medium transition-colors",
+            side === "right"
+              ? "bg-[#007AFF] text-white shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          You
+        </button>
+      </div>
       <div className="flex items-center gap-2">
         {/* The file <input> itself is the click target — stretched over the
             icon at opacity 0 — so the native picker always opens (no label
@@ -601,7 +631,7 @@ function Composer({
               onSend();
             }
           }}
-          placeholder={`Message as ${nextSide === "right" ? "you" : "them"}…`}
+          placeholder={`Message as ${side === "right" ? "you" : "them"}…`}
           className="flex-1 rounded-full border border-border bg-background px-4 py-2.5 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-foreground/30"
         />
         <Button
@@ -611,7 +641,7 @@ function Composer({
           className={cn(
             "size-10 shrink-0 rounded-full text-white shadow-sm",
             canSend
-              ? nextSide === "right"
+              ? side === "right"
                 ? "bg-[#007AFF] hover:bg-[#0070E8] active:scale-95"
                 : "bg-zinc-500 hover:bg-zinc-600 active:scale-95"
               : "cursor-not-allowed bg-muted text-muted-foreground",

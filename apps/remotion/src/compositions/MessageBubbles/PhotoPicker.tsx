@@ -122,7 +122,11 @@ export function PhotoPicker({
   // Phases — snappy, with minimal dead time between steps so it doesn't drag.
   // + menu → Photos tap → gallery → tap a photo (badge) → the photo drops into
   // the composer (handled in IMessageChat) → gallery slides away as it sends.
-  const menuIn = ease(0, 0.08); // card pops up after the + tap
+  const menuIn = ease(0, 0.12); // card grows out of the + button after the tap
+  // Row contents fade in only once the card has grown past a small nub, so the
+  // expansion reads as the card opening UP from the + icon (not text appearing
+  // in a tiny blob).
+  const cardContent = ease(0.05, 0.12);
   const photosTapped = t >= 0.16 && t < 0.26; // Photos row pressed
   const toGrid = ease(0.26, 0.38, Easing.out(Easing.cubic)); // 0 menu → 1 grid
   const photoTap = ease(0.42, 0.5); // chosen tile presses + "1" badge pops
@@ -268,48 +272,64 @@ export function PhotoPicker({
               : "1px solid rgba(0,0,0,0.07)",
             backdropFilter: "blur(32px) saturate(150%)",
             WebkitBackdropFilter: "blur(32px) saturate(150%)",
-            borderRadius: 16,
+            // Grows from a small rounded nub (reads like the + button) into the
+            // card's rounded rectangle as it opens.
+            borderRadius: 16 + (1 - menuIn) * 90,
             padding: "3px 0",
             opacity: menuVisible,
-            transform: `translateY(${(1 - menuIn) * 18}px) scale(${0.88 + menuIn * 0.12})`,
+            // Scale UP from a point at the + button (bottom-left), so the card
+            // appears to spring open out of the icon rather than slide in.
+            transform: `scale(${0.16 + menuIn * 0.84})`,
             transformOrigin: "bottom left",
+            // Clip the rows to the rounded shape while it's still a small nub so
+            // no text spills outside the blob mid-expansion.
+            overflow: "hidden",
             boxShadow: dark
               ? "inset 0 1px 0.5px rgba(255,255,255,0.14), 0 18px 50px rgba(0,0,0,0.55)"
               : "inset 0 1px 0.5px rgba(255,255,255,0.7), 0 18px 50px rgba(0,0,0,0.22)",
           }}
         >
-          {MENU_ITEMS.map((item, i) => (
-            <div
-              key={item.key}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 12,
-                padding: "8px 13px",
-                borderBottom:
-                  i < MENU_ITEMS.length - 1
-                    ? `0.5px solid ${rowDivider}`
-                    : "none",
-                background:
-                  item.key === "photos" && photosTapped
-                    ? dark
-                      ? "rgba(255,255,255,0.12)"
-                      : "rgba(0,0,0,0.06)"
-                    : "transparent",
-              }}
-            >
-              <MenuIcon kind={item.key} />
-              <span
+          {/* Rows fade + settle in once the card has opened, counter-scaled so
+              the text isn't distorted by the card's own scale-up. */}
+          <div
+            style={{
+              opacity: cardContent,
+              transform: `translateY(${(1 - cardContent) * 8}px)`,
+            }}
+          >
+            {MENU_ITEMS.map((item, i) => (
+              <div
+                key={item.key}
                 style={{
-                  fontSize: 16,
-                  color: labelColor,
-                  letterSpacing: "-0.01em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "8px 13px",
+                  borderBottom:
+                    i < MENU_ITEMS.length - 1
+                      ? `0.5px solid ${rowDivider}`
+                      : "none",
+                  background:
+                    item.key === "photos" && photosTapped
+                      ? dark
+                        ? "rgba(255,255,255,0.12)"
+                        : "rgba(0,0,0,0.06)"
+                      : "transparent",
                 }}
               >
-                {item.label}
-              </span>
-            </div>
-          ))}
+                <MenuIcon kind={item.key} />
+                <span
+                  style={{
+                    fontSize: 16,
+                    color: labelColor,
+                    letterSpacing: "-0.01em",
+                  }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
