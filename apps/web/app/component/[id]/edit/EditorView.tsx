@@ -7,6 +7,12 @@ import { type Project, projectDuration } from "@workspace/compositions/project";
 import { compositionsById } from "@workspace/compositions/registry";
 import type { AnyCompositionInfo } from "@workspace/compositions/schema";
 import { Button } from "@workspace/ui/components/button";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@workspace/ui/components/tabs";
 import { useEffect, useMemo, useState } from "react";
 import { ExportProgressOverlay } from "@/features/studio/components/export-progress-overlay";
 import { ExportSettingsModal } from "@/features/studio/components/export-settings-modal";
@@ -91,16 +97,61 @@ export function EditorView({
 
   const totalDuration = useMemo(() => projectDuration(project), [project]);
 
+  // Chat compositions get a dedicated Messages tab so the conversation editor
+  // has the full sidebar height (instead of being buried under the other
+  // settings at the bottom). Everything else goes on the Settings tab.
+  const hasChatField = info.fields.some((f) => f.kind === "chat");
+  const generalFields = info.fields.filter((f) => f.kind !== "chat");
+  const chatFields = info.fields.filter((f) => f.kind === "chat");
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] lg:min-h-0 lg:flex-1">
       <aside className="flex flex-col border-b border-border lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
-        <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
-          <FieldsRenderer
-            fields={info.fields}
-            value={props}
-            onChange={setProps}
-          />
-        </div>
+        {hasChatField ? (
+          <Tabs
+            defaultValue="messages"
+            className="flex min-h-0 flex-1 flex-col"
+          >
+            <div className="px-3 pt-3">
+              <TabsList className="w-full">
+                <TabsTrigger value="messages" className="flex-1">
+                  Messages
+                </TabsTrigger>
+                <TabsTrigger value="settings" className="flex-1">
+                  Settings
+                </TabsTrigger>
+              </TabsList>
+            </div>
+            <TabsContent
+              value="messages"
+              className="min-h-0 flex-1 overflow-y-auto"
+            >
+              <FieldsRenderer
+                fields={chatFields}
+                value={props}
+                onChange={setProps}
+              />
+            </TabsContent>
+            <TabsContent
+              value="settings"
+              className="min-h-0 flex-1 overflow-y-auto"
+            >
+              <FieldsRenderer
+                fields={generalFields}
+                value={props}
+                onChange={setProps}
+              />
+            </TabsContent>
+          </Tabs>
+        ) : (
+          <div className="flex flex-col lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+            <FieldsRenderer
+              fields={info.fields}
+              value={props}
+              onChange={setProps}
+            />
+          </div>
+        )}
         <div className="shrink-0 border-t border-border p-4">
           <Button
             className="w-full"

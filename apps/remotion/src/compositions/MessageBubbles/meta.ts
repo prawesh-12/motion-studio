@@ -89,9 +89,13 @@ export const messageBubblesDefaultProps: MessageBubblesProps = {
       text: "",
       side: "right",
       image: "images/imessage-wallpaper.jpg",
-      // Window for the picker flow (+ → menu → Photos → grid → tap → fly). Kept
-      // tight (~1.3s) so the photo send feels about as quick as a normal send.
-      typingFrames: 80,
+      // Window for the WHOLE picker flow (+ tap → menu opens → Photos → grid →
+      // select photo → send). The entire sequence is squeezed into this window,
+      // so this is the master speed dial. ~2s at 60fps — the whole flow (open
+      // card → browse → select → send) plays in about two seconds, flowing step
+      // to step. Only THIS photo message uses the long window; the regular text
+      // messages keep their own (shorter) typing speeds, so chatting is normal.
+      typingFrames: 120,
       delay: 940,
     },
   ],

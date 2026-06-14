@@ -48,9 +48,10 @@ function MenuIcon({ kind }: { kind: string }) {
         crossOrigin="anonymous"
         alt=""
         style={{
-          width: 30,
-          height: 30,
-          borderRadius: 7,
+          width: 28,
+          height: 28,
+          // Circular icons, like the real iMessage attachment menu.
+          borderRadius: 9999,
           objectFit: "cover",
           flexShrink: 0,
         }}
@@ -58,10 +59,10 @@ function MenuIcon({ kind }: { kind: string }) {
     );
   }
   const base: React.CSSProperties = {
-    width: 30,
-    height: 30,
-    // Rounded square (app-icon shape) to match the real PNG icons above.
-    borderRadius: 7,
+    width: 28,
+    height: 28,
+    // Circular icon to match the real PNG icons above.
+    borderRadius: 9999,
     flexShrink: 0,
     display: "flex",
     alignItems: "center",
@@ -76,7 +77,7 @@ function MenuIcon({ kind }: { kind: string }) {
         background: "linear-gradient(160deg, #c76bff 0%, #9b3fe0 100%)",
       }}
     >
-      <svg width="17" height="17" viewBox="0 0 24 24" aria-hidden>
+      <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden>
         <path
           d="M12 3l2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.9 6.7 19.1l1-5.8L3.5 9.2l5.9-.9z"
           fill="#fff"
@@ -110,7 +111,6 @@ export function PhotoPicker({
 }) {
   const dark = theme !== "light";
   const labelColor = dark ? "#ffffff" : "#000000";
-  const rowDivider = dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
 
   const ease = (a: number, b: number, easing = Easing.out(Easing.cubic)) =>
     interpolate(t, [a, b], [0, 1], {
@@ -119,20 +119,26 @@ export function PhotoPicker({
       easing,
     });
 
-  // Phases — snappy, with minimal dead time between steps so it doesn't drag.
-  // + menu → Photos tap → gallery → tap a photo (badge) → the photo drops into
-  // the composer (handled in IMessageChat) → gallery slides away as it sends.
-  const menuIn = ease(0, 0.12); // card grows out of the + button after the tap
-  // Row contents fade in only once the card has grown past a small nub, so the
-  // expansion reads as the card opening UP from the + icon (not text appearing
-  // in a tiny blob).
-  const cardContent = ease(0.05, 0.12);
-  const photosTapped = t >= 0.16 && t < 0.26; // Photos row pressed
-  const toGrid = ease(0.26, 0.38, Easing.out(Easing.cubic)); // 0 menu → 1 grid
-  const photoTap = ease(0.42, 0.5); // chosen tile presses + "1" badge pops
-  // Gallery slides away as the message sends near the end of the flow.
-  const closing = ease(0.82, 0.98, Easing.out(Easing.cubic));
+  // Phases — tight and FLOWING: each step starts right as the previous one ends,
+  // no dead-time holds between them, so the whole flow reads snappy.
+  // + menu opens → Photos tap → grid slides up → tap a photo (badge) → the photo
+  // drops into the composer (IMessageChat) → grid slides away as it sends.
+  // The icons + names are part of the card as it grows (no separate content fade).
+  // Bouncy "pop" open — an overshoot bezier so the card springs out of the +
+  // button like the real attachment menu (not a flat ease).
+  const menuIn = ease(0, 0.16, Easing.bezier(0.34, 1.56, 0.64, 1));
+  const toGrid = ease(0.32, 0.46, Easing.out(Easing.cubic)); // 0 menu → 1 grid
+  // Tap a tile — the "1" badge pops; the photo drops into the composer
+  // (IMessageChat) only AFTER this tap completes (~0.60).
+  const photoTap = ease(0.5, 0.6); // chosen tile presses + "1" badge pops
+  // Gallery slides away as the selected photo moves to the composer.
+  const closing = ease(0.66, 0.8, Easing.out(Easing.cubic));
+  // Card openness: 0 → 1 (pop open) → 0 (reverse-shrink back to the + circle as
+  // the grid takes over). Drives the card's scale, corner radius AND opacity so
+  // the CLOSE mirrors the open instead of just fading at full size.
   const menuVisible = menuIn * (1 - toGrid);
+  // Subtle expanding ripple for the Photos tap, instead of a hard rectangle.
+  const photosRipple = ease(0.2, 0.42);
 
   const tiles = [image, ...FILLER_GRADIENTS];
 
@@ -260,76 +266,92 @@ export function PhotoPicker({
             // sitting low in the keyboard area.
             bottom: "100%",
             marginBottom: 8,
-            width: 240,
+            width: 208,
             // Liquid-glass material: a DARK, see-through frosted fill (not a
             // milky/whitish panel) with only a faint rim — over the dimmed
             // backdrop it reads as transparent dark glass. The blur is
             // progressive enhancement for the live Player; the translucent fill
             // carries the look in the export.
-            background: dark ? "rgba(30,30,34,0.55)" : "rgba(250,250,252,0.7)",
+            background: dark ? "rgba(40,40,46,0.42)" : "rgba(250,250,252,0.55)",
             border: dark
-              ? "1px solid rgba(255,255,255,0.1)"
-              : "1px solid rgba(0,0,0,0.07)",
-            backdropFilter: "blur(32px) saturate(150%)",
-            WebkitBackdropFilter: "blur(32px) saturate(150%)",
-            // Grows from a small rounded nub (reads like the + button) into the
-            // card's rounded rectangle as it opens.
-            borderRadius: 16 + (1 - menuIn) * 90,
-            padding: "3px 0",
+              ? "1px solid rgba(255,255,255,0.16)"
+              : "1px solid rgba(0,0,0,0.06)",
+            backdropFilter: "blur(44px) saturate(185%)",
+            WebkitBackdropFilter: "blur(44px) saturate(185%)",
+            // Starts as a CIRCLE (like the + button), morphs to the rounded
+            // rectangle as it opens, and morphs BACK to a circle as it closes.
+            // Driven by `menuVisible` (openness) so close mirrors the open.
+            borderRadius: 26 + (1 - menuVisible) * 110,
+            padding: "5px 0",
             opacity: menuVisible,
-            // Scale UP from a point at the + button (bottom-left), so the card
-            // appears to spring open out of the icon rather than slide in.
-            transform: `scale(${0.16 + menuIn * 0.84})`,
+            // Scale from a point at the + button (bottom-left): pops open out of
+            // the icon, then shrinks back into it on close.
+            transform: `scale(${0.16 + menuVisible * 0.84})`,
             transformOrigin: "bottom left",
-            // Clip the rows to the rounded shape while it's still a small nub so
-            // no text spills outside the blob mid-expansion.
+            // Clip the rows to the rounded shape while it's still small so no
+            // content spills outside the card mid-expansion.
             overflow: "hidden",
             boxShadow: dark
-              ? "inset 0 1px 0.5px rgba(255,255,255,0.14), 0 18px 50px rgba(0,0,0,0.55)"
-              : "inset 0 1px 0.5px rgba(255,255,255,0.7), 0 18px 50px rgba(0,0,0,0.22)",
+              ? "inset 0 1px 0.5px rgba(255,255,255,0.22), 0 20px 56px rgba(0,0,0,0.55)"
+              : "inset 0 1px 0.5px rgba(255,255,255,0.8), 0 20px 56px rgba(0,0,0,0.22)",
           }}
         >
-          {/* Rows fade + settle in once the card has opened, counter-scaled so
-              the text isn't distorted by the card's own scale-up. */}
-          <div
-            style={{
-              opacity: cardContent,
-              transform: `translateY(${(1 - cardContent) * 8}px)`,
-            }}
-          >
-            {MENU_ITEMS.map((item, i) => (
-              <div
-                key={item.key}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "8px 13px",
-                  borderBottom:
-                    i < MENU_ITEMS.length - 1
-                      ? `0.5px solid ${rowDivider}`
-                      : "none",
-                  background:
-                    item.key === "photos" && photosTapped
-                      ? dark
-                        ? "rgba(255,255,255,0.12)"
-                        : "rgba(0,0,0,0.06)"
-                      : "transparent",
-                }}
+          {MENU_ITEMS.map((item) => (
+            <div
+              key={item.key}
+              style={{
+                position: "relative",
+                overflow: "hidden",
+                display: "flex",
+                alignItems: "center",
+                gap: 11,
+                padding: "7px 15px",
+                // No row dividers — clean spacing, like the real menu.
+              }}
+            >
+              {/* Tap feedback on Photos: a water-style RIPPLE radiating from the
+                  CENTER of the row — a soft circle that expands and fades. The
+                  radial-gradient soft edge means it never hardens into a box. */}
+              {item.key === "photos" &&
+                photosRipple > 0 &&
+                photosRipple < 1 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      left: "50%",
+                      top: "50%",
+                      width: photosRipple * 300,
+                      height: photosRipple * 300,
+                      transform: "translate(-50%, -50%)",
+                      borderRadius: 9999,
+                      background: dark
+                        ? "radial-gradient(circle, rgba(255,255,255,0.22), transparent 70%)"
+                        : "radial-gradient(circle, rgba(0,0,0,0.12), transparent 70%)",
+                      opacity: 1 - photosRipple,
+                      pointerEvents: "none",
+                      zIndex: 0,
+                    }}
+                  />
+                )}
+              <span
+                style={{ position: "relative", zIndex: 1, display: "flex" }}
               >
                 <MenuIcon kind={item.key} />
-                <span
-                  style={{
-                    fontSize: 16,
-                    color: labelColor,
-                    letterSpacing: "-0.01em",
-                  }}
-                >
-                  {item.label}
-                </span>
-              </div>
-            ))}
-          </div>
+              </span>
+              <span
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  fontSize: 15,
+                  fontWeight: 400,
+                  color: labelColor,
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {item.label}
+              </span>
+            </div>
+          ))}
         </div>
       )}
     </div>

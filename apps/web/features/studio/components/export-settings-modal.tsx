@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  ArrowDown01Icon,
   Cancel01Icon,
   CloudUploadIcon,
   ComputerIcon,
@@ -17,6 +18,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@workspace/ui/components/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@workspace/ui/components/dropdown-menu";
 import { Input } from "@workspace/ui/components/input";
 import { Label } from "@workspace/ui/components/label";
 import {
@@ -304,61 +312,62 @@ export function ExportSettingsModal({
           )}
         </div>
 
-        <div className="rounded-lg border border-dashed border-border bg-accent/20 p-3">
-          <p className="text-[12px] font-medium">Want a much faster render?</p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Download a self-contained renderer. Runs locally via{" "}
-            <code>node render.mjs</code>, uses all your CPU cores. Typically
-            5–10× faster than the in-browser export.
-          </p>
-          {zip.error && (
-            <p className="mt-2 text-[11px] text-red-500">{zip.error}</p>
+        <DialogFooter className="items-center">
+          {/* Zip packaging status — the download action lives in the Export
+              menu now, but keep its progress/error visible while it runs. */}
+          {(zip.busy || zip.error || zip.finishedAt) && (
+            <span
+              className={`mr-auto text-[11px] ${
+                zip.error ? "text-red-500" : "text-muted-foreground"
+              }`}
+            >
+              {zip.busy
+                ? `Packaging renderer… ${formatElapsed(zipElapsedMs)}`
+                : zip.error
+                  ? zip.error
+                  : `Renderer downloaded · ${formatElapsed(zipElapsedMs)}`}
+            </span>
           )}
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-3 w-full"
-            onClick={handleDownloadZip}
-            disabled={zip.busy}
-          >
-            <HugeiconsIcon icon={Download04Icon} size={16} />
-            {zip.busy
-              ? `Packaging… ${formatElapsed(zipElapsedMs)}`
-              : zip.finishedAt && !zip.error
-                ? `Downloaded · packaged in ${formatElapsed(zipElapsedMs)}`
-                : "Download fast renderer (zip)"}
-          </Button>
-        </div>
-
-        <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             <HugeiconsIcon icon={Cancel01Icon} size={16} />
             Cancel
           </Button>
-          {onStartServer && (
-            <Button
-              variant="secondary"
-              onClick={() => {
-                onStartServer(options);
-                onOpenChange(false);
-              }}
-              disabled={zip.busy}
-              title="Render in the cloud on AWS Lambda via real Chromium — pixel-identical to the preview (glass, blur, WebGL, fonts). Doesn't use your machine."
-            >
-              <HugeiconsIcon icon={CloudUploadIcon} size={16} />
-              Render on Cloud
-            </Button>
-          )}
-          <Button
-            onClick={() => {
-              onStart(options);
-              onOpenChange(false);
-            }}
-            disabled={zip.busy}
-          >
-            <HugeiconsIcon icon={ComputerIcon} size={16} />
-            Start render in browser
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button disabled={zip.busy}>
+                Export
+                <HugeiconsIcon icon={ArrowDown01Icon} size={16} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60">
+              <DropdownMenuItem
+                onClick={() => {
+                  onStart(options);
+                  onOpenChange(false);
+                }}
+              >
+                <HugeiconsIcon icon={ComputerIcon} size={16} />
+                Render in browser
+              </DropdownMenuItem>
+              {onStartServer && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    onStartServer(options);
+                    onOpenChange(false);
+                  }}
+                  title="Render in the cloud on AWS Lambda via real Chromium — pixel-identical to the preview (glass, blur, WebGL, fonts)."
+                >
+                  <HugeiconsIcon icon={CloudUploadIcon} size={16} />
+                  Render on Cloud
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDownloadZip} disabled={zip.busy}>
+                <HugeiconsIcon icon={Download04Icon} size={16} />
+                Download renderer (zip)
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </DialogFooter>
       </DialogContent>
     </Dialog>

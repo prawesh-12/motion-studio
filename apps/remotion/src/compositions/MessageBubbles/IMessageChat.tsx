@@ -154,25 +154,27 @@ export function IMessageChat({
   const glassOn = false;
   const dark = theme === "dark";
 
-  // Photo attachment in the composer. Tapping a photo in the gallery
-  // (PhotoPicker, ~t 0.46) drops it into the input pill: the pill grows and the
-  // photo RISES into it with a gentle bounce. On send (~t 0.86→1) the photo
-  // slides up and out, the pill collapses its height, and it fades — then the
-  // real photo bubble lands in the thread.
+  // Photo attachment in the composer. Only AFTER the gallery photo is tapped and
+  // its "1" badge has popped (PhotoPicker, photoTap ends ~t 0.72) does the photo
+  // drop into the input pill: the pill grows and the photo RISES into it with a
+  // gentle bounce. It then sits visibly in the composer before the send (~t
+  // 0.94→1) collapses the pill and the real photo bubble lands in the thread.
+  // These windows MUST start after PhotoPicker's photoTap so the photo never
+  // appears in the composer before it's been selected.
   const attachT = attachment?.t ?? 0;
   // Pill grows smoothly to fit the photo (clean expand, no height wobble).
-  const grow = interpolate(attachT, [0.46, 0.62], [0, 1], {
+  const grow = interpolate(attachT, [0.61, 0.71], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
   // Fade-in as it's added.
-  const fadeIn = interpolate(attachT, [0.46, 0.55], [0, 1], {
+  const fadeIn = interpolate(attachT, [0.61, 0.68], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
   });
   // Gentle settle as it appears in the input (stays CONTAINED in the pill).
-  const riseIn = interpolate(attachT, [0.46, 0.58, 0.65], [16, -3, 0], {
+  const riseIn = interpolate(attachT, [0.61, 0.7, 0.76], [16, -3, 0], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
@@ -180,12 +182,12 @@ export function IMessageChat({
   // Send: the input preview just fades + the pill collapses IN PLACE (the photo
   // never leaves the input). The actual "slide up" happens on the message
   // bubble in the thread, not here.
-  const sendT = interpolate(attachT, [0.86, 1], [0, 1], {
+  const sendT = interpolate(attachT, [0.86, 0.98], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.inOut(Easing.cubic),
   });
-  const showAttach = Boolean(attachment) && attachT >= 0.45 && sendT < 1;
+  const showAttach = Boolean(attachment) && attachT >= 0.6 && sendT < 1;
   // Preview size (design px) — a large, slightly-portrait photo card like the
   // real iMessage composer preview (not a tiny thumbnail).
   const THUMB_W = 120;
