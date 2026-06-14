@@ -120,10 +120,17 @@ export function BubbleEnter({
   enterFrames,
   from,
   children,
+  slideUp = false,
 }: {
   enterFrames?: number;
   from?: "me" | "them";
   children: React.ReactNode;
+  /**
+   * Slide the bubble UP into place (translateY) instead of the default
+   * scale-from-tail inflate. Used for sent PHOTO bubbles, which read better
+   * rising into the thread than ballooning from a corner.
+   */
+  slideUp?: boolean;
 }) {
   const frame = Math.max(0, enterFrames ?? 9999);
   // iMessage bubbles inflate from their tail corner (bottom-right for sent,
@@ -147,7 +154,9 @@ export function BubbleEnter({
       <div
         style={{
           maxWidth: "78%",
-          transform: `scale(${scale})`,
+          transform: slideUp
+            ? `translateY(${(1 - s) * 44}px)`
+            : `scale(${scale})`,
           transformOrigin: from === "me" ? "bottom right" : "bottom left",
           opacity,
         }}
@@ -534,8 +543,8 @@ export function ReadReceipt({
     right: 0,
     top: 0,
     whiteSpace: "nowrap",
-    fontSize: 10.5,
-    lineHeight: "12px",
+    fontSize: 9.5,
+    lineHeight: "11px",
     letterSpacing: "-0.01em",
     color,
     fontWeight: 400,
@@ -545,7 +554,7 @@ export function ReadReceipt({
     <div
       style={{
         position: "relative",
-        height: 12,
+        height: 11,
         minWidth: 50,
         marginTop: 3,
         marginRight: 2,
@@ -577,7 +586,7 @@ export function ReadReceipt({
         }}
       >
         <span style={{ fontWeight: 600 }}>Read</span>
-        {time ? <span style={{ fontWeight: 400 }}> {time}</span> : null}
+        {time ? <span style={{ fontWeight: 600 }}> {time}</span> : null}
       </div>
     </div>
   );

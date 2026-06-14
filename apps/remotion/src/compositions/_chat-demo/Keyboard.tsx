@@ -1,17 +1,5 @@
 "use client";
 
-/**
- * iOS keyboard — built at the exact geometry of the Figma export
- * (`iOS 27 Safari UI Keyboards/Keyboard/Default.svg`, viewBox 402×306, rows at
- * y=16/71/126/181, letter keys 33.55×45 rx 8.5). Rebuilt as addressable React
- * keys (instead of one opaque SVG) so each key can drive the iconic press
- * "pop" balloon and stay in sync with the composer's typed text.
- *
- * Only the Figma `<foreignObject>` backdrop-blur wrapper from the original SVG
- * doesn't survive the canvas export — every actual key shape/letter does, so
- * this renders identically in the studio Player and in `remotion render`.
- */
-
 import { useLayoutEffect, useRef, useState } from "react";
 import { useDesignFrame } from "../../use-design-frame";
 

@@ -18,7 +18,7 @@
  */
 
 import { cn } from "@workspace/ui/lib/utils";
-import { Img } from "remotion";
+import { Easing, Img, interpolate } from "remotion";
 import { useDesignFrame } from "../../use-design-frame";
 import {
   asset,
@@ -154,6 +154,48 @@ export function IMessageChat({
   const glassOn = false;
   const dark = theme === "dark";
 
+  // Photo attachment in the composer. Tapping a photo in the gallery
+  // (PhotoPicker, ~t 0.46) drops it into the input pill: the pill grows and the
+  // photo RISES into it with a gentle bounce. On send (~t 0.86→1) the photo
+  // slides up and out, the pill collapses its height, and it fades — then the
+  // real photo bubble lands in the thread.
+  const attachT = attachment?.t ?? 0;
+  // Pill grows smoothly to fit the photo (clean expand, no height wobble).
+  const grow = interpolate(attachT, [0.46, 0.62], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.cubic),
+  });
+  // Fade-in as it's added.
+  const fadeIn = interpolate(attachT, [0.46, 0.55], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
+  // Gentle settle as it appears in the input (stays CONTAINED in the pill).
+  const riseIn = interpolate(attachT, [0.46, 0.58, 0.65], [16, -3, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.out(Easing.cubic),
+  });
+  // Send: the input preview just fades + the pill collapses IN PLACE (the photo
+  // never leaves the input). The actual "slide up" happens on the message
+  // bubble in the thread, not here.
+  const sendT = interpolate(attachT, [0.86, 1], [0, 1], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+    easing: Easing.inOut(Easing.cubic),
+  });
+  const showAttach = Boolean(attachment) && attachT >= 0.45 && sendT < 1;
+  // Preview size (design px) — a large, slightly-portrait photo card like the
+  // real iMessage composer preview (not a tiny thumbnail).
+  const THUMB_W = 120;
+  const THUMB_H = 146;
+  // Outer box height drives the pill's grow/collapse; the photo inside stays
+  // clipped to it (contained).
+  const attachBoxH = THUMB_H * grow * (1 - sendT);
+  const photoY = riseIn;
+  const photoOpacity = fadeIn * (1 - sendT);
+
   // The chat sheet (when there's no wallpaper) follows the appearance.
   const sheetBg = dark ? "#000000" : "#ffffff";
   // Chrome text/icons go light over a wallpaper OR in dark mode.
@@ -226,6 +268,25 @@ export function IMessageChat({
       style={{ fontFamily: SF_PRO_STACK }}
     >
       <div className="relative flex h-full flex-col">
+        {/* Subtle top darkness — a soft top-down gradient sitting ABOVE the
+            messages but BELOW the header chrome (z-10 < header z-20), so the
+            thread fades under the status bar + avatar/icons like real iMessage.
+            Invisible over the plain dark sheet; it only darkens bubbles that
+            scroll up beneath the header. */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 150,
+            background:
+              "linear-gradient(to bottom, rgba(0,0,0,0.55), rgba(0,0,0,0))",
+            zIndex: 10,
+            pointerEvents: "none",
+          }}
+        />
         {/* Header — back chevron + avatar/name chip + FaceTime, glass chrome.
             Absolutely overlaid so the thread scrolls UNDERNEATH it (like real
             iMessage) instead of being hard-cut by an opaque bar. */}
@@ -502,6 +563,9 @@ export function IMessageChat({
                         key={m.id ?? `${gi}-${i}`}
                         enterFrames={m.enterFrames}
                         from={group.from}
+                        // Sent photos slide up into the thread instead of
+                        // ballooning from the tail corner.
+                        slideUp={Boolean(m.image) && !m.typing}
                       >
                         {m.image ? (
                           // Photos can't morph from dots like text — keep the
@@ -608,10 +672,12 @@ export function IMessageChat({
               style={{
                 display: "flex",
                 flex: 1,
-                // Bottom-align so the send button stays at the bottom as the
-                // field grows up with a wrapping multi-line message.
-                alignItems: "flex-end",
-                justifyContent: "space-between",
+                // Column so a photo attachment can stack above the input row and
+                // grow the pill; the input row itself stays bottom-aligned.
+                flexDirection: "column",
+                alignItems: "stretch",
+                justifyContent: "flex-end",
+                gap: showAttach ? 7 : 0,
                 padding: "5px 8px 5px 16px",
                 minHeight: 36,
               }}
@@ -642,58 +708,130 @@ export function IMessageChat({
                       }
               }
             >
-              <div
-                className="min-w-0 flex-1"
-                style={{
-                  fontSize: 15,
-                  letterSpacing: "-0.01em",
-                  lineHeight: "20px",
-                  textAlign: "left",
-                  // Wrap long messages onto new lines (grows the field) instead
-                  // of clipping/scrolling in one line.
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  // Nudge so single-line text sits centered against the
-                  // bottom-aligned send button.
-                  paddingBottom: 3,
-                }}
-              >
-                {composerText ? (
-                  <span style={{ color: lightUI ? "#ffffff" : "#000" }}>
-                    {composerText}
-                    <span
-                      aria-hidden
-                      style={{
-                        display: "inline-block",
-                        width: 1.5,
-                        height: 17,
-                        marginLeft: 1,
-                        marginBottom: -3,
-                        background: "#0a84ff",
-                        borderRadius: 1,
-                      }}
-                    />
-                  </span>
-                ) : (
-                  <span
+              {/* Photo attachment preview — the pill grows (attachBoxH) and the
+                  photo RISES into it (bottom-anchored, clipped) with a gentle
+                  bounce. On send it slides UP out of the input, the box
+                  collapses, and it fades. */}
+              {showAttach && attachment ? (
+                <div
+                  style={{
+                    position: "relative",
+                    alignSelf: "flex-start",
+                    width: THUMB_W,
+                    height: attachBoxH,
+                    marginTop: 2,
+                    // Contained: the photo stays inside the input pill (clipped),
+                    // it never escapes over the messages. The slide-up belongs to
+                    // the sent bubble, not this preview.
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
                     style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      verticalAlign: "middle",
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      width: THUMB_W,
+                      height: THUMB_H,
+                      transform: `translateY(${photoY}px)`,
+                      opacity: photoOpacity,
                     }}
                   >
-                    <span
-                      aria-hidden
+                    <div
                       style={{
-                        display: "inline-block",
-                        width: 1.5,
-                        height: 17,
-                        marginRight: 4,
-                        background: "#0a84ff",
-                        borderRadius: 1,
-                        opacity: caretOpacity,
+                        width: "100%",
+                        height: "100%",
+                        borderRadius: 16,
+                        overflow: "hidden",
+                        boxShadow: "0 2px 12px rgba(0,0,0,0.45)",
                       }}
-                    />
+                    >
+                      <Img
+                        src={asset(attachment.image) ?? ""}
+                        crossOrigin="anonymous"
+                        alt=""
+                        style={{
+                          width: "100%",
+                          height: "100%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    </div>
+                    {/* ✕ remove badge — inset in the photo's top-right corner */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: 7,
+                        right: 7,
+                        width: 22,
+                        height: 22,
+                        borderRadius: 9999,
+                        background: "rgba(0,0,0,0.45)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 10 10"
+                        aria-hidden
+                      >
+                        <path
+                          d="M2 2l6 6M8 2l-6 6"
+                          stroke="#fff"
+                          strokeWidth="1.8"
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+              <div
+                style={{
+                  display: "flex",
+                  width: "100%",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  className="min-w-0 flex-1"
+                  style={{
+                    fontSize: 15,
+                    letterSpacing: "-0.01em",
+                    lineHeight: "20px",
+                    textAlign: "left",
+                    // Wrap long messages onto new lines (grows the field) instead
+                    // of clipping/scrolling in one line.
+                    whiteSpace: "pre-wrap",
+                    wordBreak: "break-word",
+                    // Nudge so single-line text sits centered against the
+                    // bottom-aligned send button.
+                    paddingBottom: 3,
+                  }}
+                >
+                  {composerText ? (
+                    <span style={{ color: lightUI ? "#ffffff" : "#000" }}>
+                      {composerText}
+                      <span
+                        aria-hidden
+                        style={{
+                          display: "inline-block",
+                          width: 1.5,
+                          height: 17,
+                          marginLeft: 1,
+                          marginBottom: -3,
+                          background: "#0a84ff",
+                          borderRadius: 1,
+                        }}
+                      />
+                    </span>
+                  ) : showAttach ? (
+                    // With a photo attached, the placeholder becomes the iMessage
+                    // "Add comment or Send" prompt (no blinking caret).
                     <span
                       style={{
                         color: lightUI
@@ -701,50 +839,80 @@ export function IMessageChat({
                           : "rgba(60,60,67,0.38)",
                       }}
                     >
-                      Message
+                      Add comment or Send
                     </span>
-                  </span>
+                  ) : (
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        verticalAlign: "middle",
+                      }}
+                    >
+                      <span
+                        aria-hidden
+                        style={{
+                          display: "inline-block",
+                          width: 1.5,
+                          height: 17,
+                          marginRight: 4,
+                          background: "#0a84ff",
+                          borderRadius: 1,
+                          opacity: caretOpacity,
+                        }}
+                      />
+                      <span
+                        style={{
+                          color: lightUI
+                            ? "rgba(235,235,245,0.32)"
+                            : "rgba(60,60,67,0.38)",
+                        }}
+                      >
+                        Message
+                      </span>
+                    </span>
+                  )}
+                </div>
+                {composerText || showAttach ? (
+                  <button
+                    type="button"
+                    aria-label="Send"
+                    className="ml-2 flex shrink-0 cursor-pointer items-center justify-center rounded-full"
+                    style={{ width: 26, height: 26, background: "#0a84ff" }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden>
+                      <path
+                        d="M8 13V3M8 3 3.5 7.5M8 3l4.5 4.5"
+                        stroke="#fff"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        fill="none"
+                      />
+                    </svg>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    aria-label="Audio"
+                    className="ml-2 flex cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-black/[0.06]"
+                    style={{
+                      color: lightUI
+                        ? "rgba(255,255,255,0.85)"
+                        : "rgba(60,60,67,0.7)",
+                      width: 22,
+                      height: 22,
+                    }}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
+                      <path
+                        d="M8 1.5a2 2 0 0 0-2 2v4a2 2 0 0 0 4 0v-4a2 2 0 0 0-2-2Zm4 6a4 4 0 0 1-8 0H3a5 5 0 0 0 4.5 5V14h1v-1.5A5 5 0 0 0 13 7.5h-1Z"
+                        fill="currentColor"
+                      />
+                    </svg>
+                  </button>
                 )}
               </div>
-              {composerText ? (
-                <button
-                  type="button"
-                  aria-label="Send"
-                  className="ml-2 flex shrink-0 cursor-pointer items-center justify-center rounded-full"
-                  style={{ width: 26, height: 26, background: "#0a84ff" }}
-                >
-                  <svg width="15" height="15" viewBox="0 0 16 16" aria-hidden>
-                    <path
-                      d="M8 13V3M8 3 3.5 7.5M8 3l4.5 4.5"
-                      stroke="#fff"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      fill="none"
-                    />
-                  </svg>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  aria-label="Audio"
-                  className="ml-2 flex cursor-pointer items-center justify-center rounded-full transition-colors hover:bg-black/[0.06]"
-                  style={{
-                    color: lightUI
-                      ? "rgba(255,255,255,0.85)"
-                      : "rgba(60,60,67,0.7)",
-                    width: 22,
-                    height: 22,
-                  }}
-                >
-                  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden>
-                    <path
-                      d="M8 1.5a2 2 0 0 0-2 2v4a2 2 0 0 0 4 0v-4a2 2 0 0 0-2-2Zm4 6a4 4 0 0 1-8 0H3a5 5 0 0 0 4.5 5V14h1v-1.5A5 5 0 0 0 13 7.5h-1Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </button>
-              )}
             </CssLiquidGlass>
           </div>
         )}

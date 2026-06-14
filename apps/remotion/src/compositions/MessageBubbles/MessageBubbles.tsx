@@ -14,6 +14,7 @@ import { useDesignFrame } from "../../use-design-frame";
 import type { ChatMessageItem } from "../_chat-demo/ChatDemo";
 import { ChatFill } from "../_chat-demo/ChatFill";
 import { KEYBOARD_BG } from "../_chat-demo/Keyboard";
+import { useSFProDisplay } from "../_chat-demo/sf-pro";
 import { IMessageChat } from "./IMessageChat";
 
 /** iMessage send/receive sound — played as each bubble lands. */
@@ -224,6 +225,9 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
   theme = "dark",
   showKeyboard = false,
 }) => {
+  // Load Apple's SF Pro Display so the chat renders in the real iMessage font
+  // in headless exports too (blocks the render until decoded; never fails it).
+  useSFProDisplay();
   const frame = useDesignFrame();
   const { fps } = useVideoConfig();
 
