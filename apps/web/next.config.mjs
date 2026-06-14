@@ -11,6 +11,10 @@ const nextConfig = {
     // Turbopack try (and fail) to resolve every platform's binary statically,
     // so it must be externalized and loaded from node_modules at runtime.
     "@remotion/renderer",
+    // @remotion/lambda ships native/AWS deps; the /api/render/lambda routes
+    // only use the lightweight `@remotion/lambda/client` entry, but externalize
+    // the package so Turbopack doesn't try to bundle its native side.
+    "@remotion/lambda",
     "@remotion/tailwind-v4",
     "@tailwindcss/webpack",
     "@tailwindcss/node",
