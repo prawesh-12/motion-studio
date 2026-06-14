@@ -310,10 +310,10 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
           <Audio src={sfxSrc} volume={0.8} />
         </Sequence>
       ))}
-      {/* Keyboard "tick" on every typed character — subtle, under the swoosh. */}
+      {/* Keyboard "thwack" on every typed character — punchy, front and center. */}
       {keyTapCues.map((from, i) => (
         <Sequence key={`key-${i}`} from={from} name="key-tap">
-          <Audio src={keySfxSrc} volume={0.35} />
+          <Audio src={keySfxSrc} volume={0.85} />
         </Sequence>
       ))}
       <ChatFill
