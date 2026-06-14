@@ -17,9 +17,7 @@
 
 import { Easing, Img, interpolate } from "remotion";
 import { asset } from "../_chat-demo/ChatDemo";
-
-const SF_STACK =
-  '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif';
+import { SF_PRO_STACK } from "../_chat-demo/sf-pro";
 
 const MENU_ITEMS = [
   { key: "halo", label: "Halo AI" },
@@ -111,7 +109,6 @@ export function PhotoPicker({
   theme?: "light" | "dark";
 }) {
   const dark = theme !== "light";
-  const panelBg = dark ? "#1c1c1e" : "#d1d4db";
   const labelColor = dark ? "#ffffff" : "#000000";
   const rowDivider = dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.08)";
 
@@ -123,23 +120,20 @@ export function PhotoPicker({
     });
 
   // Phases — snappy, with minimal dead time between steps so it doesn't drag.
-  // Each action (card up, Photos tap, grid, photo tap, fly) follows quickly.
+  // + menu → Photos tap → gallery → tap a photo (badge) → the photo drops into
+  // the composer (handled in IMessageChat) → gallery slides away as it sends.
   const menuIn = ease(0, 0.08); // card pops up after the + tap
   const photosTapped = t >= 0.16 && t < 0.26; // Photos row pressed
   const toGrid = ease(0.26, 0.38, Easing.out(Easing.cubic)); // 0 menu → 1 grid
-  const photoTap = ease(0.5, 0.6); // the chosen tile presses
-  // Grid slides away as the send finishes.
-  const closing = ease(0.72, 1, Easing.out(Easing.cubic));
-  // The chosen photo flies to the thread at a CONSTANT speed (no decel drift),
-  // staying opaque almost the whole way so it reads as a direct send rather than
-  // a slow dissolve in mid-air.
-  const fly = ease(0.74, 1, Easing.linear);
+  const photoTap = ease(0.42, 0.5); // chosen tile presses + "1" badge pops
+  // Gallery slides away as the message sends near the end of the flow.
+  const closing = ease(0.82, 0.98, Easing.out(Easing.cubic));
   const menuVisible = menuIn * (1 - toGrid);
 
   const tiles = [image, ...FILLER_GRADIENTS];
 
   return (
-    <div style={{ position: "absolute", inset: 0, fontFamily: SF_STACK }}>
+    <div style={{ position: "absolute", inset: 0, fontFamily: SF_PRO_STACK }}>
       {/* Dim the whole screen behind the menu (messages + keyboard), like iOS
           when you tap +. It extends up into the message area (the keyboard slot
           allows the overflow) and fades out at the top so there's no hard edge —
@@ -167,27 +161,37 @@ export function PhotoPicker({
           position: "absolute",
           inset: 0,
           overflow: "hidden",
-          background: panelBg,
-          opacity: toGrid,
-          // Slide the grid cleanly down on close (instead of fading and exposing
-          // the keyboard mid-transition).
-          transform: `translateY(${closing * 100}%)`,
-          padding: 7,
+          // Solid black behind the tiles so the thin gaps read as black (like the
+          // real picker) and the keyboard underneath never bleeds through.
+          background: "#000",
+          // Slide UP from below to appear (when Photos is tapped) and slide back
+          // DOWN to close on send — no fade. (1 - toGrid) starts it fully below;
+          // `closing` drops it again at the end.
+          transform: `translateY(${(1 - toGrid + closing) * 100}%)`,
+          padding: 0,
           display: "grid",
-          gridTemplateColumns: "repeat(2, 1fr)",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gridAutoRows: "1fr",
-          gap: 4,
+          // Thin iMessage-style gap between tiles instead of a wide gutter.
+          gap: 2,
         }}
       >
-        {tiles.slice(0, 4).map((tile, i) => {
+        {tiles.slice(0, 6).map((tile, i) => {
           const isTarget = i === 0;
           const tapScale = isTarget ? 1 - photoTap * 0.05 : 1;
+          // Round only the OUTER corners of the 3×2 block (top-left, top-right,
+          // bottom-left, bottom-right tiles) so the whole grid reads as a single
+          // rounded rectangle with square inner gaps — like the iMessage picker.
+          const GRID_R = 22;
           return (
             <div
               key={i}
               style={{
                 position: "relative",
-                borderRadius: 6,
+                borderTopLeftRadius: i === 0 ? GRID_R : 0,
+                borderTopRightRadius: i === 2 ? GRID_R : 0,
+                borderBottomLeftRadius: i === 3 ? GRID_R : 0,
+                borderBottomRightRadius: i === 5 ? GRID_R : 0,
                 overflow: "hidden",
                 // The chosen tile empties out as its photo flies to the thread.
                 background: isTarget ? "#000" : tile,
@@ -196,7 +200,7 @@ export function PhotoPicker({
                   isTarget && photoTap > 0 ? "0 0 0 3px #0a84ff inset" : "none",
               }}
             >
-              {isTarget && fly < 0.02 && (
+              {isTarget && (
                 <Img
                   src={asset(tile) ?? ""}
                   crossOrigin="anonymous"
@@ -204,32 +208,30 @@ export function PhotoPicker({
                   style={{ width: "100%", height: "100%", objectFit: "cover" }}
                 />
               )}
+              {/* Selection badge — a numbered "1" pill like real iMessage, pops
+                  on once the photo is tapped. */}
               {isTarget && photoTap > 0 && (
                 <div
                   style={{
                     position: "absolute",
                     top: 6,
                     right: 6,
-                    width: 19,
-                    height: 19,
+                    width: 20,
+                    height: 20,
                     borderRadius: 9999,
                     background: "#0a84ff",
+                    border: "1.5px solid #fff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    opacity: 1 - closing,
+                    color: "#fff",
+                    fontSize: 12,
+                    fontWeight: 600,
+                    lineHeight: 1,
+                    transform: `scale(${0.6 + 0.4 * photoTap})`,
                   }}
                 >
-                  <svg width="11" height="11" viewBox="0 0 12 12" aria-hidden>
-                    <path
-                      d="M2.5 6.5l2.2 2.2L9.5 3.8"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="1.8"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
+                  1
                 </div>
               )}
             </div>
@@ -237,40 +239,9 @@ export function PhotoPicker({
         })}
       </div>
 
-      {/* The chosen photo flying from its grid tile up toward the thread, so the
-          send reads as "grid → message" like iMessage. It starts on the tile and
-          lifts up-and-right, shrinking toward bubble size, then the real bubble
-          (which lands as the flow ends) takes over. */}
-      {fly > 0.001 && (
-        <div
-          style={{
-            position: "absolute",
-            // Top-left tile position (grid padding 7).
-            left: 7,
-            top: 7,
-            width: "calc((100% - 18px) / 2)",
-            aspectRatio: "1 / 1",
-            borderRadius: 6 + fly * 10,
-            overflow: "hidden",
-            // Head up-and-right toward where the outgoing photo bubble lands
-            // (just above the composer), shrinking toward bubble size. Stay
-            // opaque almost all the way, then a quick fade as the real bubble
-            // takes over at the very end.
-            transform: `translate(${fly * 205}px, ${fly * -105}px) scale(${1 - fly * 0.42})`,
-            transformOrigin: "center",
-            opacity: fly < 0.85 ? 1 : Math.max(0, 1 - (fly - 0.85) / 0.15),
-            boxShadow: "0 18px 44px rgba(0,0,0,0.5)",
-            zIndex: 5,
-          }}
-        >
-          <Img
-            src={asset(image) ?? ""}
-            crossOrigin="anonymous"
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover" }}
-          />
-        </div>
-      )}
+      {/* The selected photo now drops into the COMPOSER (handled in
+          IMessageChat) and sends from there as a normal message — no fly from
+          the grid, matching the real iMessage flow. */}
 
       {/* Attachment menu card — grows UP out of the + button (its bottom sits at
           the composer, above the keyboard slot) and floats over the messages

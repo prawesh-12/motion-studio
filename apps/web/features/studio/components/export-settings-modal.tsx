@@ -31,6 +31,15 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onStart: (options: ExportOptions) => void;
+  /**
+   * Optional WYSIWYG render path — runs through real headless Chromium on AWS
+   * Lambda (`/api/render/lambda`), so `backdrop-filter` glass / WebGL / bundled
+   * fonts match the Player exactly without tying up the user's machine. When
+   * provided, an "exact" button is shown alongside the in-browser one. Receives
+   * the same export options (resolution scale / fps / bitrate) as the in-browser
+   * render.
+   */
+  onStartServer?: (options: ExportOptions) => void;
   initialOptions?: ExportOptions;
   project: Project;
   projectWidth: number;
@@ -111,6 +120,7 @@ export function ExportSettingsModal({
   open,
   onOpenChange,
   onStart,
+  onStartServer,
   initialOptions,
   project,
   projectWidth,
@@ -316,6 +326,19 @@ export function ExportSettingsModal({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
+          {onStartServer && (
+            <Button
+              variant="secondary"
+              onClick={() => {
+                onStartServer(options);
+                onOpenChange(false);
+              }}
+              disabled={zip.busy}
+              title="Render in the cloud on AWS Lambda via real Chromium — pixel-identical to the preview (glass, blur, WebGL, fonts). Doesn't use your machine."
+            >
+              Render exact (Chromium)
+            </Button>
+          )}
           <Button
             onClick={() => {
               onStart(options);
