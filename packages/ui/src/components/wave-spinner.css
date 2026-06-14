@@ -44,12 +44,31 @@
   }
 }
 
+.wave-spinner-dot--pulse {
+  animation: waveSpinnerPulse var(--wave-spinner-duration) ease-out infinite;
+  animation-delay: var(--wave-spinner-delay);
+}
+
+.wave-spinner-dot--fade {
+  animation: waveSpinnerFade var(--wave-spinner-duration) ease-in-out infinite;
+  animation-delay: var(--wave-spinner-delay);
+}
+
+.wave-spinner-dot--bounce {
+  animation: waveSpinnerBounce var(--wave-spinner-duration) ease-in-out infinite;
+  animation-delay: var(--wave-spinner-delay);
+}
+
+.wave-spinner-dot--grow {
+  animation: waveSpinnerGrow var(--wave-spinner-duration) ease-in-out infinite;
+  animation-delay: var(--wave-spinner-delay);
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-  [role="status"] div {
-    animation-duration: 0s !important;
-    animation-delay: 0s !important;
-    opacity: 0.7 !important;
-    transform: scale(1) !important;
+  [role="status"] .wave-spinner-dot {
+    animation: none;
+    opacity: 0.7;
+    transform: scale(1);
   }
 }

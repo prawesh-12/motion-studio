@@ -81,6 +81,19 @@ const COLOR_PRESETS = {
 
 type ColorPreset = keyof typeof COLOR_PRESETS;
 
+const getWaveSpinnerDotClassName = (animation: DelayPattern) => {
+  switch (animation) {
+    case "ripple":
+      return "wave-spinner-dot wave-spinner-dot--fade";
+    case "vertical":
+      return "wave-spinner-dot wave-spinner-dot--bounce";
+    case "spiral":
+      return "wave-spinner-dot wave-spinner-dot--grow";
+    default:
+      return "wave-spinner-dot wave-spinner-dot--pulse";
+  }
+};
+
 // CVA variants for the container
 const waveSpinnerVariants = cva("flex items-center justify-center w-fit", {
   variants: {
@@ -172,6 +185,7 @@ const SpecialLayoutDots: FC<{
 
   const borderRadius =
     dotShape === "circle" ? "50%" : dotShape === "rounded" ? "30%" : "0";
+  const dotClassName = getWaveSpinnerDotClassName(animation);
 
   if (config.specialLayout === "diamond") {
     // Diamond pattern: center + 4 corners arranged as diamond
@@ -195,14 +209,18 @@ const SpecialLayoutDots: FC<{
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed position list
             key={idx}
-            className="absolute transition-all"
+            className={cn("absolute transition-all", dotClassName)}
             style={{
               width: "var(--dot-size)",
               height: "var(--dot-size)",
               backgroundColor: color,
               borderRadius,
-              animation: `waveSpinnerPulse ${duration}s ease-out infinite`,
-              animationDelay: `${getDelayForIndex(idx, animation, config)}s`,
+              ["--wave-spinner-duration" as string]: `${duration}s`,
+              ["--wave-spinner-delay" as string]: `${getDelayForIndex(
+                idx,
+                animation,
+                config,
+              )}s`,
               ...pos,
             }}
           />
@@ -233,14 +251,18 @@ const SpecialLayoutDots: FC<{
           <div
             // biome-ignore lint/suspicious/noArrayIndexKey: fixed position list
             key={idx}
-            className="absolute transition-all"
+            className={cn("absolute transition-all", dotClassName)}
             style={{
               width: "var(--dot-size)",
               height: "var(--dot-size)",
               backgroundColor: color,
               borderRadius,
-              animation: `waveSpinnerPulse ${duration}s ease-out infinite`,
-              animationDelay: `${getDelayForIndex(idx, animation, config)}s`,
+              ["--wave-spinner-duration" as string]: `${duration}s`,
+              ["--wave-spinner-delay" as string]: `${getDelayForIndex(
+                idx,
+                animation,
+                config,
+              )}s`,
               ...pos,
             }}
           />
@@ -270,14 +292,14 @@ const SpecialLayoutDots: FC<{
             <div
               // biome-ignore lint/suspicious/noArrayIndexKey: fixed circle dot count
               key={idx}
-              className="absolute transition-all"
+              className={cn("absolute transition-all", dotClassName)}
               style={{
                 width: "var(--dot-size)",
                 height: "var(--dot-size)",
                 backgroundColor: color,
                 borderRadius: "50%", // Always circular for circle pattern
-                animation: `waveSpinnerPulse ${duration}s ease-out infinite`,
-                animationDelay: `${(idx / config.count) * duration}s`,
+                ["--wave-spinner-duration" as string]: `${duration}s`,
+                ["--wave-spinner-delay" as string]: `${(idx / config.count) * duration}s`,
                 top: "50%",
                 left: "50%",
                 transform: `translate(calc(-50% + ${x} * ${radius}), calc(-50% + ${y} * ${radius}))`,
@@ -309,6 +331,7 @@ export const WaveSpinner: FC<WaveSpinnerProps> = ({
   const gridConfig = GRID_CONFIGS[pattern];
   const borderRadius =
     dotShape === "circle" ? "50%" : dotShape === "rounded" ? "30%" : "0";
+  const dotClassName = getWaveSpinnerDotClassName(animation);
 
   // Check if this is a special layout
   const isSpecialLayout = "specialLayout" in gridConfig;
@@ -340,14 +363,18 @@ export const WaveSpinner: FC<WaveSpinnerProps> = ({
               <div
                 // biome-ignore lint/suspicious/noArrayIndexKey: fixed grid count
                 key={idx}
-                className="transition-all"
+                className={cn("transition-all", dotClassName)}
                 style={{
                   width: "var(--dot-size)",
                   height: "var(--dot-size)",
                   backgroundColor: resolvedColor,
                   borderRadius,
-                  animation: `waveSpinnerPulse ${duration}s ease-out infinite`,
-                  animationDelay: `${getDelayForIndex(idx, animation, gridConfig)}s`,
+                  ["--wave-spinner-duration" as string]: `${duration}s`,
+                  ["--wave-spinner-delay" as string]: `${getDelayForIndex(
+                    idx,
+                    animation,
+                    gridConfig,
+                  )}s`,
                 }}
               />
             ))}

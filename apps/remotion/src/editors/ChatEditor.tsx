@@ -389,7 +389,6 @@ function ImageBubbleEditor({
         isRight ? "border-[#007AFF]/30" : "border-border",
       )}
     >
-      {/* biome-ignore lint/a11y/useAltText: editor preview only */}
       {/* eslint-disable-next-line @remotion/warn-native-media-tag */}
       <img
         src={src}

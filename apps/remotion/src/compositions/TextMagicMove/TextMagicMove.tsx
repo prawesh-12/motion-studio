@@ -120,7 +120,7 @@ function matchWords(a: string[], b: string[]) {
   const bMatched = b.map(() => false);
   a.forEach((w, i) => {
     const q = bByWord.get(w.toLowerCase());
-    if (q && q.length) {
+    if (q?.length) {
       const j = q.shift() as number;
       aToB[i] = j;
       bMatched[j] = true;

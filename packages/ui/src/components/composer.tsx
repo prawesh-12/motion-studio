@@ -72,7 +72,6 @@ export const Composer: FC<ComposerProps> = ({
   );
 
   // Auto-resize textarea to fit content, capped at `maxRows`.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: currentValue triggers resize when content changes
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;

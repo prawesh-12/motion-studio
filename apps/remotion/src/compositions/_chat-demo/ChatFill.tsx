@@ -159,7 +159,6 @@ export function ChatFill({
   scale = 1.6,
   chromeColor,
   bottomChromeColor,
-  orientation = "landscape",
   designWidth,
   children,
 }: Props) {
