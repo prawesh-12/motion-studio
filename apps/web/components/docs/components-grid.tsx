@@ -182,6 +182,7 @@ function ComponentCard({ info }: { info: AnyCompositionInfo }) {
             )}
             initiallyMuted
             controls={false}
+            numberOfSharedAudioTags={12}
             acknowledgeRemotionLicense
           />
         ) : (

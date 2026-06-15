@@ -472,6 +472,7 @@ export function ShortsBuilder() {
                   }}
                   controls
                   loop
+                  numberOfSharedAudioTags={12}
                   acknowledgeRemotionLicense
                 />
               </div>

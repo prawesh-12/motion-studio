@@ -53,6 +53,7 @@ export function PreviewStage({
           compositionHeight={project.height}
           style={{ width: "100%", height: "100%" }}
           loop
+          numberOfSharedAudioTags={12}
           acknowledgeRemotionLicense
         />
       </div>

@@ -63,6 +63,7 @@ export function FeaturedShowcase({ items }: Props) {
                 autoPlay
                 loop
                 initiallyMuted
+                numberOfSharedAudioTags={12}
                 acknowledgeRemotionLicense
               />
             )}
@@ -116,6 +117,7 @@ export function FeaturedShowcase({ items }: Props) {
                     autoPlay={isActive}
                     loop
                     initiallyMuted
+                    numberOfSharedAudioTags={12}
                     acknowledgeRemotionLicense
                   />
                 )}

@@ -32,6 +32,7 @@ export function CompositionPreviewCard({ info }: { info: AnyCompositionInfo }) {
           autoPlay
           loop
           initiallyMuted
+          numberOfSharedAudioTags={12}
           acknowledgeRemotionLicense
         />
       </div>

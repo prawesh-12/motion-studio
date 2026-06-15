@@ -307,6 +307,7 @@ export function DragDropDemo() {
             compositionHeight={COMP_H}
             style={{ width: "100%", height: "100%" }}
             loop
+            numberOfSharedAudioTags={12}
             acknowledgeRemotionLicense
           />
 

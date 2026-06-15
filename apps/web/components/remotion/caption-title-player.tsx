@@ -167,6 +167,7 @@ export function CaptionTitlePlayer() {
           // starts paused so the user explicitly hits play.
           autoPlay={!result}
           initiallyMuted={!result}
+          numberOfSharedAudioTags={12}
           acknowledgeRemotionLicense
         />
       </div>

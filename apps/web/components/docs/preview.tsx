@@ -93,6 +93,7 @@ export function Preview({
           controls
           autoPlay
           initiallyMuted
+          numberOfSharedAudioTags={12}
           acknowledgeRemotionLicense
         />
       </div>

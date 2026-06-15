@@ -48,6 +48,7 @@ export function FeaturedTweet() {
           autoPlay
           loop
           initiallyMuted
+          numberOfSharedAudioTags={12}
           acknowledgeRemotionLicense
         />
       </div>

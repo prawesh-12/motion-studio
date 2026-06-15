@@ -183,6 +183,7 @@ export function EditorView({
             loop
             autoPlay
             initiallyMuted
+            numberOfSharedAudioTags={12}
             acknowledgeRemotionLicense
           />
         </div>

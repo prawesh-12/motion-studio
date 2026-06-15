@@ -57,6 +57,7 @@ export function FeaturedComponents({ items }: Props) {
                     autoPlay
                     loop
                     initiallyMuted
+                    numberOfSharedAudioTags={12}
                     acknowledgeRemotionLicense
                   />
                 )}
