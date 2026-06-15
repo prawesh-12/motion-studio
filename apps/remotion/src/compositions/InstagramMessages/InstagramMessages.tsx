@@ -1,5 +1,4 @@
 "use client";
-import { Audio } from "@remotion/media";
 import {
   AbsoluteFill,
   Img,
@@ -11,6 +10,7 @@ import {
 import type { ChatMessage } from "../../editors/types";
 import { proxyExternalImg } from "../../proxy-image";
 import { useSafeArea } from "../../safe-area";
+import { SmartAudio } from "../../smart-audio";
 import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
 
@@ -139,7 +139,7 @@ export const InstagramMessages: React.FC<InstagramMessagesProps> = ({
 
   const audio = messages.map((msg, i) => (
     <Sequence key={i} from={msg.delay + msg.typingFrames}>
-      <Audio
+      <SmartAudio
         src={staticFile("sounds/message_bubble/message.mp3")}
         volume={0.85}
       />

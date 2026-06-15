@@ -1,4 +1,3 @@
-import { Audio } from "@remotion/media";
 import { useEffect, useMemo, useState } from "react";
 import {
   continueRender,
@@ -10,6 +9,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import type { ChatMessage } from "../../editors/types";
+import { SmartAudio } from "../../smart-audio";
 import { DESIGN_FPS, useDesignFrame } from "../../use-design-frame";
 import type { ChatMessageItem } from "../_chat-demo/ChatDemo";
 import { ChatFill } from "../_chat-demo/ChatFill";
@@ -80,7 +80,7 @@ const CachedSfxSequence: React.FC<{
   const src = useCachedSfx(path);
   return (
     <Sequence from={from} name="custom-sfx" layout="none">
-      <Audio src={src} volume={volume} />
+      <SmartAudio src={src} volume={volume} />
     </Sequence>
   );
 };
@@ -361,7 +361,7 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
           from={toRenderFrame(from)}
           name="message-sfx"
         >
-          <Audio src={sfxSrc} volume={0.8} />
+          <SmartAudio src={sfxSrc} volume={0.8} />
         </Sequence>
       ))}
       {/* Per-bubble custom sound effects, layered on top of the swoosh. */}
@@ -376,7 +376,7 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
       {/* Keyboard "thwack" on every typed character — punchy, front and center. */}
       {keyTapCues.map((from, i) => (
         <Sequence key={`key-${i}`} from={toRenderFrame(from)} name="key-tap">
-          <Audio src={keySfxSrc} volume={0.85} />
+          <SmartAudio src={keySfxSrc} volume={0.85} />
         </Sequence>
       ))}
       <ChatFill

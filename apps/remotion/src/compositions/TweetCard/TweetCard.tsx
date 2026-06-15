@@ -8,7 +8,6 @@ import {
   Share08Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Audio } from "@remotion/media";
 import {
   AbsoluteFill,
   Img,
@@ -17,6 +16,7 @@ import {
   useVideoConfig,
 } from "remotion";
 import { proxyExternalImg } from "../../proxy-image";
+import { SmartAudio } from "../../smart-audio";
 import { snap } from "../../snap";
 import { useDesignFrame } from "../../use-design-frame";
 
@@ -97,7 +97,7 @@ export const TweetCard: React.FC<TweetCardProps> = ({
         padding: 60,
       }}
     >
-      <Audio
+      <SmartAudio
         src={staticFile("sounds/message_bubble/message.mp3")}
         volume={0.85}
       />
