@@ -12,19 +12,26 @@ type SmartAudioProps = {
 };
 
 /**
- * Audio that doesn't lag the browser <Player>.
+ * Audio that stays in sync everywhere AND doesn't lag the <Player>.
  *
- * `@remotion/media`'s <Audio> decodes via WebCodecs so RENDERS are frame
- * accurate — but that pipeline is heavy in the live <Player>, and mounting
- * many of them (e.g. MessageBubbles' per-keystroke key taps + per-bubble
- * sounds) stutters or outright freezes the preview. So mirror what
- * Project.tsx does for the project music track: play through the lightweight
- * classic HTML5 <Audio> in preview, and only use the @remotion/media <Audio>
- * when actually rendering.
+ * Three environments, three needs:
+ *   - **Player (preview):** classic HTML5 <Audio> — lightweight, so dozens of
+ *     short SFX don't stutter/freeze the preview.
+ *   - **Web-renderer (client-side, in-browser export):** `@remotion/media`'s
+ *     WebCodecs <Audio> — that renderer pulls audio through WebCodecs and this
+ *     is the path that captures correctly there.
+ *   - **Lambda / server render:** classic HTML5 <Audio>. `@remotion/media`
+ *     audio plays OUT OF SYNC on Lambda (the swoosh landed before its bubble),
+ *     while the classic <Audio> is Remotion's canonical, frame-accurate server
+ *     audio.
+ *
+ * `isRendering` is true for BOTH render paths; `isClientSideRendering`
+ * separates the in-browser web-renderer (true) from Lambda/server (false).
  */
 export function SmartAudio(props: SmartAudioProps) {
-  const { isRendering } = useRemotionEnvironment();
-  if (isRendering) {
+  const env = useRemotionEnvironment();
+  // Only the in-browser web-renderer needs the WebCodecs <Audio>.
+  if (env.isRendering && env.isClientSideRendering) {
     return <MediaAudio {...props} />;
   }
   return (
