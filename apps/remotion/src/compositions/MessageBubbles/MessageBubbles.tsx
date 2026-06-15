@@ -289,19 +289,28 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
     return `${h}:${String(min).padStart(2, "0")} ${ampm}`;
   }, []);
 
-  // One soft "swoosh" per message, fired the frame each bubble lands (after its
-  // typing phase). Messages are spaced well apart, so the cues never overlap —
-  // each plays cleanly start-to-finish.
-  const sfxCues = useMemo(
-    () =>
-      messages
-        // History bubbles are already on screen — they never "land", so no SFX.
-        .filter((m) => !m.history && (m.image || m.text.trim()))
-        .map((m) =>
-          Math.max(0, Math.round(m.delay + m.typingFrames + DELIVERY_OFFSET)),
+  // One soft "swoosh" per message, fired as each bubble is delivered (a beat
+  // after its typing phase). `stop` is the next animated message's typing
+  // start: message.mp3 is ~0.5s, so without a hard cap a swoosh can run INTO
+  // the next bubble's typing — you'd hear the previous message's whoop while
+  // the next one is still being typed. Each swoosh is clamped to end at `stop`.
+  const sfxCues = useMemo(() => {
+    // History bubbles are already on screen — they never "land", so no SFX.
+    const visible = messages.filter(
+      (m) => !m.history && (m.image || m.text.trim()),
+    );
+    return visible.map((m, i) => {
+      const next = visible[i + 1];
+      return {
+        from: Math.max(
+          0,
+          Math.round(m.delay + m.typingFrames + DELIVERY_OFFSET),
         ),
-    [messages],
-  );
+        // Next message's typing starts at its delay; never sound past that.
+        stop: next ? Math.round(next.delay) : Number.POSITIVE_INFINITY,
+      };
+    });
+  }, [messages]);
 
   // Per-bubble custom sound effects, fired at the same "land" frame as the
   // default swoosh. A bubble opts in via msg.sound (preset path or uploaded
@@ -363,16 +372,25 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
 
   return (
     <>
-      {sfxCues.map((from, i) => (
-        <Sequence
-          key={`sfx-${i}`}
-          from={toRenderFrame(from)}
-          durationInFrames={SWOOSH_FRAMES}
-          name="message-sfx"
-        >
-          <SmartAudio src={sfxSrc} volume={0.8} />
-        </Sequence>
-      ))}
+      {sfxCues.map((cue, i) => {
+        const from = toRenderFrame(cue.from);
+        const stop =
+          cue.stop === Number.POSITIVE_INFINITY
+            ? Number.POSITIVE_INFINITY
+            : toRenderFrame(cue.stop);
+        // Full swoosh length, but never past the next message's typing start.
+        const duration = Math.max(1, Math.min(SWOOSH_FRAMES, stop - from));
+        return (
+          <Sequence
+            key={`sfx-${i}`}
+            from={from}
+            durationInFrames={duration}
+            name="message-sfx"
+          >
+            <SmartAudio src={sfxSrc} volume={0.8} />
+          </Sequence>
+        );
+      })}
       {/* Per-bubble custom sound effects, layered on top of the swoosh. */}
       {customSfxCues.map((cue, i) => (
         <CachedSfxSequence
