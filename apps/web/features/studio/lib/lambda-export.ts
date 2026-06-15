@@ -171,18 +171,47 @@ export function renderCompositionOnLambda({
   );
 }
 
-export function downloadRemoteUrl(url: string, filename: string): void {
-  // The presigned S3 URL is cross-origin, so the <a download> attribute is
-  // ignored by browsers and the video would open in a new tab. Route through
-  // our same-origin proxy, which sends Content-Disposition: attachment so the
-  // browser saves the file instead.
+/** Trigger a real "Save as" download from an in-memory blob (deferred revoke
+ *  so the browser doesn't cancel the download — same mechanism the in-browser
+ *  export uses, which is reliable across browsers). */
+function triggerBlobDownload(blob: Blob, filename: string): void {
+  const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
-  anchor.href = `/api/download?url=${encodeURIComponent(
-    url,
-  )}&filename=${encodeURIComponent(filename)}`;
+  anchor.href = objectUrl;
   anchor.download = filename;
-  anchor.rel = "noopener";
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
+  // Revoke AFTER the download has kicked off; revoking synchronously aborts it.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+}
+
+export async function downloadRemoteUrl(
+  url: string,
+  filename: string,
+): Promise<void> {
+  // The finished MP4 lives at a cross-origin presigned S3 URL, so an
+  // `<a download>` pointed straight at it is ignored (and pointing the anchor
+  // at our `/api/download` proxy and navigating to it proved unreliable — in
+  // several browsers the click just does nothing). Instead, fetch the file
+  // through the same-origin proxy (no CORS issues; it streams S3 server-side)
+  // and save the resulting blob with the proven object-URL mechanism.
+  const proxied = `/api/download?url=${encodeURIComponent(
+    url,
+  )}&filename=${encodeURIComponent(filename)}`;
+  try {
+    const res = await fetch(proxied);
+    if (!res.ok) {
+      throw new Error(`Download proxy responded ${res.status}`);
+    }
+    triggerBlobDownload(await res.blob(), filename);
+  } catch (err) {
+    console.error(
+      "[lambda-export] proxied download failed; opening the file directly",
+      err,
+    );
+    // Last resort: the presigned URL is reachable (it's what the preview
+    // plays), so open it so the user can still save the video manually.
+    window.open(url, "_blank", "noopener");
+  }
 }

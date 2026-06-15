@@ -10,6 +10,7 @@ import { FuturisticArch } from "./compositions/backgrounds/FuturisticArch/Futuri
 import { LiquidChrome } from "./compositions/backgrounds/LiquidChrome/LiquidChrome";
 import { WhiteRadialBurst } from "./compositions/backgrounds/WhiteRadialBurst/WhiteRadialBurst";
 import { CaptionTrack } from "./compositions/CaptionTrack/CaptionTrack";
+import { CardReveal } from "./compositions/CardReveal/CardReveal";
 import { CursorWalkthrough } from "./compositions/CursorWalkthrough/CursorWalkthrough";
 import { DiscordMessages } from "./compositions/DiscordMessages/DiscordMessages";
 import { FeatureCard } from "./compositions/FeatureCard/FeatureCard";
@@ -133,6 +134,7 @@ export const componentsByIdBase: Record<string, ComponentType<any>> = {
   MetricCard,
   TestimonialCard,
   LogoCloud,
+  CardReveal,
   PricingCard,
   Terminal,
   GitHubStarButton,

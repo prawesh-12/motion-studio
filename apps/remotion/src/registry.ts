@@ -8,6 +8,7 @@ import { futuristicArchInfo } from "./compositions/backgrounds/FuturisticArch/me
 import { liquidChromeInfo } from "./compositions/backgrounds/LiquidChrome/meta";
 import { whiteRadialBurstInfo } from "./compositions/backgrounds/WhiteRadialBurst/meta";
 import { captionTrackInfo } from "./compositions/CaptionTrack/meta";
+import { cardRevealInfo } from "./compositions/CardReveal/meta";
 import { cursorWalkthroughInfo } from "./compositions/CursorWalkthrough/meta";
 import { discordMessagesInfo } from "./compositions/DiscordMessages/meta";
 import { featureCardInfo } from "./compositions/FeatureCard/meta";
@@ -135,6 +136,7 @@ export const compositions: AnyCompositionInfo[] = [
   metricCardInfo,
   testimonialCardInfo,
   logoCloudInfo,
+  cardRevealInfo,
   pricingCardInfo,
   terminalInfo,
   githubStarButtonInfo,

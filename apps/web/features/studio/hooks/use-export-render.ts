@@ -396,11 +396,11 @@ export function useExportRender() {
 
   const download = useCallback(() => {
     const filename = state.filename ?? "project.mp4";
-    // Lambda path: the result is a cross-origin presigned S3 URL, so route it
-    // through our same-origin `/api/download` proxy (which sets
-    // Content-Disposition: attachment) instead of fetching the blob directly.
+    // Lambda path: the result is a cross-origin presigned S3 URL, so fetch it
+    // through our same-origin `/api/download` proxy and save the blob (errors
+    // are handled inside downloadRemoteUrl, so the floating promise is fine).
     if (remoteUrlRef.current) {
-      downloadRemoteUrl(remoteUrlRef.current, filename);
+      void downloadRemoteUrl(remoteUrlRef.current, filename);
       return;
     }
     const url = blobUrlRef.current;
