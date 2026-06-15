@@ -307,18 +307,16 @@ export const CardReveal: React.FC<CardRevealProps> = ({
 
   const resolved = resolveAsset(image);
   const faceShadow = "0 18px 40px rgba(0,0,0,0.32)";
-  const faceBase: React.CSSProperties = {
-    position: "absolute",
-    inset: 0,
-    borderRadius: r,
-    backfaceVisibility: "hidden",
-    WebkitBackfaceVisibility: "hidden",
-    overflow: "hidden",
-    // Shadow on the faces, NOT the preserve-3d wrapper — a filter/box-shadow
-    // on the rotating element flattens 3D and breaks backface-visibility
-    // (both faces would show at once).
-    boxShadow: faceShadow,
-  };
+
+  // 2D flip: squeeze the card horizontally to ~0 at the midpoint and swap the
+  // visible face there. We deliberately AVOID a 3D flip (rotateY + preserve-3d
+  // + backface-visibility): the in-browser / web-renderer export rasterizes
+  // each frame from the DOM and does NOT support 3D transforms, so the image
+  // face never painted and the card exported blank white. A scaleX flip looks
+  // the same and rasterizes correctly in every export path.
+  const angleRad = (angle * Math.PI) / 180;
+  const flipScaleX = Math.max(0.001, Math.abs(Math.cos(angleRad)));
+  const showFront = Math.cos(angleRad) < 0; // past 90° → image side faces us
 
   return (
     <AbsoluteFill
@@ -362,62 +360,52 @@ export const CardReveal: React.FC<CardRevealProps> = ({
         color={s.accent}
       />
 
-      {/* Ball → square → flip. One element throughout. */}
+      {/* Ball → square → flip. One flat element; the flip is a 2D scaleX so it
+          rasterizes correctly in every export path. */}
       <div
         style={{
           position: "absolute",
           left: cx,
           top: centerY,
-          transform: `translate(-50%, -50%) scaleX(${sx}) scaleY(${sy})`,
+          transform: `translate(-50%, -50%) scaleX(${sx * flipScaleX}) scaleY(${sy})`,
         }}
       >
-        <div style={{ perspective: 1600 }}>
-          <div
-            style={{
-              position: "relative",
-              width: w,
-              height: h,
-              transformStyle: "preserve-3d",
-              transform: `rotateY(${angle}deg) scale(${popScale})`,
-            }}
-          >
-            {/* Back — the white ball / blank square back. */}
-            <div style={{ ...faceBase, background: "#ffffff" }} />
-
-            {/* Front — the revealed image (pre-rotated so it lands upright). */}
-            <div
-              style={{
-                ...faceBase,
-                transform: "rotateY(180deg)",
-                background: "#ffffff",
-              }}
-            >
-              {resolved ? (
-                <Img
-                  src={resolved}
-                  crossOrigin="anonymous"
-                  alt=""
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
-              ) : (
-                <div
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "#e9e9ee",
-                    color: "#9aa0aa",
-                    fontSize: unit * 0.03,
-                    fontWeight: 500,
-                  }}
-                >
-                  Upload an image
-                </div>
-              )}
-            </div>
-          </div>
+        <div
+          style={{
+            width: w,
+            height: h,
+            borderRadius: r,
+            overflow: "hidden",
+            background: "#ffffff",
+            boxShadow: faceShadow,
+            transform: `scale(${popScale})`,
+          }}
+        >
+          {showFront &&
+            (resolved ? (
+              <Img
+                src={resolved}
+                crossOrigin="anonymous"
+                alt=""
+                style={{ width: "100%", height: "100%", objectFit: "cover" }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "#e9e9ee",
+                  color: "#9aa0aa",
+                  fontSize: unit * 0.03,
+                  fontWeight: 500,
+                }}
+              >
+                Upload an image
+              </div>
+            ))}
         </div>
       </div>
 

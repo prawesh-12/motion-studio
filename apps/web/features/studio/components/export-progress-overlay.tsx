@@ -83,7 +83,12 @@ export function ExportProgressOverlay({
       aria-modal="true"
       aria-label="Export progress"
       onClick={handleBackdropClick}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+      // `pointer-events-auto` is deliberate: the export-settings Radix dialog
+      // closes as this overlay mounts and can leave `pointer-events: none`
+      // stuck on <body>, which this plain fixed div would otherwise inherit —
+      // making the Download/Close buttons unclickable. Forcing auto here keeps
+      // the overlay (and its buttons) interactive regardless.
+      className="pointer-events-auto fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
     >
       <div
         className={`w-full ${
