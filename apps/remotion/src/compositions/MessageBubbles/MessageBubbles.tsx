@@ -114,6 +114,14 @@ export type MessageBubblesProps = {
 const POP_HOLD = 7;
 const POP_RISE = 2;
 
+/**
+ * Design frames (60fps) to delay each message's sound past its "send" frame
+ * (delay + typingFrames) so it lands when the bubble is DELIVERED — i.e. when
+ * its pop-in/bounce animation actually arrives on screen — instead of the
+ * instant the composer fires. The bubble grows in over ~14 frames; ~9 puts
+ * the sound on the visible landing, matching real iMessage. */
+const DELIVERY_OFFSET = 9;
+
 type ChatState = {
   items: ChatMessageItem[];
   composerText: string;
@@ -289,7 +297,9 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
       messages
         // History bubbles are already on screen — they never "land", so no SFX.
         .filter((m) => !m.history && (m.image || m.text.trim()))
-        .map((m) => Math.max(0, Math.round(m.delay + m.typingFrames))),
+        .map((m) =>
+          Math.max(0, Math.round(m.delay + m.typingFrames + DELIVERY_OFFSET)),
+        ),
     [messages],
   );
 
@@ -303,7 +313,10 @@ export const MessageBubbles: React.FC<MessageBubblesProps> = ({
           (m) => !m.history && (m.image || m.text.trim()) && m.sound?.trim(),
         )
         .map((m) => ({
-          from: Math.max(0, Math.round(m.delay + m.typingFrames)),
+          from: Math.max(
+            0,
+            Math.round(m.delay + m.typingFrames + DELIVERY_OFFSET),
+          ),
           src: m.sound!.trim(),
         })),
     [messages],
