@@ -4,12 +4,14 @@ import { useChat } from "@ai-sdk/react";
 import { Cancel01Icon, RefreshIcon } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { Project } from "@workspace/compositions/project";
+import { compositions } from "@workspace/compositions/registry";
 import { Button } from "@workspace/ui/components/button";
-import { Composer } from "@workspace/ui/components/composer";
+import { Composer, type MentionItem } from "@workspace/ui/components/composer";
 import { WaveSpinner } from "@workspace/ui/components/wave-spinner";
 import { lastAssistantMessageIsCompleteWithToolCalls } from "ai";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { isAgentVisible } from "@/lib/agent/catalog";
 import type { StudioAction } from "../state/reducer";
 import { runClientTool } from "./agent-panel/client-tools";
 import { EmptyState } from "./agent-panel/empty-state";
@@ -21,6 +23,9 @@ type Props = {
   project: Project;
   dispatch: React.Dispatch<StudioAction>;
   onClose: () => void;
+  /** The clip currently selected in the timeline/inspector, if any. Lets the
+   *  agent target it directly when the user @mentions its composition. */
+  selectedClip?: { id: string; compositionId: string } | null;
 };
 
 // Cap on how many times the SDK will auto-continue per user message.
@@ -41,7 +46,12 @@ const TERMINAL_TOOL_TYPES = new Set([
   "tool-updateClipDuration",
 ]);
 
-export function AgentPanel({ project, dispatch, onClose }: Props) {
+export function AgentPanel({
+  project,
+  dispatch,
+  onClose,
+  selectedClip,
+}: Props) {
   // Keep the latest project in a ref so onToolCall (closed over at mount)
   // always sees current clips/ids instead of a stale snapshot. Assigned during
   // render rather than in an effect — the value is only ever read later, in
@@ -54,6 +64,23 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
   // chat request without recreating useChat (which would wipe history).
   const brandKitRef = useRef(project.brandKit);
   brandKitRef.current = project.brandKit;
+
+  // The @mention picker offers every agent-visible composition; selecting one
+  // inserts `@<id>` into the message. Built once — the registry is static.
+  const mentionItems = useMemo<MentionItem[]>(
+    () =>
+      compositions
+        .filter((c) => isAgentVisible(c.id))
+        .map((c) => ({ id: c.id, label: c.title, hint: c.category })),
+    [],
+  );
+
+  // Latest @mention ids + selected clip, read at send time (refs so the
+  // memoized chat transport always sees current values — same trick as
+  // brandKit above).
+  const mentionsRef = useRef<string[]>([]);
+  const selectedClipRef = useRef(selectedClip ?? null);
+  selectedClipRef.current = selectedClip ?? null;
 
   // Tracks how many times the SDK has auto-continued since the user
   // last sent a message. We compare to the cap inside
@@ -190,10 +217,21 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
       await stop();
     }
     autoContinuationCount.current = 0;
-    // Piggyback the project's brandKit so the server can append a brand
-    // context block to the system prompt. The ref always points at the
-    // latest value, so brand kit edits show up on the very next send.
-    sendMessage({ text: trimmed }, { body: { brandKit: brandKitRef.current } });
+    // Piggyback the project's brandKit + any @mentioned components + the
+    // selected clip so the server can switch into focused-component mode and
+    // append the right context. Refs always point at the latest values, so
+    // edits show up on the very next send.
+    sendMessage(
+      { text: trimmed },
+      {
+        body: {
+          brandKit: brandKitRef.current,
+          mentions: mentionsRef.current,
+          selectedClip: selectedClipRef.current,
+        },
+      },
+    );
+    mentionsRef.current = [];
     setInput("");
   }
 
@@ -324,6 +362,10 @@ export function AgentPanel({ project, dispatch, onClose }: Props) {
           onChange={setInput}
           onSubmit={send}
           onStop={() => stop()}
+          mentionItems={mentionItems}
+          onMentionsChange={(ids) => {
+            mentionsRef.current = ids;
+          }}
           isLoading={isBusy && input.trim().length === 0}
           placeholder={
             isBusy
